@@ -1,224 +1,233 @@
-<!DOCTYPE html>
+<meta charset="utf-8">
 
-<html lang="ko">
+{% load static %}
+<script src="{% static 'js/trim.js' %}"></script>
+<script language="javascript">
+    function check(){
+        var idval = f.email.value;
+        idval = trim(idval);
+        if(idval.length == 0){
+            alert("아이디를 넣어주세요");
+            f.email.value = "";
+            f.email.focus();
+            return false;
+        }else{
+            pass = checkByteLen(idval, 50);
+            if(!pass){
+                alert("아이디가 너무 길어요");
+                f.email.focus();
+                return false;
+            }
+        }
 
-<head>
+        var pwdval = f.pwd.value;
+        pwdval = trim(pwdval);
+        if(pwdval.length == 0){
+            alert("비번을 넣어주세요");
+            f.pwd.value = "";
+            f.pwd.focus();
+            return false;
+        }else{
+            pass = checkByteLen(pwdval, 30);
+            if(!pass){
+                alert("비번이 너무 길어요");
+                f.pwd.focus();
+                return false;
+            }
+        }
 
-    <meta charset="UTF-8">
+        f.submit();
+    }
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+    function checkByteLen(str, size){
+        var byteLen = getByteLen(str);
+        if(byteLen <= size){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    function getByteLen(str){
+       return str.replace(/[\0-\x7f]|([0-\u07ff]|(.))/g,"$&$1$2").length;
+    }
 
-    <title>SHERPA - 로그인</title>
+    function enterCheck(elm){
+        if(event.keyCode == 13){
+            if(elm == f.email){
+                f.pwd.focus();
+            }else{
+                check();
+            }
+        }
+    }
+</script>
 
-    <link rel="stylesheet"
-          href="css/style.css">
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
 
-</head>
+    body {
+        background-color: #f4f6f8;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
 
+    .login-container {
+        background: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        margin-bottom: 28px;
+        text-align: center;
+    }
+
+    .login-header h2 {
+        font-size: 24px;
+        font-weight: 700;
+        color: #1a1d20;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    .input-group label {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4a5568;
+        margin-bottom: 8px;
+    }
+
+    .input-group input {
+        width: 100%;
+        padding: 12px 14px;
+        font-size: 14px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-group input:focus {
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 28px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background-color: #3182ce;
+        color: white;
+    }
+
+    .btn-submit:hover {
+        background-color: #2b6cb0;
+    }
+
+    .btn-reset {
+        background-color: #edf2f7;
+        color: #4a5568;
+    }
+
+    .btn-reset:hover {
+        background-color: #e2e8f0;
+    }
+</style>
+
+<body onload="document.f.email.focus()">
+    <div class="login-container">
+        <div class="login-header">
+                <h1 class="logo">
+                    🛫TRIPA
+                </h1>
+            <h2>로그인</h2>
+        </div>
+
+        <form name="f" action="{% url 'login_ok' %}" method="post">
+            {% csrf_token %}
+
+            <div class="input-group">
+                <label for="email">아이디(Email)</label>
+                <input
+                type="text"
+                name="email"
+                placeholder="아이디(Email)"
+                >
+            </div>
+
+            <div class="input-group">
+                <label for="pwd">비밀번호</label>
+                <input
+                    type="password"
+                    name="pwd"
+                    placeholder="비밀번호"
+                >
+            </div>
+
+            <div class="btn-group">
+                <input
+                    type="submit"
+                    class="btn-submit"
+                    value="로그인"
+                >
+            
+            </div>
+            <div class="login-footer">
+
+            <br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            아직 회원이 아니신가요?
+                
+            <a href="{% url 'join' %}">회원가입</a>
+            <br>
+            
+            아이디/비밀번호를 잊어버렸나요?
+            <a href="{% url 'join' %}">ID/PW 찾기</a>
+            <br><br>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <a href="{% url 'index' %}">홈으로가기</a>
+            
+
+        </div>
+        </form>
+    </div>
+</body>
 
 <body>
 
-
-<header>
-
-    <div class="logo">
-
-        🏔️ SHERPA
-
-    </div>
-
-
-    <nav>
-
-        <a href="travel_list.html">
-            내 여행
-        </a>
-
-        <a href="travel_create.html">
-            여행 만들기
-        </a>
-
-    </nav>
-
-</header>
-
-
-
-<div class="login-container">
-
-
-    <div class="login-box">
-
-
-        <h1>
-
-            로그인
-
-        </h1>
-
-
-        <p class="login-text">
-
-            SHERPA와 함께 여행을 계획하세요.
-
-        </p>
-
-
-        <form>
-
-
-            <div class="form-group">
-
-                <label>
-
-                    아이디
-
-                </label>
-
-
-                <input
-                    type="text"
-                    placeholder="아이디 입력">
-
-            </div>
-
-
-
-            <div class="form-group">
-
-                <label>
-
-                    비밀번호
-
-                </label>
-
-
-                <input
-                    type="password"
-                    placeholder="비밀번호 입력">
-
-            </div>
-
-
-
-            <button
-                type="button"
-                class="btn btn-primary login-btn">
-
-                로그인
-
-            </button>
-
-
-        </form>
-
-
-
-        <div class="login-footer">
-
-            아직 회원이 아니신가요?
-
-            <a href="join.html">
-
-                회원가입
-
-            </a>
-
-        </div>
-
-
-    </div>
-
-
-</div>
-
-
-<style>
-
-
-.login-container {
-
-    min-height: calc(100vh - 70px);
-
-    display: flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-}
-
-
-.login-box {
-
-    width: 400px;
-
-    background-color: white;
-
-    padding: 40px;
-
-    border-radius: 15px;
-
-    box-shadow:
-        0 5px 20px
-        rgba(0,0,0,0.08);
-
-}
-
-
-.login-box h1 {
-
-    text-align: center;
-
-    margin-bottom: 10px;
-
-}
-
-
-.login-text {
-
-    text-align: center;
-
-    color: #777;
-
-    margin-bottom: 30px;
-
-}
-
-
-.login-btn {
-
-    width: 100%;
-
-}
-
-
-.login-footer {
-
-    margin-top: 25px;
-
-    text-align: center;
-
-    font-size: 14px;
-
-    color: #777;
-
-}
-
-
-.login-footer a {
-
-    color: #2d6cdf;
-
-    font-weight: bold;
-
-}
-
-
-</style>
-
-
-</body>
-
-</html>
