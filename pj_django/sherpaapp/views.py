@@ -20,7 +20,7 @@ def join(request):
     return HttpResponse(template.render({}, request))
 
 # ==============================================
-# 로그인
+# 로그인 gg
 # ==============================================
 
 def login(request):
