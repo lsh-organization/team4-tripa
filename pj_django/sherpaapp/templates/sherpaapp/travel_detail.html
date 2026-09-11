@@ -8,963 +8,20 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>SHERPA - 여행 일정</title>
+    <title>TRIPA - 여행 일정</title>
 
+    {% load static %}
 
-    <style>
-
-
-        /* =========================
-           기본 설정
-        ========================= */
-
-        * {
-
-            margin: 0;
-            padding: 0;
-
-            box-sizing: border-box;
-
-        }
-
-
-        body {
-
-            font-family:
-                Arial,
-                "Noto Sans KR",
-                sans-serif;
-
-            background-color: #f5f7fb;
-
-            color: #333;
-
-        }
-
-
-
-        /* =========================
-           HEADER
-        ========================= */
-
-        header {
-
-            height: 70px;
-
-            background-color: white;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: space-between;
-
-            padding: 0 40px;
-
-            border-bottom: 1px solid #e5e5e5;
-
-        }
-
-
-        .logo {
-
-            font-size: 28px;
-
-            font-weight: bold;
-
-            color: #2d6cdf;
-
-        }
-
-
-        nav {
-
-            display: flex;
-
-            gap: 30px;
-
-        }
-
-
-        nav a {
-
-            text-decoration: none;
-
-            color: #555;
-
-            font-size: 16px;
-
-        }
-
-
-        nav a:hover {
-
-            color: #2d6cdf;
-
-        }
-
-
-        .user {
-
-            background-color: #eef3ff;
-
-            padding: 10px 15px;
-
-            border-radius: 20px;
-
-        }
-
-
-
-        /* =========================
-           전체 화면
-        ========================= */
-
-        .container {
-
-            display: flex;
-
-            min-height: calc(100vh - 70px);
-
-        }
-
-
-
-        /* =========================
-           SIDEBAR
-        ========================= */
-
-        .sidebar {
-
-            width: 220px;
-
-            background-color: white;
-
-            border-right: 1px solid #e5e5e5;
-
-            padding: 30px 20px;
-
-        }
-
-
-        .menu-title {
-
-            font-size: 13px;
-
-            color: #999;
-
-            margin-bottom: 15px;
-
-        }
-
-
-        .menu {
-
-            list-style: none;
-
-        }
-
-
-        .menu li {
-
-            margin-bottom: 10px;
-
-        }
-
-
-        .menu a {
-
-            display: block;
-
-            padding: 14px;
-
-            text-decoration: none;
-
-            color: #444;
-
-            border-radius: 8px;
-
-        }
-
-
-        .menu a:hover {
-
-            background-color: #eef3ff;
-
-            color: #2d6cdf;
-
-        }
-
-
-        .menu .active {
-
-            background-color: #2d6cdf;
-
-            color: white;
-
-        }
-
-
-
-        /* =========================
-           MAIN CONTENT
-        ========================= */
-
-        .content {
-
-            flex: 1;
-
-            padding: 30px;
-
-        }
-
-
-
-        /* =========================
-           여행 정보
-        ========================= */
-
-        .travel-header {
-
-            background-color: white;
-
-            padding: 25px;
-
-            border-radius: 15px;
-
-            margin-bottom: 25px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .travel-title {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            align-items: center;
-
-        }
-
-
-        .travel-title h1 {
-
-            font-size: 26px;
-
-            margin-bottom: 10px;
-
-        }
-
-
-        .travel-info {
-
-            color: #777;
-
-            font-size: 15px;
-
-        }
-
-
-        .travel-button {
-
-            border: none;
-
-            background-color: #2d6cdf;
-
-            color: white;
-
-            padding: 12px 18px;
-
-            border-radius: 8px;
-
-            cursor: pointer;
-
-        }
-
-
-
-        /* =========================
-           지도 + DAY 선택
-        ========================= */
-
-        .dashboard {
-
-            display: grid;
-
-            grid-template-columns: 2fr 1fr;
-
-            gap: 25px;
-
-        }
-
-
-
-        /* =========================
-           지도
-        ========================= */
-
-        .map-box {
-
-            background-color: white;
-
-            padding: 20px;
-
-            border-radius: 15px;
-
-            min-height: 430px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .section-title {
-
-            font-size: 20px;
-
-            font-weight: bold;
-
-            margin-bottom: 20px;
-
-        }
-
-
-        /* 실제 지도 API가 들어갈 위치 */
-
-        .fake-map {
-
-            position: relative;
-
-            height: 360px;
-
-            border-radius: 10px;
-
-            overflow: hidden;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #e4f1e7,
-                    #dceafa
-                );
-
-        }
-
-
-        .map-text {
-
-            position: absolute;
-
-            top: 20px;
-
-            left: 20px;
-
-            background-color: white;
-
-            padding: 10px 15px;
-
-            border-radius: 8px;
-
-            font-size: 14px;
-
-            color: #666;
-
-        }
-
-
-
-        /* =========================
-           지도 경로
-        ========================= */
-
-        .route-line {
-
-            position: absolute;
-
-            height: 5px;
-
-            background-color: #2d6cdf;
-
-            border-radius: 5px;
-
-        }
-
-
-        .route1 {
-
-            width: 180px;
-
-            top: 130px;
-
-            left: 20%;
-
-            transform: rotate(20deg);
-
-        }
-
-
-        .route2 {
-
-            width: 180px;
-
-            top: 220px;
-
-            left: 50%;
-
-            transform: rotate(15deg);
-
-        }
-
-
-
-        /* =========================
-           지도 마커
-        ========================= */
-
-        .marker {
-
-            position: absolute;
-
-            width: 45px;
-
-            height: 45px;
-
-            background-color: #2d6cdf;
-
-            color: white;
-
-            border-radius: 50%;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-weight: bold;
-
-            box-shadow:
-
-                0 3px 10px
-
-                rgba(0,0,0,0.2);
-
-        }
-
-
-        .marker1 {
-
-            top: 100px;
-
-            left: 18%;
-
-        }
-
-
-        .marker2 {
-
-            top: 170px;
-
-            left: 48%;
-
-        }
-
-
-        .marker3 {
-
-            top: 250px;
-
-            left: 75%;
-
-        }
-
-
-
-        /* =========================
-           DAY 선택
-        ========================= */
-
-        .day-box {
-
-            background-color: white;
-
-            border-radius: 15px;
-
-            padding: 20px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .day {
-
-            padding: 15px;
-
-            margin-bottom: 10px;
-
-            border-radius: 10px;
-
-            background-color: #f5f7fb;
-
-            cursor: pointer;
-
-        }
-
-
-        .day.active {
-
-            background-color: #2d6cdf;
-
-            color: white;
-
-        }
-
-
-        .day-date {
-
-            font-size: 13px;
-
-            margin-top: 5px;
-
-            opacity: 0.8;
-
-        }
-
-
-
-        /* =========================
-           여행 정보 요약
-        ========================= */
-
-        .travel-summary {
-
-            background-color: white;
-
-            border-radius: 15px;
-
-            padding: 20px;
-
-            margin-top: 25px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .summary-item {
-
-            padding: 15px 0;
-
-            border-bottom: 1px solid #eee;
-
-        }
-
-
-        .summary-item:last-child {
-
-            border-bottom: none;
-
-        }
-
-
-        .summary-label {
-
-            font-size: 13px;
-
-            color: #888;
-
-            margin-bottom: 5px;
-
-        }
-
-
-        .summary-value {
-
-            font-size: 16px;
-
-            font-weight: bold;
-
-        }
-
-
-
-        /* =========================
-           TIMELINE
-        ========================= */
-
-        .timeline-box {
-
-            background-color: white;
-
-            border-radius: 15px;
-
-            padding: 25px;
-
-            margin-top: 25px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .timeline {
-
-            position: relative;
-
-        }
-
-
-        .timeline-item {
-
-            display: flex;
-
-            margin-bottom: 25px;
-
-        }
-
-
-        /* 시간 */
-
-        .time {
-
-            width: 80px;
-
-            font-weight: bold;
-
-            color: #2d6cdf;
-
-            padding-top: 10px;
-
-        }
-
-
-
-        /* 아이콘 */
-
-        .timeline-icon {
-
-            width: 45px;
-
-            height: 45px;
-
-            border-radius: 50%;
-
-            background-color: #eef3ff;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            margin-right: 15px;
-
-            font-size: 20px;
-
-        }
-
-
-
-        /* 내용 */
-
-        .timeline-content {
-
-            flex: 1;
-
-            padding: 15px;
-
-            background-color: #f8f9fc;
-
-            border-radius: 10px;
-
-        }
-
-
-        .timeline-content h3 {
-
-            margin-bottom: 8px;
-
-        }
-
-
-        .timeline-content p {
-
-            font-size: 14px;
-
-            color: #777;
-
-            margin-top: 5px;
-
-        }
-
-
-
-        /* =========================
-           장소 목록
-        ========================= */
-
-        .place-list {
-
-            margin-top: 25px;
-
-        }
-
-
-        .place-card {
-
-            display: flex;
-
-            background-color: white;
-
-            padding: 15px;
-
-            border-radius: 12px;
-
-            margin-bottom: 15px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-
-        /* 장소 이미지 */
-
-        .place-image {
-
-            width: 100px;
-
-            height: 100px;
-
-            background-color: #e5e7eb;
-
-            border-radius: 10px;
-
-            display: flex;
-
-            align-items: center;
-
-            justify-content: center;
-
-            font-size: 35px;
-
-            margin-right: 15px;
-
-            flex-shrink: 0;
-
-        }
-
-
-
-        /* 장소 정보 */
-
-        .place-info {
-
-            flex: 1;
-
-        }
-
-
-        .place-info h3 {
-
-            margin-bottom: 8px;
-
-        }
-
-
-        .place-info p {
-
-            font-size: 14px;
-
-            color: #777;
-
-            margin-bottom: 6px;
-
-        }
-
-
-        .place-category {
-
-            display: inline-block;
-
-            padding: 5px 10px;
-
-            background-color: #eef3ff;
-
-            color: #2d6cdf;
-
-            border-radius: 20px;
-
-            font-size: 12px;
-
-        }
-
-
-
-        /* =========================
-           비용
-        ========================= */
-
-        .pay-box {
-
-            background-color: white;
-
-            border-radius: 15px;
-
-            padding: 20px;
-
-            margin-top: 25px;
-
-            box-shadow:
-                0 2px 10px
-                rgba(0,0,0,0.05);
-
-        }
-
-
-        .pay-item {
-
-            display: flex;
-
-            justify-content: space-between;
-
-            padding: 12px 0;
-
-            border-bottom: 1px solid #eee;
-
-        }
-
-
-        .pay-item:last-child {
-
-            border-bottom: none;
-
-        }
-
-
-        .total-pay {
-
-            font-size: 18px;
-
-            font-weight: bold;
-
-            color: #2d6cdf;
-
-        }
-
-
-
-        /* =========================
-           반응형
-        ========================= */
-
-        @media screen and (max-width: 900px) {
-
-
-            .dashboard {
-
-                grid-template-columns: 1fr;
-
-            }
-
-
-            .sidebar {
-
-                width: 180px;
-
-            }
-
-
-            nav {
-
-                display: none;
-
-            }
-
-
-        }
-
-
-    </style>
-
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
 
 </head>
-
 
 
 <body>
 
 
-
-<!-- =========================
-     HEADER
-========================= -->
-
-<header>
-
-
-    <div class="logo">
-
-        🏔️ SHERPA
-
-    </div>
-
-
-
-    <nav>
-
-        <a href="#">홈</a>
-
-        <a href="#">내 여행</a>
-
-        <a href="#">여행 만들기</a>
-
-        <a href="#">장소 검색</a>
-
-    </nav>
-
-
-
-    <div class="user">
-    
-    {% if member %}
-        <a href="{% url 'mypage' %}" class="login-btn">
-            {{ member.nickname }}
-        </a>
-    {% else %}
-        <a href="{% url 'login' %}" class="login-btn">
-            로그인
-        </a>
-    {% endif %}
-    </div>
-
-
-</header>
-
-
-
-<!-- =========================
-     전체 컨테이너
-========================= -->
-
-<div class="container">
-
+<div class="detail-container">
 
 
     <!-- =========================
@@ -974,10 +31,13 @@
     <aside class="sidebar">
 
 
+        <div class="logo">
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+        </div>
+
+
         <div class="menu-title">
-
             MENU
-
         </div>
 
 
@@ -985,94 +45,60 @@
 
 
             <li>
-
-                <a href="#">
-
-                    🏠 홈
-
-                </a>
-
-            </li>
-
-
-
-            <li>
-
-                <a href="#">
-
+                <a href="{% url 'travel_list' %}">
                     ✈️ 내 여행
-
                 </a>
-
             </li>
 
 
-
             <li>
-
-                <a href="#">
-
+                <a href="{% url 'travel_create' %}">
                     ➕ 여행 만들기
-
                 </a>
-
             </li>
 
 
-
             <li>
-
-                <a href="#">
-
+                <a href="{% url 'place_search' %}">
                     📍 장소 검색
-
                 </a>
-
             </li>
 
 
-
             <li>
-
-                <a href="#" class="active">
-
+                <a href="{% url 'travel_detail' travel_id=travel.t_id %}"
+                   class="active">
                     📅 일정 관리
-
                 </a>
-
             </li>
 
 
-
             <li>
-
-                <a href="#">
-
+                <a href="{% url 'budget' %}">
                     💰 비용 관리
-
                 </a>
-
             </li>
 
 
         </ul>
 
 
-    </aside>
+        <div class="sidebar-user">
+            👤 LEE
+        </div>
 
+
+    </aside>
 
 
     <!-- =========================
          MAIN
     ========================= -->
 
-    <main class="content">
+    <main class="detail-content">
 
 
-
-        <!-- =========================
-             여행 제목
-        ========================= -->
+        <!-- 여행 정보 -->
 
         <section class="travel-header">
 
@@ -1082,37 +108,26 @@
 
                 <div>
 
-
                     <h1>
-
                         🗺️ 서울 여행
-
                     </h1>
 
 
                     <div class="travel-info">
 
-
                         📅 2026.09.09 ~ 2026.09.12
-
 
                         &nbsp;&nbsp;
 
-
                         📍 서울
 
-
                     </div>
-
 
                 </div>
 
 
-
-                <button class="travel-button">
-
+                <button class="btn btn-primary">
                     여행 수정
-
                 </button>
 
 
@@ -1122,71 +137,46 @@
         </section>
 
 
-
-        <!-- =========================
-             지도 + DAY
-        ========================= -->
+        <!-- 지도 + DAY -->
 
         <div class="dashboard">
 
 
+            <!-- 지도 -->
 
-            <!-- =========================
-                 지도
-            ========================= -->
-
-            <section class="map-box">
+            <section class="section-box map-box">
 
 
                 <div class="section-title">
-
                     🗺️ 여행 지도
-
                 </div>
 
 
-
-                <!-- 실제 지도 API 영역 -->
-
-                <div class="fake-map">
+                <div class="detail-map">
 
 
                     <div class="map-text">
-
                         실제 지도 API가 표시될 영역
-
                     </div>
 
-
-
-                    <!-- 방문 경로 -->
 
                     <div class="route-line route1"></div>
 
                     <div class="route-line route2"></div>
 
 
-
-                    <!-- 방문 장소 -->
-
                     <div class="marker marker1">
-
                         ①
-
                     </div>
 
 
                     <div class="marker marker2">
-
                         ②
-
                     </div>
 
 
                     <div class="marker marker3">
-
                         ③
-
                     </div>
 
 
@@ -1196,10 +186,7 @@
             </section>
 
 
-
-            <!-- =========================
-                 DAY 선택
-            ========================= -->
+            <!-- DAY + 요약 -->
 
             <div>
 
@@ -1208,71 +195,45 @@
 
 
                     <div class="section-title">
-
                         📅 여행 일정
-
                     </div>
-
 
 
                     <div class="day active">
 
-
                         <strong>
-
                             DAY 1
-
                         </strong>
 
-
                         <div class="day-date">
-
                             2026.09.09
-
                         </div>
-
 
                     </div>
 
 
-
                     <div class="day">
 
-
                         <strong>
-
                             DAY 2
-
                         </strong>
 
-
                         <div class="day-date">
-
                             2026.09.10
-
                         </div>
-
 
                     </div>
 
 
-
                     <div class="day">
 
-
                         <strong>
-
                             DAY 3
-
                         </strong>
 
-
                         <div class="day-date">
-
                             2026.09.11
-
                         </div>
-
 
                     </div>
 
@@ -1280,79 +241,51 @@
                 </section>
 
 
-
                 <!-- 여행 요약 -->
-
 
                 <section class="travel-summary">
 
 
                     <div class="section-title">
-
                         여행 정보
-
                     </div>
-
 
 
                     <div class="summary-item">
 
-
                         <div class="summary-label">
-
                             여행 지역
-
                         </div>
 
-
                         <div class="summary-value">
-
                             서울
-
                         </div>
-
 
                     </div>
 
 
-
                     <div class="summary-item">
 
-
                         <div class="summary-label">
-
                             여행 기간
-
                         </div>
-
 
                         <div class="summary-value">
-
                             3일
-
                         </div>
-
 
                     </div>
 
 
-
                     <div class="summary-item">
 
-
                         <div class="summary-label">
-
                             방문 장소
-
                         </div>
-
 
                         <div class="summary-value">
-
                             3곳
-
                         </div>
-
 
                     </div>
 
@@ -1366,77 +299,49 @@
         </div>
 
 
-
-        <!-- =========================
-             TIMELINE
-        ========================= -->
+        <!-- TIMELINE -->
 
         <section class="timeline-box">
 
 
             <div class="section-title">
-
                 📅 DAY 1 일정
-
             </div>
-
 
 
             <div class="timeline">
 
 
-
-                <!-- 일정 1 -->
-
                 <div class="timeline-item">
 
 
                     <div class="time">
-
                         10:00
-
                     </div>
-
 
 
                     <div class="timeline-icon">
-
                         📍
-
                     </div>
-
 
 
                     <div class="timeline-content">
 
-
                         <h3>
-
                             ① 경복궁
-
                         </h3>
 
-
                         <p>
-
                             서울특별시 종로구
-
                         </p>
 
-
                         <p>
-
                             ⏱ 체류 시간 : 2시간
-
                         </p>
 
-
                         <p>
-
                             출발 시간 : 12:00
-
                         </p>
-
 
                     </div>
 
@@ -1444,58 +349,36 @@
                 </div>
 
 
-
-                <!-- 일정 2 -->
-
                 <div class="timeline-item">
 
 
                     <div class="time">
-
                         13:00
-
                     </div>
-
 
 
                     <div class="timeline-icon">
-
                         📍
-
                     </div>
-
 
 
                     <div class="timeline-content">
 
-
                         <h3>
-
                             ② 북촌한옥마을
-
                         </h3>
 
-
                         <p>
-
                             서울특별시 종로구
-
                         </p>
 
-
                         <p>
-
                             ⏱ 체류 시간 : 1시간 30분
-
                         </p>
-
 
                         <p>
-
                             출발 시간 : 14:30
-
                         </p>
-
 
                     </div>
 
@@ -1503,58 +386,36 @@
                 </div>
 
 
-
-                <!-- 일정 3 -->
-
                 <div class="timeline-item">
 
 
                     <div class="time">
-
                         16:00
-
                     </div>
-
 
 
                     <div class="timeline-icon">
-
                         📍
-
                     </div>
-
 
 
                     <div class="timeline-content">
 
-
                         <h3>
-
                             ③ 남산타워
-
                         </h3>
 
-
                         <p>
-
                             서울특별시 용산구
-
                         </p>
 
-
                         <p>
-
                             ⏱ 체류 시간 : 2시간
-
                         </p>
-
 
                         <p>
-
                             출발 시간 : 18:00
-
                         </p>
-
 
                     </div>
 
@@ -1568,149 +429,87 @@
         </section>
 
 
-
-        <!-- =========================
-             방문 장소
-        ========================= -->
+        <!-- 방문 장소 -->
 
         <section class="place-list">
 
 
             <div class="section-title">
-
                 📍 방문 장소
-
             </div>
 
 
-
-            <!-- 장소 1 -->
-
             <div class="place-card">
 
-
                 <div class="place-image">
-
                     🏯
-
                 </div>
-
-
 
                 <div class="place-info">
 
-
                     <h3>
-
                         경복궁
-
                     </h3>
 
-
                     <p>
-
                         서울특별시 종로구 사직로 161
-
                     </p>
 
-
                     <span class="place-category">
-
                         관광지
-
                     </span>
 
-
                 </div>
-
 
             </div>
 
 
-
-            <!-- 장소 2 -->
-
             <div class="place-card">
 
-
                 <div class="place-image">
-
                     🏘️
-
                 </div>
-
-
 
                 <div class="place-info">
 
-
                     <h3>
-
                         북촌한옥마을
-
                     </h3>
 
-
                     <p>
-
                         서울특별시 종로구 계동길
-
                     </p>
 
-
                     <span class="place-category">
-
                         관광지
-
                     </span>
 
-
                 </div>
-
 
             </div>
 
 
-
-            <!-- 장소 3 -->
-
             <div class="place-card">
 
-
                 <div class="place-image">
-
                     🗼
-
                 </div>
-
-
 
                 <div class="place-info">
 
-
                     <h3>
-
                         남산타워
-
                     </h3>
 
-
                     <p>
-
                         서울특별시 용산구 남산공원길
-
                     </p>
 
-
                     <span class="place-category">
-
                         관광지
-
                     </span>
 
-
                 </div>
-
 
             </div>
 
@@ -1718,107 +517,69 @@
         </section>
 
 
-
-        <!-- =========================
-             비용
-        ========================= -->
+        <!-- 비용 -->
 
         <section class="pay-box">
 
 
             <div class="section-title">
-
                 💰 여행 비용
-
             </div>
-
 
 
             <div class="pay-item">
 
-
                 <span>
-
                     경복궁 입장료
-
                 </span>
 
-
                 <strong>
-
                     3,000원
-
                 </strong>
-
 
             </div>
 
 
-
             <div class="pay-item">
 
-
                 <span>
-
                     식사
-
                 </span>
 
-
                 <strong>
-
                     15,000원
-
                 </strong>
 
-
             </div>
-
 
 
             <div class="pay-item">
 
-
                 <span>
-
                     기타 비용
-
                 </span>
 
-
                 <strong>
-
                     10,000원
-
                 </strong>
 
-
             </div>
-
 
 
             <div class="pay-item total-pay">
 
-
                 <span>
-
                     총 비용
-
                 </span>
-
 
                 <span>
-
                     28,000원
-
                 </span>
-
 
             </div>
 
 
         </section>
-
 
 
     </main>
@@ -1828,5 +589,4 @@
 
 
 </body>
-
 </html>

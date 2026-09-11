@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 장소 검색</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+    <script
+    type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=eafcddadb38dc6215242aedf70281190">
+    </script>
+
+</head>
+
+
+<body>
+
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'place_search' %}"
+                   class="active">
+                    📍 장소 검색
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_detail' travel_id=1 %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    💰 비용 관리
+                </a>
+            </li>
+
+
+        </ul>
+
+
+        <div class="sidebar-user">
+            👤 LEE
+        </div>
+
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <div class="page-title">
+
+            <h1>
+                📍 장소 검색
+            </h1>
+
+            <p>
+                여행하고 싶은 장소를 검색하세요.
+            </p>
+
+        </div>
+
+
+        <!-- 검색 -->
+
+        <div class="search-box">
+
+
+            <input
+                type="text"
+                placeholder="장소명을 입력하세요.">
+
+
+            <button class="btn btn-primary">
+                검색
+            </button>
+
+
+        </div>
+
+
+        <!-- 장소 + 지도 -->
+
+        <div class="place-layout">
+
+
+            <!-- 검색 결과 -->
+
+            <section class="place-results">
+
+
+                <h2>
+                    검색 결과
+                </h2>
+
+
+                <!-- 경복궁 -->
+
+                <div class="place-result-card">
+
+
+                    <div class="place-photo">
+                        🏯
+                    </div>
+
+
+                    <div class="place-result-info">
+
+
+                        <h3>
+                            경복궁
+                        </h3>
+
+
+                        <p>
+                            서울특별시 종로구
+                        </p>
+
+
+                        <span>
+                            관광지
+                        </span>
+
+
+                        <br>
+
+
+                        <button class="btn btn-primary">
+                            일정에 추가
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+                <!-- 북촌 -->
+
+                <div class="place-result-card">
+
+
+                    <div class="place-photo">
+                        🏘️
+                    </div>
+
+
+                    <div class="place-result-info">
+
+
+                        <h3>
+                            북촌한옥마을
+                        </h3>
+
+
+                        <p>
+                            서울특별시 종로구
+                        </p>
+
+
+                        <span>
+                            관광지
+                        </span>
+
+
+                        <br>
+
+
+                        <button class="btn btn-primary">
+                            일정에 추가
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+            <!-- 지도 -->
+
+            <section class="map-area">
+
+
+                <div class="map-title">
+                    🗺️ 지도
+                </div>
+
+
+                <!-- 카카오 지도 영역 -->
+                <div id="map"></div>
+
+
+            </section>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+<script>
+
+    // =========================
+    // 지도 표시 영역
+    // =========================
+
+    var container = document.getElementById('map');
+
+
+    // =========================
+    // 지도 옵션
+    // =========================
+
+    var options = {
+
+        // 서울 중심 좌표
+        center: new kakao.maps.LatLng(
+            37.5665,
+            126.9780
+        ),
+
+        // 확대 레벨
+        level: 8
+    };
+
+
+    // =========================
+    // 지도 생성 ★ 중요
+    // =========================
+
+    var map = new kakao.maps.Map(
+        container,
+        options
+    );
+
+
+    // =========================
+    // 장소 좌표
+    // =========================
+
+
+    // 경복궁
+    var gyeongbokgung = new kakao.maps.LatLng(
+        37.5796,
+        126.9770
+    );
+
+
+    // 북촌한옥마을
+    var bukchon = new kakao.maps.LatLng(
+        37.5826,
+        126.9836
+    );
+
+
+    // 남산타워
+    var namsan = new kakao.maps.LatLng(
+        37.5512,
+        126.9882
+    );
+
+
+    // =========================
+    // 마커 생성
+    // =========================
+
+
+    // 경복궁 마커
+    var marker1 = new kakao.maps.Marker({
+
+        position: gyeongbokgung
+
+    });
+
+    marker1.setMap(map);
+
+
+
+    // 북촌한옥마을 마커
+    var marker2 = new kakao.maps.Marker({
+
+        position: bukchon
+
+    });
+
+    marker2.setMap(map);
+
+
+
+    // 남산타워 마커
+    var marker3 = new kakao.maps.Marker({
+
+        position: namsan
+
+    });
+
+    marker3.setMap(map);
+
+</script>
+
+</body>
+</html>

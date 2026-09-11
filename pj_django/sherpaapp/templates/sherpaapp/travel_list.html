@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 내 여행</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+</head>
+
+
+<body>
+
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+
+            <li>
+                <a href="{% url 'travel_list' %}"
+                   class="active">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'place_search' %}">
+                    📍 장소 검색
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_detail' travel_id=1 %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    💰 비용 관리
+                </a>
+            </li>
+
+
+        </ul>
+
+
+        <div class="sidebar-user">
+            👤 LEE
+        </div>
+
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <div class="travel-list-header">
+
+
+            <div class="travel-list-title">
+
+                <h1>
+                    ✈️ 내 여행
+                </h1>
+
+                <p>
+                    내가 계획한 여행을 관리하세요.
+                </p>
+
+            </div>
+
+
+            <a
+                href="{% url 'travel_create' %}"
+                class="btn btn-primary">
+
+                + 여행 만들기
+
+            </a>
+
+
+        </div>
+
+
+        <div class="travel-grid">
+
+
+            <!-- 서울 -->
+
+            <div class="travel-card">
+
+
+                <div class="travel-image">
+                    🏙️
+                </div>
+
+
+                <div class="travel-content">
+
+
+                    <h2>
+                        서울 여행
+                    </h2>
+
+
+                    <p>
+                        📍 서울
+                    </p>
+
+
+                    <p>
+                        📅 2026.09.09 ~ 2026.09.12
+                    </p>
+
+
+                    <p>
+                        🗓️ 4일 여행
+                    </p>
+
+
+                    <a
+                        href="{% url 'travel_detail' travel_id=1 %}"
+                        class="btn btn-primary">
+
+                        여행 보기
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- 부산 -->
+
+            <div class="travel-card">
+
+
+                <div class="travel-image">
+                    🌊
+                </div>
+
+
+                <div class="travel-content">
+
+
+                    <h2>
+                        부산 여행
+                    </h2>
+
+
+                    <p>
+                        📍 부산
+                    </p>
+
+
+                    <p>
+                        📅 2026.10.01 ~ 2026.10.03
+                    </p>
+
+
+                    <p>
+                        🗓️ 3일 여행
+                    </p>
+
+
+                    <a
+                        href="#"
+                        class="btn btn-primary">
+
+                        여행 보기
+
+                    </a>
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+</body>
+</html>

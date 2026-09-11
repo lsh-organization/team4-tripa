@@ -15,19 +15,15 @@ from django.shortcuts import render, redirect
 # ==============================================
 
 def join(request):
-    template = loader.get_template('join.html')
+    template = loader.get_template('sherpaapp/join.html')
     return HttpResponse(template.render({}, request))
 
 # ==============================================
-<<<<<<< HEAD
-# 로그인 gg
-=======
-# 로그인asdasdasdasdsasdsa
->>>>>>> origin/master
+# 로그인
 # ==============================================
 
 def login(request):
-    template = loader.get_template('login.html')
+    template = loader.get_template('sherpaapp/login.html')
     return HttpResponse(template.render({}, request))
 
 # ==============================================
@@ -36,13 +32,14 @@ def login(request):
 
 def place_search(request):
     template = loader.get_template('sherpaapp/place_search.html')
-
+    return HttpResponse(template.render({}, request))
 # ==============================================
 # 여행 생성
 # ==============================================
 
 def travel_create(request):
     template = loader.get_template('sherpaapp/travel_create.html')
+    return HttpResponse(template.render({}, request))
 
 # ==============================================
 # 여행 목록
@@ -57,11 +54,7 @@ def travel_list(request):
 # ==============================================
 
 def travel_detail(request, travel_id):
-    # travel = Travel.objects.get(t_id=travel_id)
-    # return render(request, 'sherpaapp/travel_detail.html', {
-    #     'travel': travel
-    # })
-    template = loader.get_template('travel_detail.html')
+    travel = Travel.objects.get(t_id=travel_id)
     login_user = request.session.get('login_ok_user')
     member = None
     if login_user:
@@ -69,7 +62,11 @@ def travel_detail(request, travel_id):
             member = Member.objects.get(email=login_user)
         except Member.DoesNotExist:
             member = None
-    return HttpResponse(template.render({'member': member}, request))
+
+    return render(request, 'sherpaapp/travel_detail.html', {
+        'travel': travel,
+        'member': member
+    })
 
 # ==============================================
 # 여행 수정
@@ -85,11 +82,30 @@ def travel_update(request, travel_id):
 def travel_delete(request, travel_id):
     pass
 
+# ==============================================
+# 홈페이지
+# ==============================================
+
 def index(request):
-    travel = Travel.objects.first()
-    if travel:
-        return redirect('travel_detail', travel_id=travel.t_id)
-    return redirect('travel_list')
+    template = loader.get_template('index.html')
+    login_user = request.session.get('login_ok_user')
+    member = None
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+    return HttpResponse(template.render({'member': member}, request))
+
+# ==============================================
+# 예산
+# ==============================================
+
+def budget(request):
+    template = loader.get_template('sherpaapp/budget.html')
+    return HttpResponse(template.render({}, request))
+
+
 
 def check_email(request):
     email = request.GET.get('email')
