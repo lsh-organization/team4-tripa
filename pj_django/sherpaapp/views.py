@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.template import loader
 from django.db.models import Q
 from .models import Member
@@ -56,9 +55,17 @@ def travel_list(request):
 
 def travel_detail(request, travel_id):
     travel = Travel.objects.get(t_id=travel_id)
+    login_user = request.session.get('login_ok_user')
+    member = None
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
 
     return render(request, 'sherpaapp/travel_detail.html', {
-        'travel': travel
+        'travel': travel,
+        'member': member
     })
 
 # ==============================================
@@ -80,7 +87,15 @@ def travel_delete(request, travel_id):
 # ==============================================
 
 def index(request):
-    return render(request, 'index.html')
+    template = loader.get_template('index.html')
+    login_user = request.session.get('login_ok_user')
+    member = None
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+    return HttpResponse(template.render({'member': member}, request))
 
 # ==============================================
 # 예산
@@ -89,3 +104,142 @@ def index(request):
 def budget(request):
     template = loader.get_template('sherpaapp/budget.html')
     return HttpResponse(template.render({}, request))
+
+
+
+def check_email(request):
+    email = request.GET.get('email')
+    exists = Member.objects.filter(email=email).exists()
+    return JsonResponse({'is_exists': exists})
+
+def join_ok(request):
+    email = request.POST.get('email')
+    pwd = request.POST.get('pwd')
+    name = request.POST.get('name')
+    nickname = request.POST.get('nickname')
+    # 이메일 중복 확인
+    if Member.objects.filter(email=email).exists():
+        return HttpResponse("""
+            <script>
+                alert('이미 사용 중인 이메일입니다.');
+                history.back();
+            </script>
+        """)
+    # 회원가입
+    Member.objects.create(email=email,pwd=pwd,name=name,nickname=nickname)
+    # 회원가입 완료
+    return HttpResponse("""
+        <script>
+            alert('회원가입이 완료되었습니다!');
+            location.href = '../login/';
+        </script>
+    """)
+
+def login_ok(request):
+    email = request.POST.get('email')
+    pwd = request.POST.get('pwd')
+    try:
+        member = Member.objects.get(email=email)
+        # 비밀번호 확인
+        if member.pwd == pwd:
+            # 로그인 세션 저장
+            request.session['login_ok_user'] = member.email
+            # return redirect('index')
+            return HttpResponse("""
+                <script>
+                alert('로그인되었습니다.');
+                location.href = '../';
+                </script>
+                """)
+        else:
+            return HttpResponse("""
+                <script>
+                    alert('비밀번호가 틀렸습니다.');
+                    history.back();
+                </script>
+            """)
+    except Member.DoesNotExist:
+        return HttpResponse("""
+            <script>
+                alert('존재하지 않는 이메일입니다.');
+                history.back();
+            </script>
+        """)
+    
+def mypage(request):
+    login_user = request.session.get('login_ok_user')
+    if not login_user:
+        return redirect('login')
+    try:
+        member = Member.objects.get(email=login_user)
+    except Member.DoesNotExist:
+        return redirect('login')
+    return render(request, 'mypage.html', {'member': member})  
+
+def logout(request):
+    request.session.flush()
+    return HttpResponse("""
+        <script>
+            alert('로그아웃되었습니다.');
+            location.href = '../';
+        </script>
+    """)
+
+# ID/PW 찾기 페이지
+def idpw(request):
+    template = loader.get_template('idpw.html')
+    return HttpResponse(template.render({}, request))
+
+# 아이디 찾기
+def id_find(request):
+    name = request.POST.get('name')
+    nickname = request.POST.get('nickname')
+    members = Member.objects.filter(name=name,nickname=nickname)
+    if members.exists():
+        emails = [member.email for member in members]
+        return HttpResponse(f"""
+            <script>
+                alert('회원님의 아이디는 {", ".join(emails)} 입니다.');
+                location.href = '../idpw/';
+            </script>
+        """)
+    else:
+        return HttpResponse("""
+            <script>
+                alert('일치하는 회원정보가 없습니다.');
+                history.back();
+            </script>
+        """)
+
+# 비밀번호 찾기
+def pw_find(request):
+    email = request.POST.get('email')
+    name = request.POST.get('name')
+    new_pwd = request.POST.get('new_pwd')
+    new_pwd_check = request.POST.get('new_pwd_check')
+    try:
+        member = Member.objects.get(email=email,name=name)
+        # 새 비밀번호 확인
+        if new_pwd != new_pwd_check:
+            return HttpResponse("""
+                <script>
+                    alert('비밀번호가 일치하지 않습니다.');
+                    history.back();
+                </script>
+            """)
+        # 비밀번호 변경
+        member.pwd = new_pwd
+        member.save()
+        return HttpResponse("""
+            <script>
+                alert('비밀번호가 변경되었습니다.');
+                location.href = '../login/';
+            </script>
+        """)
+    except Member.DoesNotExist:
+        return HttpResponse("""
+            <script>
+                alert('일치하는 회원정보가 없습니다.');
+                history.back();
+            </script>
+        """)

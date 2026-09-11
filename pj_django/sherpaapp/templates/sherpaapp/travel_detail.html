@@ -32,7 +32,7 @@
 
 
         <div class="logo">
-            🏔️ TRIPA
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
         </div>
 
 
@@ -66,7 +66,7 @@
 
 
             <li>
-                <a href="{% url 'travel_detail' travel_id=1 %}"
+                <a href="{% url 'travel_detail' travel_id=travel.t_id %}"
                    class="active">
                     📅 일정 관리
                 </a>

@@ -603,26 +603,11 @@ nav a:hover {
 }
 
 
-.fake-map {
-    height: 500px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e4f1e7,
-            #dceafa
-        );
-
+/* 카카오 지도 */
+#map {
+    width: 100%;
+    height: 360px;
     border-radius: 10px;
-
-    position: relative;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    color: #777;
 }
 
 

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 
+
 <head>
 
     <meta charset="UTF-8">
@@ -14,6 +15,11 @@
 
     <link rel="stylesheet"
           href="{% static 'sherpaapp/css/style.css' %}">
+
+    <script
+    type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=eafcddadb38dc6215242aedf70281190">
+    </script>
 
 </head>
 
@@ -32,7 +38,7 @@
 
 
         <div class="logo">
-            🏔️ TRIPA
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
         </div>
 
 
@@ -241,23 +247,8 @@
                 </div>
 
 
-                <div class="fake-map">
-
-
-                    지도 API 영역
-
-
-                    <div class="map-marker marker1">
-                        📍
-                    </div>
-
-
-                    <div class="map-marker marker2">
-                        📍
-                    </div>
-
-
-                </div>
+                <!-- 카카오 지도 영역 -->
+                <div id="map"></div>
 
 
             </section>
@@ -270,7 +261,105 @@
 
 
 </div>
+<script>
 
+    // =========================
+    // 지도 표시 영역
+    // =========================
+
+    var container = document.getElementById('map');
+
+
+    // =========================
+    // 지도 옵션
+    // =========================
+
+    var options = {
+
+        // 서울 중심 좌표
+        center: new kakao.maps.LatLng(
+            37.5665,
+            126.9780
+        ),
+
+        // 확대 레벨
+        level: 8
+    };
+
+
+    // =========================
+    // 지도 생성 ★ 중요
+    // =========================
+
+    var map = new kakao.maps.Map(
+        container,
+        options
+    );
+
+
+    // =========================
+    // 장소 좌표
+    // =========================
+
+
+    // 경복궁
+    var gyeongbokgung = new kakao.maps.LatLng(
+        37.5796,
+        126.9770
+    );
+
+
+    // 북촌한옥마을
+    var bukchon = new kakao.maps.LatLng(
+        37.5826,
+        126.9836
+    );
+
+
+    // 남산타워
+    var namsan = new kakao.maps.LatLng(
+        37.5512,
+        126.9882
+    );
+
+
+    // =========================
+    // 마커 생성
+    // =========================
+
+
+    // 경복궁 마커
+    var marker1 = new kakao.maps.Marker({
+
+        position: gyeongbokgung
+
+    });
+
+    marker1.setMap(map);
+
+
+
+    // 북촌한옥마을 마커
+    var marker2 = new kakao.maps.Marker({
+
+        position: bukchon
+
+    });
+
+    marker2.setMap(map);
+
+
+
+    // 남산타워 마커
+    var marker3 = new kakao.maps.Marker({
+
+        position: namsan
+
+    });
+
+    marker3.setMap(map);
+
+</script>
 
 </body>
 </html>
