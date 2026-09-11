@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ID/PW 찾기</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .box {
+            width: 400px;
+            margin: 0 auto;
+        }
+
+        input {
+            width: 300px;
+            padding: 12px;
+            margin: 8px;
+        }
+
+        button {
+            width: 330px;
+            padding: 12px;
+            margin-top: 10px;
+            background-color: #3788d8;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        h2 {
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h2>✈️ TRIPA</h2>
+    <h2>ID / PW 찾기</h2>
+
+    <!-- ID 찾기 -->
+    <div class="section">
+
+        <h3>아이디 찾기</h3>
+
+        <form action="{% url 'id_find' %}" method="post">
+            {% csrf_token %}
+
+            <input type="text" name="name" placeholder="이름" required>
+            <br>
+
+            <input type="text" name="nickname" placeholder="닉네임" required>
+            <br>
+
+            <button type="submit">아이디 찾기</button>
+        </form>
+
+    </div>
+
+
+    <!-- PW 찾기 -->
+    <div class="section">
+
+        <h3>비밀번호 찾기</h3>
+
+        <form action="{% url 'pw_find' %}" method="post">
+            {% csrf_token %}
+
+            <input type="email" name="email" placeholder="아이디(Email)" required>
+            <br>
+
+            <input type="text" name="name" placeholder="이름" required>
+            <br>
+
+            <input type="password" name="new_pwd" placeholder="새 비밀번호" required>
+            <br>
+
+            <input type="password" name="new_pwd_check" placeholder="새 비밀번호 확인" required>
+            <br>
+
+            <button type="submit">비밀번호 변경</button>
+        </form>
+
+    </div>
+
+    <a href="{% url 'login' %}">로그인으로 돌아가기</a>
+
+</div>
+
+</body>
+</html>

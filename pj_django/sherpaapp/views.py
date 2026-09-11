@@ -168,3 +168,62 @@ def logout(request):
             location.href = '../';
         </script>
     """)
+
+# ID/PW 찾기 페이지
+def idpw(request):
+    template = loader.get_template('idpw.html')
+    return HttpResponse(template.render({}, request))
+
+# 아이디 찾기
+def id_find(request):
+    name = request.POST.get('name')
+    nickname = request.POST.get('nickname')
+    members = Member.objects.filter(name=name,nickname=nickname)
+    if members.exists():
+        emails = [member.email for member in members]
+        return HttpResponse(f"""
+            <script>
+                alert('회원님의 아이디는 {", ".join(emails)} 입니다.');
+                location.href = '../idpw/';
+            </script>
+        """)
+    else:
+        return HttpResponse("""
+            <script>
+                alert('일치하는 회원정보가 없습니다.');
+                history.back();
+            </script>
+        """)
+
+# 비밀번호 찾기
+def pw_find(request):
+    email = request.POST.get('email')
+    name = request.POST.get('name')
+    new_pwd = request.POST.get('new_pwd')
+    new_pwd_check = request.POST.get('new_pwd_check')
+    try:
+        member = Member.objects.get(email=email,name=name)
+        # 새 비밀번호 확인
+        if new_pwd != new_pwd_check:
+            return HttpResponse("""
+                <script>
+                    alert('비밀번호가 일치하지 않습니다.');
+                    history.back();
+                </script>
+            """)
+        # 비밀번호 변경
+        member.pwd = new_pwd
+        member.save()
+        return HttpResponse("""
+            <script>
+                alert('비밀번호가 변경되었습니다.');
+                location.href = '../login/';
+            </script>
+        """)
+    except Member.DoesNotExist:
+        return HttpResponse("""
+            <script>
+                alert('일치하는 회원정보가 없습니다.');
+                history.back();
+            </script>
+        """)
