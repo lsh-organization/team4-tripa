@@ -16,4 +16,7 @@ urlpatterns = [
     path('login_ok/', views.login_ok, name='login_ok'),
     path('mypage/', views.mypage, name='mypage'),
     path('logout/', views.logout, name='logout'),
+    path('idpw/', views.idpw, name='idpw'),
+    path('id_find/', views.id_find, name='id_find'),
+    path('pw_find/', views.pw_find, name='pw_find'),
 ]
