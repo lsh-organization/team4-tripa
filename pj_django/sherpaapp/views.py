@@ -20,11 +20,7 @@ def join(request):
     return HttpResponse(template.render({}, request))
 
 # ==============================================
-<<<<<<< HEAD
-# 로그인 gg
-=======
-# 로그인asdasdasdasdsasdsa
->>>>>>> origin/master
+# 로그인
 # ==============================================
 
 def login(request):
@@ -37,13 +33,14 @@ def login(request):
 
 def place_search(request):
     template = loader.get_template('sherpaapp/place_search.html')
-
+    return HttpResponse(template.render({}, request))
 # ==============================================
 # 여행 생성
 # ==============================================
 
 def travel_create(request):
     template = loader.get_template('sherpaapp/travel_create.html')
+    return HttpResponse(template.render({}, request))
 
 # ==============================================
 # 여행 목록
@@ -78,10 +75,17 @@ def travel_update(request, travel_id):
 def travel_delete(request, travel_id):
     pass
 
-def index(request):
-    travel = Travel.objects.first()
+# ==============================================
+# 홈페이지
+# ==============================================
 
-    if travel:
-        return redirect('travel_detail', travel_id=travel.t_id)
-    return redirect('travel_list')
-  
+def index(request):
+    return render(request, 'index.html')
+
+# ==============================================
+# 예산
+# ==============================================
+
+def budget(request):
+    template = loader.get_template('sherpaapp/budget.html')
+    return HttpResponse(template.render({}, request))

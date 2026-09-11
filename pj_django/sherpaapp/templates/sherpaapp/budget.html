@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 예산 관리</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     MAIN LAYOUT
+========================= -->
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+        <!-- 로고 -->
+        <div class="logo">
+            🏔️ TRIPA
+        </div>
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'place_search' %}">
+                    📍 장소 검색
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'budget' %}"
+                   class="active">
+                    💰 비용 관리
+                </a>
+            </li>
+
+        </ul>
+
+        <div class="sidebar-user">
+            👤 LEE
+        </div>
+
+    </aside>
+
+
+
+    <!-- =========================
+         CONTENT
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <!-- =========================
+             PAGE HEADER
+        ========================= -->
+
+        <section class="budget-header">
+
+            <div>
+
+                <h1>
+                    💰 예산 관리
+                </h1>
+
+                <p>
+                    여행에 필요한 예산과 지출을 한곳에서 관리하세요.
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="openBudgetModal()">
+
+                + 비용 추가
+
+            </button>
+
+        </section>
+
+
+
+        <!-- =========================
+             TRAVEL INFO
+        ========================= -->
+
+        <section class="budget-travel-info">
+
+            <div>
+
+                <span class="budget-info-label">
+                    현재 여행
+                </span>
+
+                <strong>
+                    🗺️ 서울 여행
+                </strong>
+
+            </div>
+
+
+            <div>
+
+                <span class="budget-info-label">
+                    여행 기간
+                </span>
+
+                <strong>
+                    2026.09.09 ~ 2026.09.12
+                </strong>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =========================
+             BUDGET SUMMARY
+        ========================= -->
+
+        <section class="budget-summary">
+
+
+            <div class="budget-summary-card">
+
+                <div class="budget-summary-icon">
+                    💳
+                </div>
+
+                <div>
+
+                    <div class="budget-summary-label">
+                        총 예산
+                    </div>
+
+                    <div class="budget-summary-value">
+                        100,000원
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="budget-summary-card">
+
+                <div class="budget-summary-icon expense">
+                    💸
+                </div>
+
+                <div>
+
+                    <div class="budget-summary-label">
+                        사용 금액
+                    </div>
+
+                    <div class="budget-summary-value">
+                        28,000원
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="budget-summary-card">
+
+                <div class="budget-summary-icon remain">
+                    💰
+                </div>
+
+                <div>
+
+                    <div class="budget-summary-label">
+                        남은 금액
+                    </div>
+
+                    <div class="budget-summary-value remain">
+                        72,000원
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             BUDGET PROGRESS
+        ========================= -->
+
+        <section class="section-box budget-progress-box">
+
+
+            <div class="section-title">
+                📊 예산 사용 현황
+            </div>
+
+
+            <div class="budget-progress-info">
+
+                <span>
+                    사용 금액
+                </span>
+
+                <strong>
+                    28,000원 / 100,000원
+                </strong>
+
+            </div>
+
+
+            <div class="budget-progress">
+
+                <div class="budget-progress-bar"
+                     style="width: 28%;">
+
+                </div>
+
+            </div>
+
+
+            <p class="budget-progress-text">
+                전체 예산의 28%를 사용했습니다.
+            </p>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             EXPENSE LIST
+        ========================= -->
+
+        <section class="section-box expense-list-box">
+
+
+            <div class="expense-list-header">
+
+                <div class="section-title">
+                    💸 지출 내역
+                </div>
+
+
+                <select class="expense-sort">
+
+                    <option>
+                        날짜순
+                    </option>
+
+                    <option>
+                        금액순
+                    </option>
+
+                    <option>
+                        장소순
+                    </option>
+
+                </select>
+
+            </div>
+
+
+
+            <!-- 지출 1 -->
+
+            <div class="expense-item">
+
+
+                <div class="expense-icon">
+                    🏯
+                </div>
+
+
+                <div class="expense-info">
+
+                    <h3>
+                        경복궁 입장료
+                    </h3>
+
+                    <p>
+                        📍 경복궁
+                    </p>
+
+                    <span>
+                        2026.09.09
+                    </span>
+
+                </div>
+
+
+                <div class="expense-price">
+                    3,000원
+                </div>
+
+
+                <button
+                    type="button"
+                    class="expense-delete">
+
+                    삭제
+
+                </button>
+
+            </div>
+
+
+
+            <!-- 지출 2 -->
+
+            <div class="expense-item">
+
+
+                <div class="expense-icon">
+                    🍚
+                </div>
+
+
+                <div class="expense-info">
+
+                    <h3>
+                        점심 식사
+                    </h3>
+
+                    <p>
+                        📍 종로구 식당
+                    </p>
+
+                    <span>
+                        2026.09.09
+                    </span>
+
+                </div>
+
+
+                <div class="expense-price">
+                    15,000원
+                </div>
+
+
+                <button
+                    type="button"
+                    class="expense-delete">
+
+                    삭제
+
+                </button>
+
+            </div>
+
+
+
+            <!-- 지출 3 -->
+
+            <div class="expense-item">
+
+
+                <div class="expense-icon">
+                    🛍️
+                </div>
+
+
+                <div class="expense-info">
+
+                    <h3>
+                        기타 비용
+                    </h3>
+
+                    <p>
+                        📍 서울
+                    </p>
+
+                    <span>
+                        2026.09.09
+                    </span>
+
+                </div>
+
+
+                <div class="expense-price">
+                    10,000원
+                </div>
+
+
+                <button
+                    type="button"
+                    class="expense-delete">
+
+                    삭제
+
+                </button>
+
+            </div>
+
+
+
+            <!-- 총 지출 -->
+
+            <div class="expense-total">
+
+                <span>
+                    총 지출
+                </span>
+
+                <strong>
+                    28,000원
+                </strong>
+
+            </div>
+
+
+        </section>
+
+
+
+    </main>
+
+
+</div>
+
+
+
+<!-- =========================
+     COST MODAL
+========================= -->
+
+<div id="budgetModal"
+     class="budget-modal">
+
+
+    <div class="budget-modal-overlay"
+         onclick="closeBudgetModal()">
+    </div>
+
+
+
+    <div class="budget-modal-content">
+
+
+        <!-- 모달 헤더 -->
+
+        <div class="budget-modal-header">
+
+            <h2>
+                비용 추가
+            </h2>
+
+            <button
+                type="button"
+                class="modal-close"
+                onclick="closeBudgetModal()">
+
+                ×
+
+            </button>
+
+        </div>
+
+
+
+        <!-- 금액 -->
+
+        <div class="form-group">
+
+            <label for="expenseAmount">
+                금액
+            </label>
+
+            <div class="amount-input">
+
+                <span>
+                    ₩
+                </span>
+
+                <input
+                    type="number"
+                    id="expenseAmount"
+                    placeholder="0">
+
+                <span>
+                    원
+                </span>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- 카테고리 -->
+
+        <div class="form-group">
+
+            <label for="expenseCategory">
+                비용 항목
+            </label>
+
+            <select id="expenseCategory">
+
+                <option value="">
+                    선택해주세요
+                </option>
+
+                <option value="tour">
+                    관광지
+                </option>
+
+                <option value="food">
+                    식비
+                </option>
+
+                <option value="transport">
+                    교통
+                </option>
+
+                <option value="shopping">
+                    쇼핑
+                </option>
+
+                <option value="accommodation">
+                    숙박
+                </option>
+
+                <option value="etc">
+                    기타
+                </option>
+
+            </select>
+
+        </div>
+
+
+
+        <!-- 장소 -->
+
+        <div class="form-group">
+
+            <label for="expensePlace">
+                장소
+            </label>
+
+            <input
+                type="text"
+                id="expensePlace"
+                placeholder="예: 경복궁">
+
+        </div>
+
+
+
+        <!-- 메모 -->
+
+        <div class="form-group">
+
+            <label for="expenseMemo">
+                메모
+            </label>
+
+            <textarea
+                id="expenseMemo"
+                rows="3"
+                placeholder="비용에 대한 메모를 입력하세요."></textarea>
+
+        </div>
+
+
+
+        <!-- 날짜 -->
+
+        <div class="form-group">
+
+            <label for="expenseDate">
+                날짜
+            </label>
+
+            <input
+                type="date"
+                id="expenseDate">
+
+        </div>
+
+
+
+        <!-- 버튼 -->
+
+        <div class="budget-modal-buttons">
+
+            <button
+                type="button"
+                class="btn btn-secondary"
+                onclick="closeBudgetModal()">
+
+                취소
+
+            </button>
+
+
+            <button
+                type="button"
+                class="btn btn-primary"
+                onclick="saveExpense()">
+
+                저장
+
+            </button>
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- =========================
+     JAVASCRIPT
+========================= -->
+
+<script>
+
+    function openBudgetModal() {
+
+        document
+            .getElementById("budgetModal")
+            .classList.add("show");
+
+    }
+
+
+    function closeBudgetModal() {
+
+        document
+            .getElementById("budgetModal")
+            .classList.remove("show");
+
+    }
+
+
+    function saveExpense() {
+
+        const amount =
+            document.getElementById("expenseAmount").value;
+
+        const category =
+            document.getElementById("expenseCategory").value;
+
+        if (!amount || amount <= 0) {
+
+            alert("금액을 입력해주세요.");
+
+            return;
+
+        }
+
+
+        if (!category) {
+
+            alert("비용 항목을 선택해주세요.");
+
+            return;
+
+        }
+
+
+        alert("비용이 추가되었습니다.");
+
+        closeBudgetModal();
+
+    }
+
+
+    /* ESC로 모달 닫기 */
+
+    document.addEventListener("keydown", function(event) {
+
+        if (event.key === "Escape") {
+
+            closeBudgetModal();
+
+        }
+
+    });
+
+</script>
+
+
+</body>
+
+</html>
