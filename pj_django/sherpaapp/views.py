@@ -1,5 +1,4 @@
-from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse,JsonResponse
 from django.template import loader
 from django.db.models import Q
 from .models import Member
@@ -16,7 +15,7 @@ from django.shortcuts import render, redirect
 # ==============================================
 
 def join(request):
-    template = loader.get_template('sherpaapp/join.html')
+    template = loader.get_template('join.html')
     return HttpResponse(template.render({}, request))
 
 # ==============================================
@@ -24,7 +23,7 @@ def join(request):
 # ==============================================
 
 def login(request):
-    template = loader.get_template('sherpaapp/login.html')
+    template = loader.get_template('login.html')
     return HttpResponse(template.render({}, request))
 
 # ==============================================
@@ -54,11 +53,19 @@ def travel_list(request):
 # ==============================================
 
 def travel_detail(request, travel_id):
-    travel = Travel.objects.get(t_id=travel_id)
-
-    return render(request, 'sherpaapp/travel_detail.html', {
-        'travel': travel
-    })
+    # travel = Travel.objects.get(t_id=travel_id)
+    # return render(request, 'sherpaapp/travel_detail.html', {
+    #     'travel': travel
+    # })
+    template = loader.get_template('travel_detail.html')
+    login_user = request.session.get('login_ok_user')
+    member = None
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+    return HttpResponse(template.render({'member': member}, request))
 
 # ==============================================
 # 여행 수정
@@ -76,8 +83,84 @@ def travel_delete(request, travel_id):
 
 def index(request):
     travel = Travel.objects.first()
-
     if travel:
         return redirect('travel_detail', travel_id=travel.t_id)
     return redirect('travel_list')
-  
+
+def check_email(request):
+    email = request.GET.get('email')
+    exists = Member.objects.filter(email=email).exists()
+    return JsonResponse({'is_exists': exists})
+
+def join_ok(request):
+    email = request.POST.get('email')
+    pwd = request.POST.get('pwd')
+    name = request.POST.get('name')
+    nickname = request.POST.get('nickname')
+    # 이메일 중복 확인
+    if Member.objects.filter(email=email).exists():
+        return HttpResponse("""
+            <script>
+                alert('이미 사용 중인 이메일입니다.');
+                history.back();
+            </script>
+        """)
+    # 회원가입
+    Member.objects.create(email=email,pwd=pwd,name=name,nickname=nickname)
+    # 회원가입 완료
+    return HttpResponse("""
+        <script>
+            alert('회원가입이 완료되었습니다!');
+            location.href = '../login/';
+        </script>
+    """)
+
+def login_ok(request):
+    email = request.POST.get('email')
+    pwd = request.POST.get('pwd')
+    try:
+        member = Member.objects.get(email=email)
+        # 비밀번호 확인
+        if member.pwd == pwd:
+            # 로그인 세션 저장
+            request.session['login_ok_user'] = member.email
+            # return redirect('index')
+            return HttpResponse("""
+                <script>
+                alert('로그인되었습니다.');
+                location.href = '../';
+                </script>
+                """)
+        else:
+            return HttpResponse("""
+                <script>
+                    alert('비밀번호가 틀렸습니다.');
+                    history.back();
+                </script>
+            """)
+    except Member.DoesNotExist:
+        return HttpResponse("""
+            <script>
+                alert('존재하지 않는 이메일입니다.');
+                history.back();
+            </script>
+        """)
+    
+def mypage(request):
+    login_user = request.session.get('login_ok_user')
+    if not login_user:
+        return redirect('login')
+    try:
+        member = Member.objects.get(email=login_user)
+    except Member.DoesNotExist:
+        return redirect('login')
+    return render(request, 'mypage.html', {'member': member})  
+
+def logout(request):
+    request.session.flush()
+    return HttpResponse("""
+        <script>
+            alert('로그아웃되었습니다.');
+            location.href = '../';
+        </script>
+    """)

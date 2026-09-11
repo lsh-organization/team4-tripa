@@ -942,9 +942,16 @@
 
 
     <div class="user">
-
-        👤 사용자
-
+    
+    {% if member %}
+        <a href="{% url 'mypage' %}" class="login-btn">
+            {{ member.nickname }}
+        </a>
+    {% else %}
+        <a href="{% url 'login' %}" class="login-btn">
+            로그인
+        </a>
+    {% endif %}
     </div>
 
 
