@@ -5,29 +5,14 @@ from django.db import models
 # ==============================================
 
 class Member(models.Model):
-    m_id = models.AutoField(
-        primary_key=True,
-        db_column='M_ID'
-        )
-    user_id = models.CharField(
-        max_length=30,
-        db_column='ID'
-        )
-    pwd = models.CharField(
-        max_length=30,
-        db_column='PWD'
-        )
-    nickname = models.CharField(
-        max_length=30,
-        db_column='NICKNAME'
-        )
-    name = models.CharField(
-        max_length=30,
-        db_column='NAME'
-        )
-
+    m_id = models.AutoField(primary_key=True, db_column='M_ID')
+    email = models.EmailField(max_length=30,db_column='ID')
+    pwd = models.CharField(max_length=30,db_column='PWD')
+    nickname = models.CharField(max_length=30,db_column='NICKNAME')
+    name = models.CharField(max_length=30,db_column='NAME')
     class Meta:
-        db_table = 'MEMBER'
+        db_table = 'member'
+        managed = False
 
     def __str__(self):
         return self.nickname
@@ -37,43 +22,17 @@ class Member(models.Model):
 # ==============================================
 
 class Travel(models.Model):
-    t_id = models.AutoField(
-        primary_key=True,
-        db_column='T_ID'
-    )
-    member = models.ForeignKey(
-        Member,
-        on_delete=models.CASCADE,
-        db_column='M_ID'
-    )
-    t_day = models.DateField(
-        null=True,
-        blank=True,
-        db_column='T_DAY'
-    )
-    t_place = models.CharField(
-        max_length=100,
-        db_column='T_PLACE'
-    )
-    t_title = models.CharField(
-        max_length=100,
-        db_column='T_TITLE'
-    )
-    t_way = models.CharField(
-        max_length=30,
-        null=True,
-        blank=True,
-        db_column='T_WAY'
-    )
-    t_start = models.DateField(
-        db_column='T_START'
-    )
-    t_end = models.DateField(
-        db_column='T_END'
-    )
-
+    t_id = models.IntegerField(primary_key=True,db_column='T_ID')
+    member = models.ForeignKey(Member,on_delete=models.CASCADE,db_column='M_ID')
+    t_day = models.DateField(db_column='T_DAY',null=True)
+    t_place = models.CharField(max_length=100,db_column='T_PLACE',null=True)
+    t_title = models.CharField(max_length=100,db_column='T_TITLE',null=True)
+    t_way = models.CharField(max_length=30,db_column='T_WAY',null=True)
+    t_start = models.DateField(db_column='T_START',null=True)
+    t_end = models.DateField(db_column='T_END',null=True)
     class Meta:
-        db_table = 'TRAVEL'
+        db_table = 'travel'
+        managed = False
 
     def __str__(self):
         return self.t_title
