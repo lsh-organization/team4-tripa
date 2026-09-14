@@ -17,6 +17,7 @@ urlpatterns = [
     path('join_ok/', views.join_ok, name='join_ok'),
     path('login_ok/', views.login_ok, name='login_ok'),
     path('mypage/', views.mypage, name='mypage'),
+    path('mypage_edit/', views.mypage_edit, name='mypage_edit'),
     path('logout/', views.logout, name='logout'),
     path('idpw/', views.idpw, name='idpw'),
     path('id_find/', views.id_find, name='id_find'),

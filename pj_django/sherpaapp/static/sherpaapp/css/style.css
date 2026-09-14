@@ -78,6 +78,32 @@ nav a:hover {
     white-space: nowrap;
 }
 
+.user-profile {
+    position: absolute;
+    bottom: 16px;
+    left: 18px;
+    width: 179px;
+    height: 47px;
+    box-sizing: border-box;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 16px;
+
+    background-color: #eef4ff;
+    border-radius: 10px;
+
+    color: #333;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.user-profile:hover {
+    background-color: #dfeaff;
+    color: #2f6be5;
+}
 
 /* =========================
    BUTTON
@@ -1508,32 +1534,59 @@ nav a:hover {
 ========================= */
 
 .header-inner {
-    width: 100%;
-    max-width: 1200px;
-
-    margin: 0 auto;
-
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
+    height: 64px;
+    padding: 0 20px;
 }
 
 
-.header-login {
-    margin-right: 15px;
+/* 로그인 / 회원가입 영역 */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
 
-    color: #555;
 
+/* 닉네임 */
+.header-actions span {
+    color: #333;
     font-size: 14px;
     font-weight: 600;
 }
 
 
-.header-actions {
-    display: flex;
-    align-items: center;
+/* 일반 링크 */
+.header-actions a {
+    text-decoration: none;
+    color: #555;
+    font-size: 14px;
+    font-weight: 600;
 }
 
+
+/* 마우스를 올렸을 때 */
+.header-actions a:hover {
+    color: #2f6be5;
+}
+
+
+/* 마지막 버튼 - 회원가입 / 로그아웃 */
+.header-actions a:last-child {
+    background-color: #2f6be5;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+}
+
+
+/* 버튼에 마우스를 올렸을 때 */
+.header-actions a:last-child:hover {
+    background-color: #2459c5;
+    color: white;
+}
 
 /* =========================
    HERO

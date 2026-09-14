@@ -84,9 +84,15 @@
 
         </ul>
 
-        <div class="sidebar-user">
-            👤 LEE
-        </div>
+            {% if member %}
+                <a href="{% url 'mypage' %}" class="user-profile">
+                    👤 {{ member.nickname }}
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="user-profile">
+                    👤 로그인
+                </a>
+            {% endif %}
 
     </aside>
 
