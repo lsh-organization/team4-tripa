@@ -35,15 +35,14 @@
 
         <div class="header-actions">
 
-            <a href="{% url 'login' %}"
-               class="header-login">
-                로그인
-            </a>
-
-            <a href="{% url 'join' %}"
-               class="btn btn-primary">
-                회원가입
-            </a>
+            {% if member %}
+                <span>👤🏞️🏖️🏕️{{ member.nickname }}님</span>
+                <a href="{% url 'mypage' %}">마이페이지</a>
+                <a href="{% url 'logout' %}">로그아웃</a>
+            {% else %}
+                <a href="{% url 'login' %}">로그인</a>
+                <a href="{% url 'join' %}">회원가입</a>
+            {% endif %}
 
         </div>
 
