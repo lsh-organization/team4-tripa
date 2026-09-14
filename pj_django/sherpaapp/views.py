@@ -9,6 +9,9 @@ from .models import Pay
 from .models import Category
 from .models import SchedulePlace
 from django.shortcuts import render, redirect
+import requests
+from django.conf import settings
+from django.shortcuts import render
 
 # ==============================================
 # 회원가입
@@ -33,6 +36,138 @@ def login(request):
 def place_search(request):
     template = loader.get_template('sherpaapp/place_search.html')
     return HttpResponse(template.render({}, request))
+
+def place_search_search(request):
+
+    #GET 방식으로 검색어 받기
+    query = request.GET.get("query", "").strip()
+
+    #GET 검색 결과 저장
+    places = []
+
+    #검색어가 없으면
+    if not query:
+        return render(
+            request,
+            "sherpaapp/place_search.html",
+            {
+                "places": places,
+                "query": query
+            }
+        )
+    # ============================================
+    # 카카오 REST API KEY
+    # ============================================
+    REST_API_KEY = settings.KAKAO_REST_API_KEY
+
+    headers = {
+        "Authorization":
+        f"KakaoAK {REST_API_KEY}"
+    }
+    # ============================================
+    # 1. 카카오 장소 검색
+    # ============================================
+    place_url = (
+        "https://dapi.kakao.com/"
+        "v2/local/search/keyword.json"
+    )
+    params = {
+        "query": query,
+        # 검색 결과 개수
+        "size": 5
+    }
+    response = requests.get(
+        place_url,
+        headers=headers,
+        params=params
+    )
+    data = response.json()
+    # ============================================
+    # 검색된 장소 반복
+    # ============================================
+    for place in data.get("documents", []):
+        # -------------------------
+        # 장소명
+        # -------------------------
+        place_name = place.get(
+            "place_name",
+            ""
+        )
+        # -------------------------
+        # 이미지 검색
+        # -------------------------
+        image_url = (
+            "https://dapi.kakao.com/"
+            "v2/search/image"
+        )
+        image_params = {
+            "query":place_name,
+            # 이미지 1개만 검색
+            "size": 1
+        }
+        image_response = requests.get(
+            image_url,
+            headers=headers,
+            params=image_params
+        )
+        image_data = image_response.json()
+
+        #기본 이미지
+        image = None
+
+        #이미지가 존재하면
+        if image_data.get("documents"):
+            image = image_data[
+                "documents"
+            ][0].get(
+                "thumbnail_url"
+            )
+
+        # -------------------------
+        # 장소 정보 저장 
+        # -------------------------    
+        places.append({
+            # 장소명
+            "name":place_name,
+            # 주소
+            "address":
+            place.get("road_address_name")
+            or
+            place.get("address_name"),
+            # 카테고리
+            "category":
+            place.get("category_name"),
+            # 전화번호
+            "phone":
+            place.get("phone"),
+            # 카카오맵 장소 상세 페이지
+            "place_url":
+            place.get("place_url"),
+            # 경도
+            "x":
+            place.get("x"),
+            # 위도
+            "y":
+            place.get("y"),
+            # 이미지
+            "image":
+            image
+
+        })
+    # ============================================
+    # HTML 전달
+    # ============================================
+    context = {
+        "places": places,
+        "query": query
+    }
+
+    return render(
+        request,
+        "sherpaapp/place_search.html",
+        context
+    )
+
 # ==============================================
 # 여행 생성
 # ==============================================
@@ -243,3 +378,5 @@ def pw_find(request):
                 history.back();
             </script>
         """)
+
+
