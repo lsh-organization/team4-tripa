@@ -243,3 +243,38 @@ def pw_find(request):
                 history.back();
             </script>
         """)
+
+# ==============================================
+# 내정보 수정
+# ==============================================
+
+def mypage_edit(request):
+
+    login_user = request.session.get('login_ok_user')
+
+    # 로그인하지 않았다면 로그인 페이지로 이동
+    if not login_user:
+        return redirect('login')
+
+    try:
+        member = Member.objects.get(email=login_user)
+    except Member.DoesNotExist:
+        return redirect('login')
+
+    # 수정 페이지에서 저장 버튼을 눌렀을 때
+    if request.method == 'POST':
+
+        name = request.POST.get('name')
+        nickname = request.POST.get('nickname')
+
+        member.name = name
+        member.nickname = nickname
+
+        member.save()
+
+        return redirect('mypage')
+
+    # 처음 수정 페이지에 들어왔을 때
+    return render(request, 'mypage_edit.html', {
+        'member': member
+    })
