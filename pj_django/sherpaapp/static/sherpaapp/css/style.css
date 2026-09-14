@@ -511,25 +511,44 @@ nav a:hover {
 ========================= */
 
 .place-layout {
+
     display: grid;
 
     grid-template-columns: 1fr 1fr;
 
-    gap: 25px;
+    gap: 20px;
+
+    align-items: stretch;
+
 }
 
 
 .place-results,
 .map-area {
-    background-color: white;
 
-    padding: 25px;
+    display: flex;
 
-    border-radius: 15px;
+    flex-direction: column;
 
-    box-shadow:
-        0 2px 10px
-        rgba(0, 0, 0, 0.05);
+    min-height: 650px;
+
+    overflow-y: visible;
+
+}
+
+.map-wrapper {
+    
+    position: relative !important;
+
+    width: 100%;
+
+    height: 600px;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+    
+    background-color: #eee;
 }
 
 
@@ -555,14 +574,14 @@ nav a:hover {
 
 
 .place-photo {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
 
     flex-shrink: 0;
 
     background-color: #e7eefc;
 
-    border-radius: 10px;
+    border-radius: 12px;
 
     display: flex;
 
@@ -571,7 +590,7 @@ nav a:hover {
 
     font-size: 40px;
 
-    margin-right: 15px;
+    margin-right: 20px;
 }
 
 
@@ -631,9 +650,21 @@ nav a:hover {
 
 /* 카카오 지도 */
 #map {
-    width: 100%;
-    height: 360px;
-    border-radius: 10px;
+
+    position: absolute !important;
+
+    top: 0 !important;
+    
+    letf: 0 !important;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    border-radius: 12px;
+
+    z-index: 1 !important;
+
 }
 
 
@@ -649,19 +680,6 @@ nav a:hover {
         );
 }
 
-
-.marker1 {
-    top: 100px;
-    left: 30%;
-}
-
-
-.marker2 {
-    top: 250px;
-    left: 60%;
-}
-
-
 /* =========================
    TRAVEL DETAIL
 ========================= */
@@ -671,6 +689,44 @@ nav a:hover {
     min-height: 100vh;
 }
 
+.detail-no-image {
+
+    width: 100%;
+
+    height: 150px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 50px;
+
+    background: #f3f3f3;
+
+    border-radius: 10px;
+
+}
+
+.detail-info h3 {
+    
+    margin-top: 15px;
+
+    margin-bottom: 10px;
+
+}
+
+.detail-info p {
+    
+    margin: 7px 0;
+
+}
+
+.detail-category {
+
+    color: #4b6fa9;
+}
 
 .sidebar {
     position: fixed;
@@ -694,37 +750,9 @@ nav a:hover {
     z-index: 1000;
 }
 
-.menu-title {
-    font-size: 13px;
-
-    color: #999;
-
-    margin-bottom: 15px;
-}
-
-
-.menu {
-    list-style: none;
-}
-
 
 .menu li {
     margin-bottom: 8px;
-}
-
-
-.menu a {
-    display: block;
-
-    padding: 13px 14px;
-
-    color: #444;
-
-    border-radius: 8px;
-
-    transition:
-        background-color 0.2s ease,
-        color 0.2s ease;
 }
 
 
@@ -1165,6 +1193,56 @@ nav a:hover {
         rgba(0, 0, 0, 0.05);
 }
 
+.place-detail-card {
+    position: absolute !important;
+    
+    right: 15px !important;
+    bottom: 15px !important;
+
+    width: 300px !important;
+
+    max-height: 360px;
+
+    overflow-y: auto;
+
+    background: white;
+
+    border-radius: 15px;
+
+    padding: 15px;
+
+    box-shadow:
+        0 5px 20px
+        rgba(0, 0, 0, 0.2);
+    
+    z-index: 10 !important;
+}
+
+.detail-image {
+    display: block;
+
+    width: 100%;
+
+    height: 150px;
+    
+    object-fit: cover;
+    
+    border-radius: 10px;
+}
+
+.place-detail-card h3 {
+
+    margin-top: 10px;
+
+    margin-bottom: 10px;
+}
+
+.place-detail-card p {
+
+    font-size: 14px;
+
+    margin: 5px 0;
+}
 
 .place-card:last-child {
     margin-bottom: 0;
@@ -1348,14 +1426,6 @@ nav a:hover {
         align-items: flex-start;
     }
 
-
-    .place-photo {
-        width: 80px;
-        height: 80px;
-        font-size: 32px;
-    }
-
-
     /* 모바일에서는 사이드바 숨김 */
     .sidebar {
         display: none;
@@ -1371,6 +1441,31 @@ nav a:hover {
         padding: 20px 15px;
     }
 
+    .detail-empty {
+        disdplay: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+
+        min-height: 150px;
+
+        color: #888;
+
+        text-align: center;
+    }
+
+    .detail-empty p {
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .detail-empty-icon {
+        font-size: 35px;
+        margin-bottom: 10px;
+    }
 
     .travel-title {
         align-items: flex-start;
@@ -1416,73 +1511,18 @@ nav a:hover {
         width: 80px;
         height: 80px;
     }
-
-}
-
-/* =========================
-   DETAIL LAYOUT
-========================= */
-@media screen and (max-width: 768px) {
 
     .detail-container {
         min-height: 100vh;
         width: 100%;
     }
 
-
-
-    .detail-content {
-        padding: 20px 15px;
-    }
-
-
-    .travel-title {
-        align-items: flex-start;
-
-        flex-direction: column;
-    }
-
-
     .travel-title .btn {
         width: 100%;
     }
 
-
-    .timeline-item {
-        flex-wrap: wrap;
-    }
-
-
-    .time {
-        width: 60px;
-    }
-
-
-    .timeline-icon {
-        margin-right: 10px;
-    }
-
-
-    .timeline-content {
-        width: calc(100% - 70px);
-
-        margin-left: 60px;
-
-        margin-top: 8px;
-    }
-
-
-    .place-card {
-        align-items: flex-start;
-    }
-
-
-    .place-image {
-        width: 80px;
-        height: 80px;
-    }
-
 }
+
 
 /* =========================================================
    INDEX PAGE
@@ -3023,13 +3063,7 @@ footer {
 }
 
 
-.menu li {
-    margin-bottom: 8px;
-}
-
-
-
-.menu li a {
+.menu a {
     display: block;
 
     padding: 14px 16px;
@@ -3041,14 +3075,21 @@ footer {
     color: #333;
 
     font-size: 16px;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
-.menu li a:hover {
-    background-color: #f1f5ff;
-    color: #2f6de0;
-}
 
-.menu li a.active {
-    background-color: #2f6de0;
-    color: white;
+.place-photo img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
+    border-radius: 12px;
+
 }

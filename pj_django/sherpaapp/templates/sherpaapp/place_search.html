@@ -125,247 +125,344 @@
 
         <!-- 검색 -->
 
-        <div class="search-box">
+        <form
+            class="search-box"
+            action="{% url 'place_search_search' %}"
+            method="get"
+        >
 
 
             <input
                 type="text"
-                placeholder="장소명을 입력하세요.">
+                name="query"
+                placeholder="장소명 또는 키워드를 입력하세요."
+                value="{{ query|default:'' }}"
+                required
+            >
 
-
-            <button class="btn btn-primary">
+            <button type="submit" class="btn btn-primary">
                 검색
             </button>
 
+        </form>
 
-        </div>
-
-
+<!-- 검색 후에만 결과 표시 -->
         <!-- 장소 + 지도 -->
+{% if places %}
 
-        <div class="place-layout">
+<div class="place-layout">
 
+        <!-- 검색 결과 -->
 
-            <!-- 검색 결과 -->
+        <section class="place-results">
 
-            <section class="place-results">
+            <h2>
+                검색 결과
+            </h2>
+            
+            {% for place in places %}
 
+            <div class="place-result-card">
 
-                <h2>
-                    검색 결과
-                </h2>
+                <!-- 장소 사진 -->
 
+                <div class="place-photo">
+                    {% if place.image %}
 
-                <!-- 경복궁 -->
+                        <img
 
-                <div class="place-result-card">
+                            src="{{ place.image }}"
 
+                            alt="{{ place.name }}"
 
-                    <div class="place-photo">
-                        🏯
-                    </div>
+                        >
 
+                    {% else %}
 
-                    <div class="place-result-info">
-
-
-                        <h3>
-                            경복궁
-                        </h3>
-
-
-                        <p>
-                            서울특별시 종로구
-                        </p>
-
-
-                        <span>
-                            관광지
-                        </span>
-
-
-                        <br>
-
-
-                        <button class="btn btn-primary">
-                            일정에 추가
-                        </button>
-
-
-                    </div>
-
-
-                </div>
-
-
-                <!-- 북촌 -->
-
-                <div class="place-result-card">
-
-
-                    <div class="place-photo">
                         🏘️
-                    </div>
+
+                    {% endif %}
+
+                </div>
+
+                <!-- 장소 정보 -->
+
+                <div class="place-result-info">
 
 
-                    <div class="place-result-info">
+                    <h3>
+                        {{ place.name }}
+                    </h3>
 
 
-                        <h3>
-                            북촌한옥마을
-                        </h3>
+                    <p>
+                        {{ place.address }}
+                    </p>
 
 
-                        <p>
-                            서울특별시 종로구
-                        </p>
+                    <span>
+                        {{ place.category }}
+                    </span>
 
 
-                        <span>
-                            관광지
-                        </span>
+                    <br>
 
 
-                        <br>
-
-
-                        <button class="btn btn-primary">
-                            일정에 추가
-                        </button>
-
-
-                    </div>
+                    <button class="btn btn-primary">
+                        일정에 추가
+                    </button>
 
 
                 </div>
 
 
-            </section>
+            </div>
+
+            {% endfor %}
+
+        </section>
 
 
-            <!-- 지도 -->
+        <!-- 지도 -->
 
-            <section class="map-area">
-
-
-                <div class="map-title">
-                    🗺️ 지도
-                </div>
+        <section class="map-area">
 
 
-                <!-- 카카오 지도 영역 -->
+            <div class="map-title">
+                🗺️ 지도
+            </div>
+
+            <!-- 지도 컨테이너 -->
+            
+            <div class="map-wrapper">
+                <!-- 카카오 지도 -->
                 <div id="map"></div>
+                <!-- 마커 클릭 시 표시될 카드 -->
+                <div id="place-detail-card" class="place-detail-card">
+                    <div class="detail-empty">📍</div>
+                        <p>지도에서 마커를 선택하세요.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
 
 
-            </section>
+    </div>
 
-
-        </div>
-
+    
 
     </main>
 
 
 </div>
-<script>
+    <script>
 
-    // =========================
-    // 지도 표시 영역
-    // =========================
+        // =========================
+        // 지도 생성
+        // =========================
 
-    var container = document.getElementById('map');
-
-
-    // =========================
-    // 지도 옵션
-    // =========================
-
-    var options = {
-
-        // 서울 중심 좌표
-        center: new kakao.maps.LatLng(
-            37.5665,
-            126.9780
-        ),
-
-        // 확대 레벨
-        level: 8
-    };
+        const container = document.getElementById('map');
 
 
-    // =========================
-    // 지도 생성 ★ 중요
-    // =========================
+        // =========================
+        // 지도 옵션
+        // =========================
 
-    var map = new kakao.maps.Map(
-        container,
-        options
-    );
+        const options = {
 
+            // 서울 중심 좌표
+            center: new kakao.maps.LatLng(
+                37.5665,
+                126.9780
+            ),
 
-    // =========================
-    // 장소 좌표
-    // =========================
+            // 확대 레벨
+            level: 8
+        };
 
+        // =========================
+        // 지도 생성 ★ 중요
+        // =========================
 
-    // 경복궁
-    var gyeongbokgung = new kakao.maps.LatLng(
-        37.5796,
-        126.9770
-    );
-
-
-    // 북촌한옥마을
-    var bukchon = new kakao.maps.LatLng(
-        37.5826,
-        126.9836
-    );
+        const map = new kakao.maps.Map(
+            container,
+            options
+        );
 
 
-    // 남산타워
-    var namsan = new kakao.maps.LatLng(
-        37.5512,
-        126.9882
-    );
+        // =========================
+        // 지도 범위
+        // =========================
+
+        const bounds =
+            new kakao.maps.LatLngBounds();
+        
+        // =========================
+        // 장소 상세 카드
+        // =========================
+        const detailCard =
+            document.getElementById(
+                "place-detail-card"
+            );
+            
+        // =========================
+        // 검색 결과 반복
+        // =========================
+
+        {% for place in places %}
+
+        (function() {
+        
+            const position =
+                new kakao.maps.LatLng(
+                    {{ place.y }},
+                    {{ place.x }}
+                );
+
+            // 마커 생성
+
+            const marker =
+                new kakao.maps.Marker({
+                    position: position
+                });
+            
+            // 지도에 표시
+            marker.setMap(map);
+
+            // 지도 범위에 추가
+            bounds.extend(position);
+
+            // =========================
+            // 장소 정보
+            // =========================
+            const placeData = {
+                
+                name: "{{ place.name|escapejs }}",
+                address: "{{ place.address|escapejs }}",
+                category: "{{ place.category|escapejs }}",
+                phone: "{{place.phone|default:''|escapejs }}",
+                image: "{{place.image|default:''|escapejs }}",
+                place_url: "{{place.place_url|default:''|escapejs }}"
+            };
+
+            // =========================
+            // 마커 클릭 이벤트
+            // =========================
+            kakao.maps.event.addListener(
+                marker,
+                "click",
+                function() {
+
+                    console.log(
+                        "마커 클릭!",
+                        placeData
+                    );
+
+                    showPlaceDetail(
+                        placeData
+                    );
+
+                    // 클릭한 장소 중심으로 이동
+
+                    map.panTo(
+                        position
+                    );
+                }
+            );
+
+        })();
+
+        {% endfor %}
+        
+        // =========================
+        // 장소 정보 표시 함수
+        // =========================
+        function showPlaceDetail(place) {
+            let imageHtml = "";
+            if (place.image) {
+                imageHtml =
+                    '<img ' +
+                    'class="detail-image" ' +
+                    'src="' +
+                    place.image +
+                    '" ' +
+                    'alt="' +
+                    place.name +
+                    '">';
+            }
+
+            else {
+                imageHtml =
+                    '<div class="detail-no-image">' +
+                    '📍' +
+                    '</div>';
+            }
+
+            detailCard.innerHTML =
+
+                imageHtml +
+
+                '<h3>' +
+                place.name +
+                '</h3>' +
+
+                '<p class="detail-category">' +
+                    '🏷️ ' +
+                    place.category +
+                '</p>' +
+
+                '<p>' +
+                '📍 ' +
+                place.address +
+                '</p>' +
 
 
-    // =========================
-    // 마커 생성
-    // =========================
+                (
+                    place.phone
 
+                    ?
+                    
+                    '<p>📞 ' +
+                    place.phone +
+                    '</p>'
 
-    // 경복궁 마커
-    var marker1 = new kakao.maps.Marker({
+                    :
 
-        position: gyeongbokgung
+                    ''
 
-    });
+                ) +
 
-    marker1.setMap(map);
+                (
+                    place.place_url
+                    
+                    ?
 
+                    '<a ' +
+                    'href="' +
+                    place.place_url +
+                    '" ' +
+                    'target="_blank" ' +
+                    'class="btn btn-primary">' +
+                    '카카오맵 보기' +
+                    '</a>'
 
+                    :
 
-    // 북촌한옥마을 마커
-    var marker2 = new kakao.maps.Marker({
+                    ''
 
-        position: bukchon
+                );
+        }
 
-    });
+        // ==================================
+        // 모든 마커가 보이도록 지도 범위 조정
+        // ==================================
 
-    marker2.setMap(map);
+        {% if places %}
+            map.setBounds(bounds);
+        {% endif %}
 
-
-
-    // 남산타워 마커
-    var marker3 = new kakao.maps.Marker({
-
-        position: namsan
-
-    });
-
-    marker3.setMap(map);
-
-</script>
-
+    </script>
+{% endif %}
 </body>
 </html>
