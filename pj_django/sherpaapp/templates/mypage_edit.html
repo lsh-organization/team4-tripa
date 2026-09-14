@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>내정보 수정 - TRIPA</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 500px;
+            margin: 80px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .info {
+            margin-bottom: 20px;
+        }
+
+        .info-title {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f5f7fa;
+            font-size: 16px;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 13px;
+            margin-top: 30px;
+            background-color: #3182ce;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .cancel {
+            background-color: #777;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>👤 내정보 수정</h1>
+
+    <form method="POST">
+
+        {% csrf_token %}
+
+        <div class="info">
+
+            <div class="info-title">
+                아이디(Email)
+            </div>
+
+            <input
+                type="text"
+                value="{{ member.email }}"
+                readonly
+            >
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="info-title">
+                이름
+            </div>
+
+            <input
+                type="text"
+                name="name"
+                value="{{ member.name }}"
+                required
+            >
+
+        </div>
+
+
+        <div class="info">
+
+            <div class="info-title">
+                닉네임
+            </div>
+
+            <input
+                type="text"
+                name="nickname"
+                value="{{ member.nickname }}"
+                required
+            >
+
+        </div>
+
+
+        <button type="submit" class="btn">
+            저장하기
+        </button>
+
+    </form>
+
+
+    <a href="{% url 'mypage' %}" class="btn cancel">
+        취소
+    </a>
+
+</div>
+
+</body>
+</html>
