@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>회원가입</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f6f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .login-header {
+            margin-bottom: 28px;
+            text-align: center;
+        }
+
+        .login-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1d20;
+        }
+
+        .logo {
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 14px;
+            font-size: 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.15);
+        }
+
+        /* 이메일 입력창 + 중복확인 버튼 */
+        .email-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .email-row input {
+            flex: 1;
+        }
+
+        .check-btn {
+            background-color: #3182ce;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 15px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .check-btn:hover {
+            background-color: #2b6cb0;
+        }
+
+        /* 중복확인 결과 */
+        #email-msg {
+            display: block;
+            margin-top: 7px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* 비밀번호 */
+        .password-box {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* 비밀번호 확인 결과 */
+        #pwd-msg {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-group {
+            margin-top: 28px;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background-color: #3182ce;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background-color: #2b6cb0;
+        }
+
+        .login-footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+
+<body onload="document.f.email.focus()">
+
+<div class="login-container">
+
+    <div class="login-header">
+        <h1 class="logo">🛫TRIPA</h1>
+        <h2>회원가입</h2>
+    </div>
+
+    <form name="f" action="{% url 'join_ok' %}" method="post">
+
+        {% csrf_token %}
+
+        <!-- 이메일 -->
+        <div class="input-group">
+
+            <label for="email">아이디(Email)</label>
+
+            <div class="email-row">
+
+                <input
+                    id="email"
+                    name="email"
+                    type="text"
+                    placeholder="아이디 입력"
+                    oninput="emailChanged()"
+                >
+
+                <button
+                    type="button"
+                    class="check-btn"
+                    onclick="checkEmailAjax()"
+                >
+                    중복확인
+                </button>
+
+            </div>
+
+            <span id="email-msg"></span>
+
+        </div>
+
+
+        <!-- 비밀번호 -->
+        <div class="input-group">
+
+            <label for="pwd">비밀번호</label>
+
+            <div class="password-box">
+
+                <input
+                    id="pwd"
+                    name="pwd"
+                    type="password"
+                    placeholder="비밀번호 입력"
+                >
+
+                <input
+                    id="pwd_confirm"
+                    type="password"
+                    placeholder="비밀번호 확인"
+                    oninput="checkPassword()"
+                >
+
+                <span id="pwd-msg"></span>
+
+            </div>
+
+        </div>
+
+
+        <!-- 이름 -->
+        <div class="input-group">
+
+            <label for="name">이름</label>
+
+            <input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="이름을 입력"
+            >
+
+        </div>
+
+
+        <!-- 닉네임 -->
+        <div class="input-group">
+
+            <label for="nickname">닉네임</label>
+
+            <input
+                id="nickname"
+                name="nickname"
+                type="text"
+                placeholder="닉네임 입력"
+            >
+
+        </div>
+
+
+        <!-- 회원가입 버튼 -->
+        <div class="btn-group">
+
+            <input
+                type="button"
+                class="btn-submit"
+                value="회원가입"
+                onclick="check()"
+            >
+
+        </div>
+
+
+        <div class="login-footer">
+
+            이미 회원이신가요?
+
+            <a href="{% url 'login' %}">로그인</a>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script>
+
+    // 이메일 중복확인 여부
+    let emailChecked = false;
+
+    // 중복확인한 이메일
+    let checkedEmail = "";
+
+
+    // 이메일 내용이 변경되면
+    // 기존 중복확인을 무효화
+    function emailChanged() {
+
+        emailChecked = false;
+        checkedEmail = "";
+
+        document.getElementById("email-msg").innerText = "";
+
+    }
+
+
+    // 이메일 중복확인
+    function checkEmailAjax() {
+
+        const emailValue = document.getElementById("email").value;
+        const msgArea = document.getElementById("email-msg");
+
+
+        if (!emailValue) {
+
+            alert("이메일을 입력해주세요.");
+            return;
+
+        }
+
+
+        fetch(`../check_email/?email=${encodeURIComponent(emailValue)}`)
+
+            .then(response => response.json())
+
+            .then(data => {
+
+                if (data.is_exists) {
+
+                    // 중복됨
+                    msgArea.style.color = "red";
+                    msgArea.innerText = "✕ 이미 사용 중인 이메일입니다.";
+
+                    emailChecked = false;
+
+                } else {
+
+                    // 사용 가능
+                    msgArea.style.color = "green";
+                    msgArea.innerText = "✓ 사용 가능한 이메일입니다.";
+
+                    emailChecked = true;
+                    checkedEmail = emailValue;
+
+                }
+
+            })
+
+            .catch(error => {
+
+                console.error("Error:", error);
+                alert("중복확인 중 오류가 발생했습니다.");
+
+            });
+
+    }
+
+
+    // 비밀번호 일치 확인
+    function checkPassword() {
+
+        const pwd = document.getElementById("pwd").value;
+        const pwdConfirm = document.getElementById("pwd_confirm").value;
+
+        const msg = document.getElementById("pwd-msg");
+
+
+        if (!pwdConfirm) {
+
+            msg.innerText = "";
+            return;
+
+        }
+
+
+        if (pwd === pwdConfirm) {
+
+            msg.style.color = "green";
+            msg.innerText = "✓ 비밀번호가 일치합니다.";
+
+        } else {
+
+            msg.style.color = "red";
+            msg.innerText = "✕ 비밀번호가 일치하지 않습니다.";
+
+        }
+
+    }
+
+
+    // 회원가입 버튼
+    function check() {
+
+        const email = document.getElementById("email").value;
+        const pwd = document.getElementById("pwd").value;
+        const pwdConfirm = document.getElementById("pwd_confirm").value;
+        const name = document.getElementById("name").value;
+        const nickname = document.getElementById("nickname").value;
+
+
+        // 이메일 중복확인
+        if (!emailChecked || checkedEmail !== email) {
+
+            alert("이메일 중복확인을 해주세요.");
+            return;
+
+        }
+
+
+        // 비밀번호 입력
+        if (!pwd) {
+
+            alert("비밀번호를 입력해주세요.");
+            return;
+
+        }
+
+
+        // 비밀번호 확인
+        if (pwd !== pwdConfirm) {
+
+            alert("비밀번호가 일치하지 않습니다.");
+            return;
+
+        }
+
+
+        // 이름
+        if (!name) {
+
+            alert("이름을 입력해주세요.");
+            return;
+
+        }
+
+
+        // 닉네임
+        if (!nickname) {
+
+            alert("닉네임을 입력해주세요.");
+            return;
+
+        }
+
+
+        // 모든 검사 통과
+        document.f.submit();
+
+    }
+
+</script>
+
+</body>
+</html>

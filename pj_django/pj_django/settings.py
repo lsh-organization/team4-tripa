@@ -25,6 +25,9 @@ SECRET_KEY = 'django-insecure-3@^-*@q8(2vf-24@!86r1^4^p!s730av90edxy%25fx)k&khm-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# 카카오 REST API키
+KAKAO_REST_API_KEY = "a42d762a9d581241570816b03ff39930"
+
 #ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ['127.0.0.1','localhost','192.168.1.23']
 
@@ -38,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'sherpaapp.apps.SherpaappConfig',
+    
 ]
 
 MIDDLEWARE = [
@@ -62,6 +66,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'sherpaapp.context_processors.login_member',
             ],
         },
     },

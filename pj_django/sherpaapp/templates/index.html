@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 여행 일정 관리</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+</head>
+
+
+<body>
+
+
+<!-- =========================
+     HEADER
+========================= -->
+
+<header>
+
+    <div class="header-inner">
+
+        <a href="{% url 'index' %}" class="logo">
+            🏔️ TRIPA
+        </a>
+
+        <div class="header-actions">
+
+            {% if member %}
+                <span>👤🏞️🏖️🏕️{{ member.nickname }}님</span>
+                <a href="{% url 'mypage' %}">마이페이지</a>
+                <a href="{% url 'logout' %}">로그아웃</a>
+            {% else %}
+                <a href="{% url 'login' %}">로그인</a>
+                <a href="{% url 'join' %}">회원가입</a>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =========================
+     HERO
+========================= -->
+
+<main>
+
+    <section class="hero">
+
+        <div class="hero-content">
+
+            <span class="hero-badge">
+                ✈️ 스마트한 여행 일정 관리
+            </span>
+
+
+            <h1>
+                여행 계획부터<br>
+                <strong>세부 일정까지 한곳에서</strong>
+            </h1>
+
+
+            <p>
+                TRIPA는 여행 날짜와 장소를 정하고
+                <br>
+                날짜별 세부 일정을 추가하여
+                <br>
+                여행 계획을 한눈에 관리할 수 있는 서비스입니다.
+            </p>
+
+
+            <div class="hero-buttons">
+
+                <a href="{% url 'travel_create' %}"
+                   class="btn btn-primary btn-large">
+                    ✈️ 여행 계획 시작하기
+                </a>
+
+                <a href="{% url 'travel_list' %}"
+                   class="btn btn-secondary btn-large">
+                    내 여행 보기
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <!-- 여행 일정 미리보기 -->
+
+        <div class="hero-preview">
+
+            <div class="preview-window">
+
+                <div class="preview-header">
+
+                    <span>
+                        🗺️ 서울 여행
+                    </span>
+
+                    <span class="preview-status">
+                        여행 일정
+                    </span>
+
+                </div>
+
+
+                <div class="preview-info">
+
+                    <div>
+                        📅
+                        <span>
+                            2026.09.09 ~ 2026.09.12
+                        </span>
+                    </div>
+
+                    <div>
+                        📍
+                        <span>
+                            서울
+                        </span>
+                    </div>
+
+                </div>
+
+
+                <div class="preview-days">
+
+                    <div class="preview-day active">
+                        DAY 1
+                    </div>
+
+                    <div class="preview-day">
+                        DAY 2
+                    </div>
+
+                    <div class="preview-day">
+                        DAY 3
+                    </div>
+
+                </div>
+
+
+                <div class="preview-schedule">
+
+                    <div class="preview-item">
+
+                        <span class="preview-time">
+                            10:00
+                        </span>
+
+                        <div class="preview-place">
+                            <strong>
+                                🏯 경복궁
+                            </strong>
+
+                            <small>
+                                관광 · 2시간
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="preview-item">
+
+                        <span class="preview-time">
+                            13:00
+                        </span>
+
+                        <div class="preview-place">
+                            <strong>
+                                🏘️ 북촌한옥마을
+                            </strong>
+
+                            <small>
+                                관광 · 1시간 30분
+                            </small>
+                        </div>
+
+                    </div>
+
+
+                    <div class="preview-item">
+
+                        <span class="preview-time">
+                            16:00
+                        </span>
+
+                        <div class="preview-place">
+                            <strong>
+                                🗼 남산타워
+                            </strong>
+
+                            <small>
+                                관광 · 2시간
+                            </small>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         SERVICE INTRO
+    ========================= -->
+
+    <section class="service-section">
+
+        <div class="section-heading">
+
+            <span>
+                TRIPA SERVICE
+            </span>
+
+            <h2>
+                여행 계획을 더 간편하게
+            </h2>
+
+            <p>
+                여행의 시작부터 마지막 일정까지
+                <br>
+                필요한 정보를 한곳에서 관리하세요.
+            </p>
+
+        </div>
+
+
+        <div class="service-grid">
+
+
+            <!-- 여행 생성 -->
+
+            <div class="service-card">
+
+                <div class="service-icon">
+                    🗺️
+                </div>
+
+                <h3>
+                    여행 계획 생성
+                </h3>
+
+                <p>
+                    여행 지역과 날짜를 정하고
+                    나만의 여행 계획을 만들어보세요.
+                </p>
+
+            </div>
+
+
+            <!-- 세부 일정 -->
+
+            <div class="service-card">
+
+                <div class="service-icon">
+                    📅
+                </div>
+
+                <h3>
+                    세부 일정 관리
+                </h3>
+
+                <p>
+                    날짜별로 방문할 장소와 시간을
+                    추가하여 여행 일정을 체계적으로 관리할 수 있습니다.
+                </p>
+
+            </div>
+
+
+            <!-- 장소 -->
+
+            <div class="service-card">
+
+                <div class="service-icon">
+                    📍
+                </div>
+
+                <h3>
+                    여행 장소 관리
+                </h3>
+
+                <p>
+                    방문하고 싶은 장소를 검색하고
+                    여행 일정에 추가할 수 있습니다.
+                </p>
+
+            </div>
+
+
+            <!-- 비용 -->
+
+            <div class="service-card">
+
+                <div class="service-icon">
+                    💰
+                </div>
+
+                <h3>
+                    여행 비용 관리
+                </h3>
+
+                <p>
+                    여행 중 발생하는 비용을 기록하고
+                    전체 여행 경비를 한눈에 확인할 수 있습니다.
+                </p>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         HOW IT WORKS
+    ========================= -->
+
+    <section class="process-section">
+
+        <div class="section-heading">
+
+            <span>
+                HOW IT WORKS
+            </span>
+
+            <h2>
+                간단하게 여행을 계획하세요
+            </h2>
+
+        </div>
+
+
+        <div class="process-list">
+
+
+            <div class="process-item">
+
+                <div class="process-number">
+                    01
+                </div>
+
+                <div>
+                    <h3>
+                        여행 만들기
+                    </h3>
+
+                    <p>
+                        여행 지역과 시작일, 종료일을 설정합니다.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="process-arrow">
+                →
+            </div>
+
+
+            <div class="process-item">
+
+                <div class="process-number">
+                    02
+                </div>
+
+                <div>
+                    <h3>
+                        장소 추가
+                    </h3>
+
+                    <p>
+                        방문하고 싶은 장소를 검색하고 추가합니다.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="process-arrow">
+                →
+            </div>
+
+
+            <div class="process-item">
+
+                <div class="process-number">
+                    03
+                </div>
+
+                <div>
+                    <h3>
+                        세부 일정 관리
+                    </h3>
+
+                    <p>
+                        날짜와 시간별로 여행 일정을 정리합니다.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="process-arrow">
+                →
+            </div>
+
+
+            <div class="process-item">
+
+                <div class="process-number">
+                    04
+                </div>
+
+                <div>
+                    <h3>
+                        여행 완성
+                    </h3>
+
+                    <p>
+                        일정과 장소, 비용을 한곳에서 확인합니다.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         CTA
+    ========================= -->
+
+    <section class="cta-section">
+
+        <div>
+
+            <h2>
+                지금 나만의 여행을 계획해보세요.
+            </h2>
+
+            <p>
+                여행 계획부터 세부 일정까지
+                TRIPA와 함께 간편하게 관리하세요.
+            </p>
+
+        </div>
+
+
+        <a href="{% url 'travel_create' %}"
+           class="btn btn-white btn-large">
+
+            여행 만들기 →
+
+        </a>
+
+    </section>
+
+</main>
+
+
+<!-- =========================
+     FOOTER
+========================= -->
+
+<footer>
+
+    <div class="footer-inner">
+
+        <div class="logo">
+            🏔️ TRIPA
+        </div>
+
+        <p>
+            여행 계획과 일정을 한곳에서 관리하세요.
+        </p>
+
+    </div>
+
+</footer>
+
+
+</body>
+
+</html>

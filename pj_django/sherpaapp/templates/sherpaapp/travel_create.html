@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 여행 만들기</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+</head>
+
+
+<body>
+
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+            
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_create' %}"
+                   class="active">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'place_search' %}">
+                    📍 장소 검색
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_detail' travel_id=1 %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    💰 비용 관리
+                </a>
+            </li>
+
+
+        </ul>
+
+
+            {% if member %}
+                <a href="{% url 'mypage' %}" class="user-profile">
+                    👤 {{ member.nickname }}
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="user-profile">
+                    👤 로그인
+                </a>
+            {% endif %}
+
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <div class="page-title">
+
+            <h1>
+                ✈️ 새로운 여행 만들기
+            </h1>
+
+            <p>
+                여행 기본 정보를 입력해주세요.
+            </p>
+
+        </div>
+
+
+        <div class="create-layout">
+
+
+            <!-- 여행 정보 입력 -->
+
+            <div class="card">
+
+
+                <form>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            여행 제목
+                        </label>
+
+                        <input
+                            type="text"
+                            placeholder="예) 서울 3박 4일 여행">
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label>
+                            여행 지역
+                        </label>
+
+                        <input
+                            type="text"
+                            placeholder="예) 서울">
+
+                    </div>
+
+
+                    <div class="date-group">
+
+
+                        <div class="form-group">
+
+                            <label>
+                                여행 시작일
+                            </label>
+
+                            <input type="date">
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                여행 종료일
+                            </label>
+
+                            <input type="date">
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="button-group">
+
+
+                        <a
+                            href="{% url 'travel_list' %}"
+                            class="btn btn-secondary">
+
+                            취소
+
+                        </a>
+
+
+                        <a
+                            href="{% url 'travel_detail' travel_id=1 %}"
+                            class="btn btn-primary">
+
+                            여행 만들기
+
+                        </a>
+
+
+                    </div>
+
+
+                </form>
+
+
+            </div>
+
+
+            <!-- 안내 -->
+
+            <div class="card guide-card">
+
+
+                <h2>
+                    💡 여행 만들기
+                </h2>
+
+
+                <p>
+                    1. 여행 제목을 입력합니다.
+                </p>
+
+
+                <p>
+                    2. 여행 지역을 입력합니다.
+                </p>
+
+
+                <p>
+                    3. 여행 기간을 선택합니다.
+                </p>
+
+
+                <p>
+                    4. 여행을 생성한 후 장소를 추가합니다.
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
+
+
+</div>
+
+
+</body>
+</html>

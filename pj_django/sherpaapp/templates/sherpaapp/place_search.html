@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 장소 검색</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+    <script
+    type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey=eafcddadb38dc6215242aedf70281190">
+    </script>
+
+</head>
+
+
+<body>
+
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'place_search' %}"
+                   class="active">
+                    📍 장소 검색
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'travel_detail' travel_id=1 %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    💰 비용 관리
+                </a>
+            </li>
+
+
+        </ul>
+
+
+            {% if member %}
+                <a href="{% url 'mypage' %}" class="user-profile">
+                    👤 {{ member.nickname }}
+                </a>
+            {% else %}
+                <a href="{% url 'login' %}" class="user-profile">
+                    👤 로그인
+                </a>
+            {% endif %}
+
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <div class="page-title">
+
+            <h1>
+                📍 장소 검색
+            </h1>
+
+            <p>
+                여행하고 싶은 장소를 검색하세요.
+            </p>
+
+        </div>
+
+
+        <!-- 검색 -->
+
+        <form
+            class="search-box"
+            action="{% url 'place_search_search' %}"
+            method="get"
+        >
+
+
+            <input
+                type="text"
+                name="query"
+                placeholder="장소명 또는 키워드를 입력하세요."
+                value="{{ query|default:'' }}"
+                required
+            >
+
+            <button type="submit" class="btn btn-primary">
+                검색
+            </button>
+
+        </form>
+
+<!-- 검색 후에만 결과 표시 -->
+        <!-- 장소 + 지도 -->
+{% if places %}
+
+<div class="place-layout">
+
+        <!-- 검색 결과 -->
+
+        <section class="place-results">
+
+            <h2>
+                검색 결과
+            </h2>
+            
+            {% for place in places %}
+
+            <div class="place-result-card">
+
+                <!-- 장소 사진 -->
+
+                <div class="place-photo">
+                    {% if place.image %}
+
+                        <img
+
+                            src="{{ place.image }}"
+
+                            alt="{{ place.name }}"
+
+                        >
+
+                    {% else %}
+
+                        🏘️
+
+                    {% endif %}
+
+                </div>
+
+                <!-- 장소 정보 -->
+
+                <div class="place-result-info">
+
+
+                    <h3>
+                        {{ place.name }}
+                    </h3>
+
+
+                    <p>
+                        {{ place.address }}
+                    </p>
+
+
+                    <span>
+                        {{ place.category }}
+                    </span>
+
+
+                    <br>
+
+
+                    <button class="btn btn-primary">
+                        일정에 추가
+                    </button>
+
+
+                </div>
+
+
+            </div>
+
+            {% endfor %}
+
+        </section>
+
+
+        <!-- 지도 -->
+
+        <section class="map-area">
+
+
+            <div class="map-title">
+                🗺️ 지도
+            </div>
+
+            <!-- 지도 컨테이너 -->
+            
+            <div class="map-wrapper">
+                <!-- 카카오 지도 -->
+                <div id="map"></div>
+                <!-- 마커 클릭 시 표시될 카드 -->
+                <div id="place-detail-card" class="place-detail-card">
+                    <div class="detail-empty">📍</div>
+                        <p>지도에서 마커를 선택하세요.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+
+    </div>
+
+    
+
+    </main>
+
+
+</div>
+    <script>
+
+        // =========================
+        // 지도 생성
+        // =========================
+
+        const container = document.getElementById('map');
+
+
+        // =========================
+        // 지도 옵션
+        // =========================
+
+        const options = {
+
+            // 서울 중심 좌표
+            center: new kakao.maps.LatLng(
+                37.5665,
+                126.9780
+            ),
+
+            // 확대 레벨
+            level: 8
+        };
+
+        // =========================
+        // 지도 생성 ★ 중요
+        // =========================
+
+        const map = new kakao.maps.Map(
+            container,
+            options
+        );
+
+
+        // =========================
+        // 지도 범위
+        // =========================
+
+        const bounds =
+            new kakao.maps.LatLngBounds();
+        
+        // =========================
+        // 장소 상세 카드
+        // =========================
+        const detailCard =
+            document.getElementById(
+                "place-detail-card"
+            );
+            
+        // =========================
+        // 검색 결과 반복
+        // =========================
+
+        {% for place in places %}
+
+        (function() {
+        
+            const position =
+                new kakao.maps.LatLng(
+                    {{ place.y }},
+                    {{ place.x }}
+                );
+
+            // 마커 생성
+
+            const marker =
+                new kakao.maps.Marker({
+                    position: position
+                });
+            
+            // 지도에 표시
+            marker.setMap(map);
+
+            // 지도 범위에 추가
+            bounds.extend(position);
+
+            // =========================
+            // 장소 정보
+            // =========================
+            const placeData = {
+                
+                name: "{{ place.name|escapejs }}",
+                address: "{{ place.address|escapejs }}",
+                category: "{{ place.category|escapejs }}",
+                phone: "{{place.phone|default:''|escapejs }}",
+                image: "{{place.image|default:''|escapejs }}",
+                place_url: "{{place.place_url|default:''|escapejs }}"
+            };
+
+            // =========================
+            // 마커 클릭 이벤트
+            // =========================
+            kakao.maps.event.addListener(
+                marker,
+                "click",
+                function() {
+
+                    console.log(
+                        "마커 클릭!",
+                        placeData
+                    );
+
+                    showPlaceDetail(
+                        placeData
+                    );
+
+                    // 클릭한 장소 중심으로 이동
+
+                    map.panTo(
+                        position
+                    );
+                }
+            );
+
+        })();
+
+        {% endfor %}
+        
+        // =========================
+        // 장소 정보 표시 함수
+        // =========================
+        function showPlaceDetail(place) {
+            let imageHtml = "";
+            if (place.image) {
+                imageHtml =
+                    '<img ' +
+                    'class="detail-image" ' +
+                    'src="' +
+                    place.image +
+                    '" ' +
+                    'alt="' +
+                    place.name +
+                    '">';
+            }
+
+            else {
+                imageHtml =
+                    '<div class="detail-no-image">' +
+                    '📍' +
+                    '</div>';
+            }
+
+            detailCard.innerHTML =
+
+                imageHtml +
+
+                '<h3>' +
+                place.name +
+                '</h3>' +
+
+                '<p class="detail-category">' +
+                    '🏷️ ' +
+                    place.category +
+                '</p>' +
+
+                '<p>' +
+                '📍 ' +
+                place.address +
+                '</p>' +
+
+
+                (
+                    place.phone
+
+                    ?
+                    
+                    '<p>📞 ' +
+                    place.phone +
+                    '</p>'
+
+                    :
+
+                    ''
+
+                ) +
+
+                (
+                    place.place_url
+                    
+                    ?
+
+                    '<a ' +
+                    'href="' +
+                    place.place_url +
+                    '" ' +
+                    'target="_blank" ' +
+                    'class="btn btn-primary">' +
+                    '카카오맵 보기' +
+                    '</a>'
+
+                    :
+
+                    ''
+
+                );
+        }
+
+        // ==================================
+        // 모든 마커가 보이도록 지도 범위 조정
+        // ==================================
+
+        {% if places %}
+            map.setBounds(bounds);
+        {% endif %}
+
+    </script>
+{% endif %}
+</body>
+</html>
