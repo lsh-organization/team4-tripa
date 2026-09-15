@@ -78,6 +78,12 @@ class Place(models.Model):
         db_column='P_KIND'
     )
 
+    p_image = models.CharField(
+        max_length=500,
+        db_column='P_IMAGE',
+        null=True,
+        blank=True
+    )
     class Meta:
         db_table = 'PLACE'
         

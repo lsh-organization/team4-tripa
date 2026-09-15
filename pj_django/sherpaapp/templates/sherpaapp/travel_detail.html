@@ -20,6 +20,9 @@
 
 <body>
 
+<script>
+    const travelId = {{ travel.t_id }};
+</script>
 
 <div class="detail-container">
 
@@ -133,7 +136,7 @@
 
 
                 <button class="btn btn-primary">
-                    여행 수정
+                    저장
                 </button>
 
 
@@ -142,6 +145,65 @@
 
         </section>
 
+        <!-- function -->
+        <script>
+        function selectDay(day) {
+
+    // DAY 버튼 active 변경
+    document.querySelectorAll(".day").forEach(function(element) {
+        element.classList.remove("active");
+    });
+
+    const dayButtons = document.querySelectorAll(".day");
+
+    if (dayButtons[day - 1]) {
+        dayButtons[day - 1].classList.add("active");
+    }
+
+    // DB에서 해당 DAY 데이터 가져오기
+    loadDay(day);
+}
+
+
+        function loadDay(day) {
+
+            fetch(`/travel_detail_day/${travelId}/${day}/`)
+                .then(response => {
+
+                    if (!response.ok) {
+                        throw new Error("서버 응답 오류");
+                    }
+
+                    return response.json();
+                })
+                .then(data => {
+
+                    if (!data.success) {
+                        alert(data.message);
+                        return;
+                    }
+
+                    console.log("받아온 DB 데이터:", data);
+
+                    // 일정 출력
+                    renderSchedule(data);
+
+                    // 비용 출력
+                    renderPayment(data);
+
+                    // DAY 제목 변경
+                    document.getElementById("currentDayTitle").innerText =
+                        `📅 DAY ${data.day} 일정`;
+                })
+                .catch(error => {
+
+                    console.error("DAY 데이터 조회 실패:", error);
+
+                    alert("일정 데이터를 불러오지 못했습니다.");
+                });
+        }
+
+        </script>
 
         <!-- 지도 + DAY -->
 
@@ -205,41 +267,25 @@
                     </div>
 
 
-                    <div class="day active">
+                    <div id="dayList">
 
-                        <strong>
-                            DAY 1
-                        </strong>
+                        {% for schedule in schedules %}
 
-                        <div class="day-date">
-                            2026.09.09
-                        </div>
+                            <div
+                                class="day {% if forloop.first %}active{% endif %}"
+                                onclick="selectDay({{ forloop.counter }})">
 
-                    </div>
+                                <strong>
+                                    DAY {{ forloop.counter }}
+                                </strong>
 
+                                <div class="day-date">
+                                    {{ schedule.s_day|date:"Y.m.d" }}
+                                </div>
 
-                    <div class="day">
+                            </div>
 
-                        <strong>
-                            DAY 2
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.10
-                        </div>
-
-                    </div>
-
-
-                    <div class="day">
-
-                        <strong>
-                            DAY 3
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.11
-                        </div>
+                        {% endfor %}
 
                     </div>
 
@@ -304,13 +350,44 @@
 
         </div>
 
+        <script>
+            function addSchedule(travelId, day, placeId, visitTime) {
+
+                fetch("/schedule_place_add/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCookie("csrftoken")
+                    },
+                    body: JSON.stringify({
+                        travel_id: travelId,
+                        day: day,
+                        place_id: placeId,
+                        visit_time: visitTime
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+
+                    if (data.success) {
+                        loadDay(day);
+                    } else {
+                        alert(data.message);
+                    }
+
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+            }
+        </script>
 
         <!-- TIMELINE -->
 
         <section class="timeline-box">
 
 
-            <div class="section-title">
+            <div class="section-title" id="currentDayTitle">
                 📅 DAY 1 일정
             </div>
 
@@ -318,202 +395,7 @@
             <div class="timeline">
 
 
-                <div class="timeline-item">
-
-
-                    <div class="time">
-                        10:00
-                    </div>
-
-
-                    <div class="timeline-icon">
-                        📍
-                    </div>
-
-
-                    <div class="timeline-content">
-
-                        <h3>
-                            ① 경복궁
-                        </h3>
-
-                        <p>
-                            서울특별시 종로구
-                        </p>
-
-                        <p>
-                            ⏱ 체류 시간 : 2시간
-                        </p>
-
-                        <p>
-                            출발 시간 : 12:00
-                        </p>
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="timeline-item">
-
-
-                    <div class="time">
-                        13:00
-                    </div>
-
-
-                    <div class="timeline-icon">
-                        📍
-                    </div>
-
-
-                    <div class="timeline-content">
-
-                        <h3>
-                            ② 북촌한옥마을
-                        </h3>
-
-                        <p>
-                            서울특별시 종로구
-                        </p>
-
-                        <p>
-                            ⏱ 체류 시간 : 1시간 30분
-                        </p>
-
-                        <p>
-                            출발 시간 : 14:30
-                        </p>
-
-                    </div>
-
-
-                </div>
-
-
-                <div class="timeline-item">
-
-
-                    <div class="time">
-                        16:00
-                    </div>
-
-
-                    <div class="timeline-icon">
-                        📍
-                    </div>
-
-
-                    <div class="timeline-content">
-
-                        <h3>
-                            ③ 남산타워
-                        </h3>
-
-                        <p>
-                            서울특별시 용산구
-                        </p>
-
-                        <p>
-                            ⏱ 체류 시간 : 2시간
-                        </p>
-
-                        <p>
-                            출발 시간 : 18:00
-                        </p>
-
-                    </div>
-
-
-                </div>
-
-
-            </div>
-
-
-        </section>
-
-
-        <!-- 방문 장소 -->
-
-        <section class="place-list">
-
-
-            <div class="section-title">
-                📍 방문 장소
-            </div>
-
-
-            <div class="place-card">
-
-                <div class="place-image">
-                    🏯
-                </div>
-
-                <div class="place-info">
-
-                    <h3>
-                        경복궁
-                    </h3>
-
-                    <p>
-                        서울특별시 종로구 사직로 161
-                    </p>
-
-                    <span class="place-category">
-                        관광지
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="place-card">
-
-                <div class="place-image">
-                    🏘️
-                </div>
-
-                <div class="place-info">
-
-                    <h3>
-                        북촌한옥마을
-                    </h3>
-
-                    <p>
-                        서울특별시 종로구 계동길
-                    </p>
-
-                    <span class="place-category">
-                        관광지
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="place-card">
-
-                <div class="place-image">
-                    🗼
-                </div>
-
-                <div class="place-info">
-
-                    <h3>
-                        남산타워
-                    </h3>
-
-                    <p>
-                        서울특별시 용산구 남산공원길
-                    </p>
-
-                    <span class="place-category">
-                        관광지
-                    </span>
+                <div id="timelineContainer">
 
                 </div>
 
@@ -521,69 +403,250 @@
 
 
         </section>
+
+        <script>
+
+        function renderSchedule(data) {
+
+            const container =
+                document.getElementById("timelineContainer");
+
+            container.innerHTML = "";
+
+            if (data.places.length === 0) {
+
+                container.innerHTML = `
+                    <div class="empty-schedule">
+                        등록된 일정이 없습니다.
+                    </div>
+                `;
+
+                return;
+            }
+
+            data.places.forEach(function(sp) {
+
+                const image = sp.place_image
+                    ? `<img src="${sp.place_image}" alt="${sp.place_name}">`
+                    : '<div class="no-place-image">📍</div>';
+                // 방문 시간
+                const html = `
+                    <div class="timeline-item">
+
+                        <div class="time"
+                            onclick="editTime(this, ${sp.sp_id})">
+
+                            ${sp.arrive_time}
+
+                        </div>
+
+                        <div class="schedule-card">
+
+                            <div class="schedule-image">
+                                ${image}
+                            </div>
+
+                            <div class="schedule-info">
+
+                                <h3>
+                                    ${sp.visit_order}.
+                                    ${sp.place_name}
+                                </h3>
+
+                                <p>
+                                    ${sp.place_addr}
+                                </p>
+
+                                <p>
+                                    ${sp.place_kind}
+                                </p>
+
+                                <p>
+                                    체류시간 :
+                                    ${sp.stay_time}분
+                                </p>
+
+                                <p>
+                                    출발시간 :
+                                    ${sp.start_time}
+                                </p>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                class="schedule-delete"
+                                onclick="deleteSchedulePlace(${sp.sp_id})">
+
+                                ×
+
+                            </button>
+
+                        </div>
+
+                    </div>
+                `;
+
+                container.insertAdjacentHTML(
+                    "beforeend",
+                    html
+                );
+            });
+        }
+
+        </script>
+
+
+        <input type="text",
+        id="place-search",
+        placeholder="장소를 검색하세요">
+
+        <button type="button"
+                onclick="searchPlace()">
+            🔍
+        </button>
+
+        <script>
+            function searchPlace() {
+
+                const visitTime =
+                    document.getElementById("visitTime").value;
+
+                if (!visitTime) {
+
+                    alert("방문 시간을 먼저 입력해주세요.");
+
+                    return;
+                }
+
+                // 장소 검색 코드
+            }
+        </script>
 
 
         <!-- 비용 -->
 
-        <section class="pay-box">
+        <section class="pay-box" id="payBox">
+        <script>
+            function renderPayment(data) {
 
+                const payBox =
+                    document.getElementById("payBox");
+
+                let html = `
+                    <div class="section-title">
+                        💰 DAY ${data.day} 여행 비용
+                    </div>
+
+                    <button
+                        type="button"
+                        class="add-schedule-btn"
+                        onclick="openPlaceSearch()">
+
+                        + 추가
+
+                    </button>
+                `;
+
+                if (data.pays.length === 0) {
+
+                    html += `
+                        <div class="pay-item">
+
+                            <span>
+                                등록된 비용이 없습니다.
+                            </span>
+
+                            <strong>
+                                0원
+                            </strong>
+
+                        </div>
+                    `;
+
+                } else {
+
+                    data.pays.forEach(function(pay) {
+
+                        html += `
+                            <div class="pay-item">
+
+                                <span>
+                                    ${pay.pay_context}
+                                </span>
+
+                                <strong>
+                                    ${Number(pay.pay_pay).toLocaleString()}원
+                                </strong>
+
+                            </div>
+                        `;
+                    });
+                }
+
+                html += `
+                    <div class="pay-item total-pay">
+
+                        <span>
+                            DAY ${data.day} 총 비용
+                        </span>
+
+                        <strong>
+                            ${Number(data.total_pay).toLocaleString()}원
+                        </strong>
+
+                    </div>
+                `;
+
+                payBox.innerHTML = html;
+            }
+
+            </script>
 
             <div class="section-title">
-                💰 여행 비용
+                💰 DAY {{ forloop.counter }} 여행 비용
             </div>
 
+            <button class="add-schedule-btn"
+                    onclick="openPlaceSearch()">
+                +추가
+            </button>
 
-            <div class="pay-item">
+            {% for pay in item.pays %}
 
-                <span>
-                    경복궁 입장료
-                </span>
+                <div class="pay-item">
 
-                <strong>
-                    3,000원
-                </strong>
+                    <span>
+                        {{ pay.pay_context }}
+                    </span>
 
-            </div>
+                    <strong>
+                        {{ pay.pay_pay|floatformat:0 }}원
+                    </strong>
 
+                </div>
 
-            <div class="pay-item">
+            {% empty %}
 
-                <span>
-                    식사
-                </span>
+                <div class="pay-item">
+                    <span>등록된 비용이 없습니다.</span>
+                    <strong>0원</strong>
+                </div>
 
-                <strong>
-                    15,000원
-                </strong>
-
-            </div>
-
-
-            <div class="pay-item">
-
-                <span>
-                    기타 비용
-                </span>
-
-                <strong>
-                    10,000원
-                </strong>
-
-            </div>
+            {% endfor %}
 
 
             <div class="pay-item total-pay">
 
                 <span>
-                    총 비용
+                    DAY {{ forloop.counter }} 총 비용
                 </span>
 
-                <span>
-                    28,000원
-                </span>
+                <strong>
+                    {{ item.total_pay }}원
+                </strong>
 
             </div>
-
 
         </section>
 
@@ -593,6 +656,68 @@
 
 </div>
 
+<div id="placeModal" class="place-modal">
+
+    <div class="place-modal-overlay"
+         onclick="closePlaceModal()">
+    </div>
+
+    <div class="place-modal-content">
+
+        <div class="place-modal-header">
+
+            <h2>
+                장소 추가
+            </h2>
+
+            <button
+                onclick="closePlaceModal()">
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="place-search-area">
+
+            <input
+                type="text"
+                id="placeSearchInput"
+                placeholder="장소를 검색하세요">
+
+            <button onclick="searchPlace()">
+                검색
+            </button>
+
+        </div>
+
+
+        <div class="visit-time-area">
+
+            <label>
+                방문 시간
+            </label>
+
+            <input
+                type="time"
+                id="visitTime">
+
+        </div>
+
+
+        <div class="place-search-result">
+
+            <div id="placeResultList">
+            </div>
+
+            <div id="placeMap">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 </body>
 </html>

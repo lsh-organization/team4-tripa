@@ -52,7 +52,10 @@ def place_search_search(request):
             "sherpaapp/place_search.html",
             {
                 "places": places,
-                "query": query
+                "query": query,
+
+                "KAKAO_MAP_API_KEY":
+                    settings.KAKAO_MAP_API_KEY
             }
         )
     # ============================================
@@ -188,19 +191,108 @@ def travel_list(request):
 # 여행 상세
 # ==============================================
 
-def travel_detail(request, travel_id):
-    travel = Travel.objects.get(t_id=travel_id)
-    login_user = request.session.get('login_ok_user')
-    member = None
-    if login_user:
-        try:
-            member = Member.objects.get(email=login_user)
-        except Member.DoesNotExist:
-            member = None
+from django.shortcuts import render, get_object_or_404
+from .models import (
+    Travel,
+    Member,
+    Schedule,
+    SchedulePlace,
+    Pay
+)
 
-    return render(request, 'sherpaapp/travel_detail.html', {
-        'travel': travel,
-        'member': member
+def travel_detail_day(request, travel_id, day):
+
+    # 여행 정보
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id
+    )
+
+    # 해당 여행의 DAY 목록
+    schedules = Schedule.objects.filter(travel=travel).order_by('s_day')
+
+    # DAY가 존재하지 않는 경우
+    if not schedules.exists():
+        return JsonResponse({
+            'success': False,
+            'message': '등록된 여행 일정이 없습니다.'
+        })
+
+    # DAY 번호 범위 확인
+    if day < 1 or day > schedules.count():
+        return JsonResponse({
+            'success': False,
+            'message': '존재하지 않는 DAY입니다.'
+        })
+
+    # 해당 DAY
+    schedule = schedules[day - 1]
+
+    # 해당 DAY의 장소 일정
+    schedule_places = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .select_related('place')
+        .order_by('visit_order')
+    )
+
+    # 해당 DAY의 비용
+    pays = Pay.objects.filter(
+        schedule=schedule
+    )
+
+    # 총 비용
+    total_pay = sum(
+        pay.pay_pay for pay in pays
+    )
+
+    # 장소 데이터
+    places = []
+
+    for sp in schedule_places:
+
+        places.append({
+            'sp_id': sp.sp_id,
+            'visit_order': sp.visit_order,
+
+            'arrive_time': (
+                sp.arrive_time.strftime('%H:%M')
+                if sp.arrive_time else ''
+            ),
+
+            'stay_time': sp.stay_time,
+
+            'start_time': (
+                sp.start_time.strftime('%H:%M')
+                if sp.start_time else ''
+            ),
+            
+            'place_id': sp.place.p_id,
+            'place_name': sp.place.p_name,
+            'place_addr': sp.place.p_addr,
+            'place_kind': sp.place.p_kind,
+            'place_image': sp.place.p_image or '',
+        })
+
+    # 비용 데이터
+    payments = []
+
+    for pay in pays:
+
+        payments.append({
+            'pay_context': pay.pay_context,
+            'pay_pay': pay.pay_pay,
+        })
+
+    return JsonResponse({
+        'success': True,
+        'travel_id': travel_id,
+        'day': day,
+        'schedule_id': schedule.s_id,
+        's_day': schedule.s_day.strftime('%Y.%m.%d'),
+        'places': places,
+        'pays': payments,
+        'total_pay': total_pay,
     })
 
 # ==============================================
@@ -412,4 +504,280 @@ def mypage_edit(request):
     # 처음 수정 페이지에 들어왔을 때
     return render(request, 'mypage_edit.html', {
         'member': member
+    })
+
+def travel_detail(request, travel_id):
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id
+    )
+
+    # 로그인 사용자
+    login_user = request.session.get('login_ok_user')
+
+    member = None
+
+    if login_user:
+        try:
+            member = Member.objects.get(
+                email=login_user
+            )
+        except Member.DoesNotExist:
+            member = None
+
+    # 해당 여행의 DAY 목록
+    schedules = (
+        Schedule.objects
+        .filter(travel=travel)
+        .order_by('s_day')
+    )
+
+    return render(
+        request,
+        'sherpaapp/travel_detail.html',
+        {
+            'travel': travel,
+            'member': member,
+
+            # DAY
+            'schedules': schedules,
+    
+            # 카카오맵
+            'KAKAO_MAP_API_KEY': settings.KAKAO_MAP_API_KEY,
+        }
+    )
+
+def schedule_place_add(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '잘못된 요청입니다.'
+        }, status=400)
+
+    schedule_id = request.POST.get('schedule_id')
+    place_id = request.POST.get('place_id')
+    arrive_time = request.POST.get('arrive_time')
+
+    # 방문시간 확인
+    if not arrive_time:
+        return JsonResponse({
+            'success': False,
+            'message': '방문 시간을 먼저 입력해주세요'
+        }, status=400)
+
+    # 필수값 확인
+    if not schedule_id or not place_id:
+        return JsonResponse({
+            'success': False,
+            'message': '필수 정보가 없습니다.'
+        }, status=400)
+
+    # Schedule 조회
+    schedule = get_object_or_404(
+        Schedule,
+        s_id=schedule_id
+    )
+
+    # Place 조회
+    place = get_object_or_404(
+        Place,
+        p_id=place_id
+    )
+
+    # 방문시간 변환
+    try:
+        arrival = datetime.strptime(
+            arrive_time,
+            '%H:%M'
+        ).time()
+    except ValueError:
+        return JsonResponse({
+            'success': False,
+            'message': '방문시간 형식이 올바르지 않습니다.'
+        }, status=400)
+
+    # --------------------------------
+    # 체류시간 기본값
+    # --------------------------------
+    kind = place.p_kind or ''
+
+    if '관광' in kind:
+        stay_time = 120
+    elif '쇼핑' in kind:
+        stay_time = 120
+    elif '공원' in kind:
+        stay_time = 90
+    elif '카페' in kind:
+        stay_time = 60
+    elif '음식' in kind or '식당' in kind:
+        stay_time = 60
+    else:
+        stay_time = 60
+
+    # --------------------------------
+    # 방문 순서
+    # --------------------------------
+    last_place = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .order_by('-visit_order')
+        .first()
+    )
+
+    if last_place:
+        visit_order = last_place.visit_order + 1
+    else:
+        visit_order = 1
+
+    # --------------------------------
+    # 출발시간 계산
+    # 방문시간 + 체류시간
+    # --------------------------------
+    arrival_datetime = datetime.combine(
+        schedule.s_day,
+        arrival
+    )
+
+    start_datetime = (
+        arrival_datetime +
+        timedelta(minutes=stay_time)
+    )
+
+    start_time = start_datetime.time()
+
+    # --------------------------------
+    # 일정 저장
+    # --------------------------------
+    schedule_place = SchedulePlace.objects.create(
+        schedule=schedule,
+        place=place,
+        visit_order=visit_order,
+        stay_time=stay_time,
+        arrive_time=arrival,
+        start_time=start_time
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': '일정이 추가되었습니다.',
+        'sp_id': schedule_place.sp_id,
+        'visit_order': visit_order,
+        'place_name': place.p_name,
+        'address': place.p_addr,
+        'kind': place.p_kind,
+        'arrive_time': arrival.strftime('%H:%M'),
+        'stay_time': stay_time,
+        'start_time': start_time.strftime('%H:%M')
+    })
+
+def schedule_place_delete(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '잘못된 요청입니다.'
+        }, status=400)
+
+    sp_id = request.POST.get('sp_id')
+
+    if not sp_id:
+        return JsonResponse({
+            'success': False,
+            'message': '삭제할 일정 정보가 없습니다.'
+        }, status=400)
+
+    # 삭제할 일정 조회
+    schedule_place = get_object_or_404(
+        SchedulePlace,
+        sp_id=sp_id
+    )
+
+    # 같은 DAY의 Schedule 저장
+    schedule = schedule_place.schedule
+
+    # 일정 삭제
+    schedule_place.delete()
+
+    # 삭제 후 방문 순서 다시 정렬
+    remaining_places = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .order_by('visit_order', 'sp_id')
+    )
+
+    for index, item in enumerate(remaining_places, start=1):
+        if item.visit_order != index:
+            item.visit_order = index
+            item.save(update_fields=['visit_order'])
+
+    return JsonResponse({
+        'success': True,
+        'message': '일정이 삭제되었습니다.'
+    })
+
+def schedule_place_time_update(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '잘못된 요청입니다.'
+        }, status=400)
+
+    sp_id = request.POST.get('sp_id')
+    arrive_time = request.POST.get('arrive_time')
+
+    # 필수값 확인
+    if not sp_id or not arrive_time:
+        return JsonResponse({
+            'success': False,
+            'message': '방문시간을 입력해주세요.'
+        }, status=400)
+
+    # 일정 조회
+    schedule_place = get_object_or_404(
+        SchedulePlace,
+        sp_id=sp_id
+    )
+
+    # 방문시간 변환
+    try:
+        arrival = datetime.strptime(
+            arrive_time,
+            '%H:%M'
+        ).time()
+    except ValueError:
+        return JsonResponse({
+            'success': False,
+            'message': '방문시간 형식이 올바르지 않습니다.'
+        }, status=400)
+
+    # 체류시간
+    stay_time = schedule_place.stay_time or 0
+
+    # 방문시간 + 체류시간 계산
+    arrival_datetime = datetime.combine(
+        schedule_place.schedule.s_day,
+        arrival
+    )
+
+    start_datetime = (
+        arrival_datetime +
+        timedelta(minutes=stay_time)
+    )
+
+    start_time = start_datetime.time()
+
+    # DB 업데이트
+    schedule_place.arrive_time = arrival
+    schedule_place.start_time = start_time
+    schedule_place.save(
+        update_fields=[
+            'arrive_time',
+            'start_time'
+        ]
+    )
+
+    return JsonResponse({
+        'success': True,
+        'message': '방문시간이 변경되었습니다.',
+        'arrive_time': arrival.strftime('%H:%M'),
+        'start_time': start_time.strftime('%H:%M')
     })
