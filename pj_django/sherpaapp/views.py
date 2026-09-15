@@ -36,8 +36,8 @@ def login(request):
 def place_search(request):
     template = loader.get_template('sherpaapp/place_search.html')
     return HttpResponse(template.render({}, request))
-<<<<<<< HEAD
-=======
+
+
 
 def place_search_search(request):
 
@@ -171,7 +171,6 @@ def place_search_search(request):
         "sherpaapp/place_search.html",
         context
     )
->>>>>>> f969cb2e4ae22a3fc0f0d3be404c73459149a985
 
 # ==============================================
 # 여행 생성
