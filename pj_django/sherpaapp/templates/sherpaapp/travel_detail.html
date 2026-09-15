@@ -115,26 +115,30 @@
                 <div>
 
                     <h1>
-                        🗺️ 서울 여행
+                        🗺️ {{ travel.t_title }}
                     </h1>
 
 
                     <div class="travel-info">
 
-                        📅 2026.09.09 ~ 2026.09.12
-
+                        📅 {{ travel.t_start|date:"Y.m.d" }}
+                        ~
+                        {{ travel.t_end|date:"Y.m.d" }}
                         &nbsp;&nbsp;
-
-                        📍 서울
+                        📍 {{ travel.t_place }}
 
                     </div>
 
                 </div>
 
 
-                <button class="btn btn-primary">
+                <a
+                    href="{% url 'travel_update' travel_id=travel.t_id %}"
+                    class="btn btn-primary">
+
                     여행 수정
-                </button>
+
+                </a>
 
 
             </div>
@@ -200,48 +204,21 @@
                 <section class="day-box">
 
 
-                    <div class="section-title">
-                        📅 여행 일정
-                    </div>
+                    {% for day in days %}
 
-
-                    <div class="day active">
+                    <div class="day {% if forloop.first %}active{% endif %}">
 
                         <strong>
-                            DAY 1
+                            DAY {{ day.number }}
                         </strong>
 
                         <div class="day-date">
-                            2026.09.09
+                            {{ day.date|date:"Y.m.d" }}
                         </div>
 
                     </div>
 
-
-                    <div class="day">
-
-                        <strong>
-                            DAY 2
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.10
-                        </div>
-
-                    </div>
-
-
-                    <div class="day">
-
-                        <strong>
-                            DAY 3
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.11
-                        </div>
-
-                    </div>
+                    {% endfor %}
 
 
                 </section>
@@ -264,7 +241,7 @@
                         </div>
 
                         <div class="summary-value">
-                            서울
+                            {{ travel.t_place }}
                         </div>
 
                     </div>
@@ -277,7 +254,7 @@
                         </div>
 
                         <div class="summary-value">
-                            3일
+                            {{ travel_days }}일
                         </div>
 
                     </div>
@@ -295,6 +272,17 @@
 
                     </div>
 
+                    <div class="summary-item">
+
+                        <div class="summary-label">
+                            교통 수단
+                        </div>
+
+                        <div class="summary-value">
+                            {{ travel.t_way }}
+                        </div>
+
+                    </div>
 
                 </section>
 
