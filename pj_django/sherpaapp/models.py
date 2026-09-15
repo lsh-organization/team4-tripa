@@ -22,7 +22,8 @@ class Member(models.Model):
 # ==============================================
 
 class Travel(models.Model):
-    t_id = models.IntegerField(primary_key=True,db_column='T_ID')
+
+    t_id = models.AutoField(primary_key=True,db_column='T_ID')
     member = models.ForeignKey(Member,on_delete=models.CASCADE,db_column='M_ID')
     t_day = models.DateField(db_column='T_DAY',null=True)
     t_place = models.CharField(max_length=100,db_column='T_PLACE',null=True)
@@ -102,15 +103,16 @@ class Schedule(models.Model):
     s_day = models.DateField(
         db_column='S_DAY'
     )
+    
     travel = models.ForeignKey(
         Travel,
         on_delete=models.CASCADE,
-        db_column='T_ID'
+        db_column='T_ID',
+        related_name='Schedules'
     )
-
+    
     class Meta:
         db_table = 'SCHEDULE'
-
     def __str__(self):
         return str(self.s_day)
 
@@ -126,12 +128,14 @@ class SchedulePlace(models.Model):
     schedule = models.ForeignKey(
         Schedule,
         on_delete=models.CASCADE,
-        db_column='S_ID'
+        db_column='S_ID',
+        related_name='schedule_places'
     )
     place = models.ForeignKey(
         Place,
         on_delete=models.CASCADE,
-        db_column='P_ID'
+        db_column='P_ID',
+        related_name='schedule_places'
     )
     visit_order = models.IntegerField(
         db_column='VISIT_ORDER'
@@ -153,6 +157,20 @@ class SchedulePlace(models.Model):
     class Meta:
         db_table = 'SCHEDULE_PLACES'
         ordering = ['visit_order']
+
+    @property
+    def stay_time_display(self):
+        if self.stay_time is None:
+            return ''
+
+        hours, minutes = divmod(self.stay_time, 60)
+
+        if hours and minutes:
+            return f'{hours}시간 {minutes}분'
+        elif hours:
+            return f'{hours}시간'
+        else:
+            return f'{minutes}분'
 
 # ==============================================
 # 카테고리
@@ -207,3 +225,11 @@ class Pay(models.Model):
 
     class Meta:
         db_table = 'PAY'
+
+
+class T_concept(models.Model):
+    t_concept = models.CharField(
+    max_length=200,
+    db_column='T_CONCEPT',
+    null=True
+        )
