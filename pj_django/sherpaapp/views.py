@@ -8,10 +8,10 @@ from .models import Schedule
 from .models import Pay
 from .models import Category
 from .models import SchedulePlace
+from datetime import timedelta
 from django.shortcuts import render, redirect
 import requests
 from django.conf import settings
-from django.shortcuts import render
 
 # ==============================================
 # 회원가입
@@ -52,7 +52,9 @@ def place_search_search(request):
             "sherpaapp/place_search.html",
             {
                 "places": places,
-                "query": query
+                "query": query,
+                "KAKAO_MAP_API_KEY":
+                    settings.KAKAO_MAP_API_KEY
             }
         )
     # ============================================
@@ -173,16 +175,73 @@ def place_search_search(request):
 # ==============================================
 
 def travel_create(request):
-    template = loader.get_template('sherpaapp/travel_create.html')
-    return HttpResponse(template.render({}, request))
+
+    login_user = request.session.get('login_ok_user')
+
+    member = None
+
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+
+    if request.method == 'POST':
+
+        title = request.POST.get('t_title')
+        place = request.POST.get('t_place')
+        start = request.POST.get('t_start')
+        end = request.POST.get('t_end')
+        traffic = ','.join(request.POST.getlist('traffic'))
+        travel = Travel.objects.create(
+            member=member,
+            t_title=title,
+            t_place=place,
+            t_start=start,
+            t_end=end,
+            t_day=start,
+            t_way=traffic
+        )
+
+        return redirect(
+            'travel_detail',
+            travel_id=travel.t_id
+        )
+
+    return render(
+        request,
+        'sherpaapp/travel_create.html',
+        {
+            'member': member
+        }
+    )
 
 # ==============================================
 # 여행 목록
 # ==============================================
 
-def travel_list(request):  
-    template = loader.get_template('sherpaapp/travel_list.html')
-    return HttpResponse(template.render({}, request))
+def travel_list(request):
+
+    login_user = request.session.get('login_ok_user')
+
+    member = None
+
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+
+    travels = Travel.objects.filter(member=member)
+
+    return render(
+        request,
+        'sherpaapp/travel_list.html',
+        {
+            'member': member,
+            'travels': travels
+        }
+    )
 
 # ==============================================
 # 여행 상세
@@ -197,25 +256,68 @@ def travel_detail(request, travel_id):
             member = Member.objects.get(email=login_user)
         except Member.DoesNotExist:
             member = None
-
-    return render(request, 'sherpaapp/travel_detail.html', {
-        'travel': travel,
-        'member': member
-    })
-
+    days = []
+    if travel.t_start and travel.t_end:
+        current_date = travel.t_start
+        day_number = 1
+        while current_date <= travel.t_end:
+            days.append({
+                'number': day_number,
+                'date': current_date
+            })
+            current_date += timedelta(days=1)
+            day_number += 1
+    travel_days = 0
+    if travel.t_start and travel.t_end:
+        travel_days = (travel.t_end - travel.t_start).days + 1
+    return render(
+        request,
+        'sherpaapp/travel_detail.html',
+        {
+            'travel': travel,
+            'member': member,
+            'days': days,
+            'travel_days': travel_days
+        }
+    )
 # ==============================================
 # 여행 수정
 # ==============================================
 
 def travel_update(request, travel_id):
-    pass
-
+    travel = Travel.objects.get(t_id=travel_id)
+    login_user = request.session.get('login_ok_user')
+    member = None
+    if login_user:
+        try:
+            member = Member.objects.get(email=login_user)
+        except Member.DoesNotExist:
+            member = None
+    if request.method == 'POST':
+        travel.t_title = request.POST.get('t_title')
+        travel.t_place = request.POST.get('t_place')
+        travel.t_start = request.POST.get('t_start')
+        travel.t_end = request.POST.get('t_end')
+        traffic = ','.join(request.POST.getlist('traffic'))
+        travel.t_way = traffic
+        travel.save()
+        return redirect(
+            'travel_detail',
+            travel_id=travel.t_id
+        )
+    return render(
+        request,
+        'sherpaapp/travel_update.html',{'travel': travel,'member': member}
+    )
 # ==============================================
 # 여행 삭제
 # ==============================================
 
 def travel_delete(request, travel_id):
-    pass
+    travel = Travel.objects.get(t_id=travel_id)
+    if request.method == 'POST':
+        travel.delete()
+    return redirect('travel_list')
 
 # ==============================================
 # 홈페이지
