@@ -32,7 +32,9 @@
 
 
         <div class="logo">
-            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+            <a href="{% url 'index' %}">
+                🏔️ TRIPA
+            </a>
         </div>
 
 
@@ -83,18 +85,29 @@
         </ul>
 
 
-            {% if member %}
-                <a href="{% url 'mypage' %}" class="user-profile">
-                    👤 {{ member.nickname }}
-                </a>
-            {% else %}
-                <a href="{% url 'login' %}" class="user-profile">
-                    👤 로그인
-                </a>
-            {% endif %}
+        {% if member %}
+
+            <a href="{% url 'mypage' %}"
+               class="user-profile">
+
+                👤 {{ member.nickname }}
+
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'login' %}"
+               class="user-profile">
+
+                👤 로그인
+
+            </a>
+
+        {% endif %}
 
 
     </aside>
+
 
 
     <!-- =========================
@@ -104,7 +117,9 @@
     <main class="detail-content">
 
 
-        <!-- 여행 정보 -->
+        <!-- =========================
+             여행 정보
+        ========================= -->
 
         <section class="travel-header">
 
@@ -114,20 +129,25 @@
 
                 <div>
 
+
                     <h1>
-                        🗺️ 서울 여행
+                        🗺️ {{ travel.t_title }}
                     </h1>
 
 
                     <div class="travel-info">
 
-                        📅 2026.09.09 ~ 2026.09.12
+                        📅
+                        {{ travel.t_start|date:"Y.m.d" }}
+                        ~
+                        {{ travel.t_end|date:"Y.m.d" }}
 
                         &nbsp;&nbsp;
 
-                        📍 서울
+                        📍 {{ travel.t_place }}
 
                     </div>
+
 
                 </div>
 
@@ -143,12 +163,17 @@
         </section>
 
 
-        <!-- 지도 + DAY -->
+
+        <!-- =========================
+             지도 + DAY
+        ========================= -->
 
         <div class="dashboard">
 
 
-            <!-- 지도 -->
+            <!-- =========================
+                 지도
+            ========================= -->
 
             <section class="section-box map-box">
 
@@ -192,7 +217,10 @@
             </section>
 
 
-            <!-- DAY + 요약 -->
+
+            <!-- =========================
+                 DAY + 요약
+            ========================= -->
 
             <div>
 
@@ -205,49 +233,48 @@
                     </div>
 
 
-                    <div class="day active">
+                    {% for day in days %}
 
-                        <strong>
-                            DAY 1
-                        </strong>
 
-                        <div class="day-date">
-                            2026.09.09
+                        <div
+                            class="day {% if forloop.first %}active{% endif %}"
+                            data-day="{{ day.day_number }}"
+                        >
+
+
+                            <strong>
+                                DAY {{ day.day_number }}
+                            </strong>
+
+
+                            <div class="day-date">
+
+                                {{ day.schedule.s_day|date:"Y.m.d" }}
+
+                            </div>
+
+
                         </div>
 
-                    </div>
+
+                    {% empty %}
 
 
-                    <div class="day">
-
-                        <strong>
-                            DAY 2
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.10
+                        <div>
+                            등록된 일정이 없습니다.
                         </div>
 
-                    </div>
 
-
-                    <div class="day">
-
-                        <strong>
-                            DAY 3
-                        </strong>
-
-                        <div class="day-date">
-                            2026.09.11
-                        </div>
-
-                    </div>
+                    {% endfor %}
 
 
                 </section>
 
 
-                <!-- 여행 요약 -->
+
+                <!-- =========================
+                     여행 요약
+                ========================= -->
 
                 <section class="travel-summary">
 
@@ -259,39 +286,50 @@
 
                     <div class="summary-item">
 
+
                         <div class="summary-label">
                             여행 지역
                         </div>
 
+
                         <div class="summary-value">
-                            서울
+                            {{ travel.t_place }}
                         </div>
+
 
                     </div>
 
 
+
                     <div class="summary-item">
+
 
                         <div class="summary-label">
                             여행 기간
                         </div>
 
+
                         <div class="summary-value">
-                            3일
+                            {{ travel_days }}일
                         </div>
+
 
                     </div>
 
 
+
                     <div class="summary-item">
+
 
                         <div class="summary-label">
                             방문 장소
                         </div>
 
+
                         <div class="summary-value">
-                            3곳
+                            {{ place_count }}곳
                         </div>
+
 
                     </div>
 
@@ -305,137 +343,160 @@
         </div>
 
 
-        <!-- TIMELINE -->
 
-        <section class="timeline-box">
-
-
-            <div class="section-title">
-                📅 DAY 1 일정
-            </div>
+        <!-- =========================
+             TIMELINE
+        ========================= -->
 
 
-            <div class="timeline">
+        {% for day in days %}
 
 
-                <div class="timeline-item">
+            <section
+                class="timeline-box day-schedule"
+                id="day-{{ day.day_number }}"
+
+                {% if not forloop.first %}
+                    style="display:none;"
+                {% endif %}
+            >
 
 
-                    <div class="time">
-                        10:00
-                    </div>
+                <div class="section-title">
+
+                    📅 DAY {{ day.day_number }} 일정
+
+                </div>
 
 
-                    <div class="timeline-icon">
-                        📍
-                    </div>
+
+                <div class="timeline">
 
 
-                    <div class="timeline-content">
+                    {% for item in day.places %}
 
-                        <h3>
-                            ① 경복궁
-                        </h3>
 
-                        <p>
-                            서울특별시 종로구
-                        </p>
+                        <div class="timeline-item">
 
-                        <p>
-                            ⏱ 체류 시간 : 2시간
-                        </p>
 
-                        <p>
-                            출발 시간 : 12:00
-                        </p>
+                            <!-- 도착시간 -->
 
-                    </div>
+                            <div class="time">
+
+                                {% if item.arrive_time %}
+
+                                    {{ item.arrive_time|time:"H:i" }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </div>
+
+
+
+                            <div class="timeline-icon">
+                                📍
+                            </div>
+
+
+
+                            <div class="timeline-content">
+
+
+                                <h3>
+
+                                    {{ item.visit_order }}.
+                                    {{ item.place.p_name }}
+
+                                </h3>
+
+
+
+                                <p>
+
+                                    {{ item.place.p_addr }}
+
+                                </p>
+
+
+
+                                <p>
+
+                                    ⏱ 체류 시간 :
+                                    {{ item.stay_time_display }}
+
+                                </p>
+
+
+
+                                <p>
+
+                                    출발 시간 :
+
+                                    {% if item.start_time %}
+
+                                        {{ item.start_time|time:"H:i" }}
+
+                                    {% else %}
+
+                                        -
+
+                                    {% endif %}
+
+                                </p>
+
+
+                            </div>
+
+
+                        </div>
+
+
+                    {% empty %}
+
+
+                        <div class="empty-schedule">
+
+                            등록된 일정이 없습니다.
+
+                        </div>
+
+
+                    {% endfor %}
 
 
                 </div>
 
 
-                <div class="timeline-item">
+            </section>
 
 
-                    <div class="time">
-                        13:00
-                    </div>
+        {% empty %}
 
 
-                    <div class="timeline-icon">
-                        📍
-                    </div>
+            <section class="timeline-box">
 
-
-                    <div class="timeline-content">
-
-                        <h3>
-                            ② 북촌한옥마을
-                        </h3>
-
-                        <p>
-                            서울특별시 종로구
-                        </p>
-
-                        <p>
-                            ⏱ 체류 시간 : 1시간 30분
-                        </p>
-
-                        <p>
-                            출발 시간 : 14:30
-                        </p>
-
-                    </div>
-
-
+                <div class="section-title">
+                    📅 일정
                 </div>
 
+                <p>
+                    등록된 일정이 없습니다.
+                </p>
 
-                <div class="timeline-item">
-
-
-                    <div class="time">
-                        16:00
-                    </div>
+            </section>
 
 
-                    <div class="timeline-icon">
-                        📍
-                    </div>
+        {% endfor %}
 
 
-                    <div class="timeline-content">
 
-                        <h3>
-                            ③ 남산타워
-                        </h3>
-
-                        <p>
-                            서울특별시 용산구
-                        </p>
-
-                        <p>
-                            ⏱ 체류 시간 : 2시간
-                        </p>
-
-                        <p>
-                            출발 시간 : 18:00
-                        </p>
-
-                    </div>
-
-
-                </div>
-
-
-            </div>
-
-
-        </section>
-
-
-        <!-- 방문 장소 -->
+        <!-- =========================
+             방문 장소
+        ========================= -->
 
         <section class="place-list">
 
@@ -445,85 +506,66 @@
             </div>
 
 
-            <div class="place-card">
 
-                <div class="place-image">
-                    🏯
-                </div>
-
-                <div class="place-info">
-
-                    <h3>
-                        경복궁
-                    </h3>
-
-                    <p>
-                        서울특별시 종로구 사직로 161
-                    </p>
-
-                    <span class="place-category">
-                        관광지
-                    </span>
-
-                </div>
-
-            </div>
+            {% for place in visited_places %}
 
 
-            <div class="place-card">
+                <div class="place-card">
 
-                <div class="place-image">
-                    🏘️
-                </div>
 
-                <div class="place-info">
+                    <div class="place-image">
+                        📍
+                    </div>
 
-                    <h3>
-                        북촌한옥마을
-                    </h3>
 
-                    <p>
-                        서울특별시 종로구 계동길
-                    </p>
 
-                    <span class="place-category">
-                        관광지
-                    </span>
+                    <div class="place-info">
+
+
+                        <h3>
+                            {{ place.p_name }}
+                        </h3>
+
+
+                        <p>
+                            {{ place.p_addr }}
+                        </p>
+
+
+                        <span class="place-category">
+
+                            {{ place.p_kind }}
+
+                        </span>
+
+
+                    </div>
+
 
                 </div>
 
-            </div>
+
+            {% empty %}
 
 
-            <div class="place-card">
+                <div>
 
-                <div class="place-image">
-                    🗼
-                </div>
-
-                <div class="place-info">
-
-                    <h3>
-                        남산타워
-                    </h3>
-
-                    <p>
-                        서울특별시 용산구 남산공원길
-                    </p>
-
-                    <span class="place-category">
-                        관광지
-                    </span>
+                    등록된 방문 장소가 없습니다.
 
                 </div>
 
-            </div>
+
+            {% endfor %}
 
 
         </section>
 
 
-        <!-- 비용 -->
+
+        <!-- =========================
+             비용
+             현재는 기존 코드 유지
+        ========================= -->
 
         <section class="pay-box">
 
@@ -594,5 +636,101 @@
 </div>
 
 
+
+<!-- =========================
+     DAY 선택
+========================= -->
+
+<script>
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const dayButtons =
+            document.querySelectorAll('.day');
+
+        const schedules =
+            document.querySelectorAll('.day-schedule');
+
+
+        dayButtons.forEach(function (button) {
+
+
+            button.addEventListener(
+                'click',
+                function () {
+
+
+                    const dayNumber =
+                        this.dataset.day;
+
+
+                    /*
+                     * 모든 DAY 버튼 active 제거
+                     */
+                    dayButtons.forEach(
+                        function (btn) {
+
+                            btn.classList.remove(
+                                'active'
+                            );
+
+                        }
+                    );
+
+
+                    /*
+                     * 클릭한 DAY 활성화
+                     */
+                    this.classList.add(
+                        'active'
+                    );
+
+
+                    /*
+                     * 모든 일정 숨기기
+                     */
+                    schedules.forEach(
+                        function (schedule) {
+
+                            schedule.style.display =
+                                'none';
+
+                        }
+                    );
+
+
+                    /*
+                     * 선택한 일정 표시
+                     */
+                    const selectedSchedule =
+                        document.getElementById(
+                            'day-' + dayNumber
+                        );
+
+
+                    if (selectedSchedule) {
+
+                        selectedSchedule.style.display =
+                            'block';
+
+                    }
+
+
+                }
+            );
+
+
+        });
+
+
+    }
+);
+
+</script>
+
+
 </body>
+
 </html>
