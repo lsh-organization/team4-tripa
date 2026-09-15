@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 여행 수정</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}">
+
+</head>
+
+
+<body>
+
+<div class="detail-container">
+
+
+    <!-- SIDEBAR -->
+
+    <aside class="sidebar">
+
+        <div class="logo">
+            <a href="{% url 'index' %}">
+                🏔️ TRIPA
+            </a>
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    ✈️ 내 여행
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    ➕ 여행 만들기
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'place_search' %}">
+                    📍 장소 검색
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'travel_detail' travel_id=travel.t_id %}">
+                    📅 일정 관리
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    💰 비용 관리
+                </a>
+            </li>
+
+        </ul>
+
+
+        {% if member %}
+
+            <a href="{% url 'mypage' %}" class="user-profile">
+                👤 {{ member.nickname }}
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'login' %}" class="user-profile">
+                👤 로그인
+            </a>
+
+        {% endif %}
+
+    </aside>
+
+
+    <!-- MAIN -->
+
+    <main class="detail-content">
+
+
+        <div class="page-title">
+
+            <h1>
+                ✏️ 여행 수정
+            </h1>
+
+            <p>
+                여행 정보를 수정해주세요.
+            </p>
+
+        </div>
+
+
+        <div class="create-layout">
+
+
+            <div class="card">
+
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+
+                    <!-- 여행 제목 -->
+
+                    <div class="form-group">
+
+                        <label>
+                            여행 제목
+                        </label>
+
+                        <input
+                            type="text"
+                            name="t_title"
+                            value="{{ travel.t_title }}"
+                            placeholder="예) 서울 3박 4일 여행">
+
+                    </div>
+
+
+                    <!-- 여행 지역 -->
+
+                    <div class="form-group">
+
+                        <label>
+                            여행 지역
+                        </label>
+
+                        <input
+                            type="text"
+                            name="t_place"
+                            value="{{ travel.t_place }}"
+                            placeholder="예) 서울">
+
+                    </div>
+
+
+                    <!-- 시작일 -->
+
+                    <div class="date-group">
+
+                        <div class="form-group">
+
+                            <label>
+                                여행 시작일
+                            </label>
+
+                            <input
+                                type="date"
+                                name="t_start"
+                                value="{{ travel.t_start|date:'Y-m-d' }}">
+
+                        </div>
+
+
+                        <!-- 종료일 -->
+
+                        <div class="form-group">
+
+                            <label>
+                                여행 종료일
+                            </label>
+
+                            <input
+                                type="date"
+                                name="t_end"
+                                value="{{ travel.t_end|date:'Y-m-d' }}">
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- 버튼 -->
+
+                    <div class="button-group">
+
+                        <a
+                            href="{% url 'travel_detail' travel_id=travel.t_id %}"
+                            class="btn btn-secondary">
+
+                            취소
+
+                        </a>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary">
+
+                            저장
+
+                        </button>
+
+                    </div>
+
+
+                </form>
+
+
+            </div>
+
+
+        </div>
+
+
+    </main>
+
+</div>
+
+</body>
+</html>

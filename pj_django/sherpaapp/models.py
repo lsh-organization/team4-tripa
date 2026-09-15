@@ -22,6 +22,7 @@ class Member(models.Model):
 # ==============================================
 
 class Travel(models.Model):
+
     t_id = models.AutoField(primary_key=True,db_column='T_ID')
     member = models.ForeignKey(Member,on_delete=models.CASCADE,db_column='M_ID')
     t_day = models.DateField(db_column='T_DAY',null=True)
@@ -96,16 +97,16 @@ class Schedule(models.Model):
     s_day = models.DateField(
         db_column='S_DAY'
     )
+    
     travel = models.ForeignKey(
         Travel,
         on_delete=models.CASCADE,
         db_column='T_ID',
         related_name='Schedules'
     )
-
+    
     class Meta:
         db_table = 'SCHEDULE'
-
     def __str__(self):
         return str(self.s_day)
 
@@ -218,3 +219,11 @@ class Pay(models.Model):
 
     class Meta:
         db_table = 'PAY'
+
+
+class T_concept(models.Model):
+    t_concept = models.CharField(
+    max_length=200,
+    db_column='T_CONCEPT',
+    null=True
+        )

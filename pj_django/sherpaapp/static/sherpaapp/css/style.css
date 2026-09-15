@@ -256,7 +256,7 @@ nav a:hover {
 }
 
 
-.form-group input,
+.form-group input:not([type="checkbox"]),
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -279,7 +279,7 @@ nav a:hover {
 }
 
 
-.form-group input:focus,
+.form-group input:not([type="checkbox"]):focus,
 .form-group select:focus,
 .form-group textarea:focus {
     border-color: #2d6cdf;
@@ -294,7 +294,13 @@ nav a:hover {
     resize: vertical;
 }
 
-
+.form-group .concept-item {
+    display: flex;
+    align-items: center;
+    width: auto;
+    margin-bottom: 0;
+    cursor: pointer;
+}
 /* =========================
    SEARCH
 ========================= */
@@ -538,11 +544,11 @@ nav a:hover {
 
 .map-wrapper {
     
-    position: relative !important;
+    position: relative;
 
     width: 100%;
 
-    height: 600px;
+    height: 1000px;
 
     border-radius: 12px;
 
@@ -655,7 +661,7 @@ nav a:hover {
 
     top: 0 !important;
     
-    letf: 0 !important;
+    left: 0 !important;
 
     width: 100% !important;
 
@@ -3092,4 +3098,65 @@ footer {
 
     border-radius: 12px;
 
+}
+/* =========================
+   여행 컨셉
+========================= */
+
+.concept-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-top: 10px;
+}
+
+
+/* 컨셉 하나 */
+.form-group label.concept-item {
+    display: flex;
+
+    align-items: center;
+
+    width: auto;
+
+    margin: 0;
+
+    padding: 10px 14px;
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+
+    background-color: white;
+
+    cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+
+/* 체크박스 */
+.form-group label.concept-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+
+    margin: 0 7px 0 0;
+
+    padding: 0;
+
+    cursor: pointer;
+}
+
+
+/* 글자 */
+.form-group label.concept-item span {
+    white-space: nowrap;
+}
+
+
+/* 마우스 올렸을 때 */
+.form-group label.concept-item:hover {
+    border-color: #2d6cdf;
+    background-color: #f5f8ff;
 }

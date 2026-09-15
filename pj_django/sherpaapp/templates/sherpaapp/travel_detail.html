@@ -32,9 +32,11 @@
 
 
         <div class="logo">
+
             <a href="{% url 'index' %}">
                 🏔️ TRIPA
             </a>
+
         </div>
 
 
@@ -47,38 +49,50 @@
 
 
             <li>
+
                 <a href="{% url 'travel_list' %}">
                     ✈️ 내 여행
                 </a>
+
             </li>
 
 
             <li>
+
                 <a href="{% url 'travel_create' %}">
                     ➕ 여행 만들기
                 </a>
+
             </li>
 
 
             <li>
+
                 <a href="{% url 'place_search' %}">
                     📍 장소 검색
                 </a>
+
             </li>
 
 
             <li>
+
                 <a href="{% url 'travel_detail' travel_id=travel.t_id %}"
                    class="active">
+
                     📅 일정 관리
+
                 </a>
+
             </li>
 
 
             <li>
+
                 <a href="{% url 'budget' %}">
                     💰 비용 관리
                 </a>
+
             </li>
 
 
@@ -152,9 +166,13 @@
                 </div>
 
 
-                <button class="btn btn-primary">
+                <a
+                    href="{% url 'travel_update' travel_id=travel.t_id %}"
+                    class="btn btn-primary">
+
                     여행 수정
-                </button>
+
+                </a>
 
 
             </div>
@@ -228,11 +246,6 @@
                 <section class="day-box">
 
 
-                    <div class="section-title">
-                        📅 여행 일정
-                    </div>
-
-
                     {% for day in days %}
 
 
@@ -260,8 +273,10 @@
                     {% empty %}
 
 
-                        <div>
+                        <div class="empty-schedule">
+
                             등록된 일정이 없습니다.
+
                         </div>
 
 
@@ -334,6 +349,23 @@
                     </div>
 
 
+
+                    <div class="summary-item">
+
+
+                        <div class="summary-label">
+                            교통 수단
+                        </div>
+
+
+                        <div class="summary-value">
+                            {{ travel.t_way }}
+                        </div>
+
+
+                    </div>
+
+
                 </section>
 
 
@@ -379,9 +411,12 @@
                         <div class="timeline-item">
 
 
-                            <!-- 도착시간 -->
+                            <!-- =========================
+                                 도착 시간
+                            ========================= -->
 
                             <div class="time">
+
 
                                 {% if item.arrive_time %}
 
@@ -392,6 +427,7 @@
                                     -
 
                                 {% endif %}
+
 
                             </div>
 
@@ -479,13 +515,16 @@
 
             <section class="timeline-box">
 
+
                 <div class="section-title">
                     📅 일정
                 </div>
 
-                <p>
+
+                <p class="empty-schedule">
                     등록된 일정이 없습니다.
                 </p>
+
 
             </section>
 
@@ -523,12 +562,16 @@
 
 
                         <h3>
+
                             {{ place.p_name }}
+
                         </h3>
 
 
                         <p>
+
                             {{ place.p_addr }}
+
                         </p>
 
 
@@ -548,7 +591,7 @@
             {% empty %}
 
 
-                <div>
+                <div class="empty-schedule">
 
                     등록된 방문 장소가 없습니다.
 
@@ -643,90 +686,101 @@
 
 <script>
 
+
 document.addEventListener(
     'DOMContentLoaded',
     function () {
 
+
         const dayButtons =
             document.querySelectorAll('.day');
+
 
         const schedules =
             document.querySelectorAll('.day-schedule');
 
 
-        dayButtons.forEach(function (button) {
+
+        dayButtons.forEach(
+            function (button) {
 
 
-            button.addEventListener(
-                'click',
-                function () {
+                button.addEventListener(
+                    'click',
+                    function () {
 
 
-                    const dayNumber =
-                        this.dataset.day;
+                        const dayNumber =
+                            this.dataset.day;
 
 
-                    /*
-                     * 모든 DAY 버튼 active 제거
-                     */
-                    dayButtons.forEach(
-                        function (btn) {
+                        /*
+                         * 모든 DAY 버튼 active 제거
+                         */
 
-                            btn.classList.remove(
-                                'active'
-                            );
+                        dayButtons.forEach(
+                            function (btn) {
 
-                        }
-                    );
+                                btn.classList.remove(
+                                    'active'
+                                );
 
-
-                    /*
-                     * 클릭한 DAY 활성화
-                     */
-                    this.classList.add(
-                        'active'
-                    );
-
-
-                    /*
-                     * 모든 일정 숨기기
-                     */
-                    schedules.forEach(
-                        function (schedule) {
-
-                            schedule.style.display =
-                                'none';
-
-                        }
-                    );
-
-
-                    /*
-                     * 선택한 일정 표시
-                     */
-                    const selectedSchedule =
-                        document.getElementById(
-                            'day-' + dayNumber
+                            }
                         );
 
 
-                    if (selectedSchedule) {
+                        /*
+                         * 클릭한 DAY 활성화
+                         */
 
-                        selectedSchedule.style.display =
-                            'block';
+                        this.classList.add(
+                            'active'
+                        );
+
+
+                        /*
+                         * 모든 일정 숨기기
+                         */
+
+                        schedules.forEach(
+                            function (schedule) {
+
+                                schedule.style.display =
+                                    'none';
+
+                            }
+                        );
+
+
+                        /*
+                         * 선택한 일정 표시
+                         */
+
+                        const selectedSchedule =
+                            document.getElementById(
+                                'day-' + dayNumber
+                            );
+
+
+                        if (selectedSchedule) {
+
+                            selectedSchedule.style.display =
+                                'block';
+
+                        }
+
 
                     }
+                );
 
 
-                }
-            );
-
-
-        });
+            }
+        );
 
 
     }
 );
+
 
 </script>
 

@@ -126,7 +126,8 @@
             <div class="card">
 
 
-                <form>
+                <form method="POST">
+                    {% csrf_token %}
 
 
                     <div class="form-group">
@@ -137,8 +138,8 @@
 
                         <input
                             type="text"
+                            name="t_title"
                             placeholder="예) 서울 3박 4일 여행">
-
                     </div>
 
 
@@ -150,10 +151,95 @@
 
                         <input
                             type="text"
+                            name="t_place"
                             placeholder="예) 서울">
-
                     </div>
 
+<div class="form-group">
+
+    <label>
+        여행 컨셉
+    </label>
+
+    <div class="concept-list">
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="쇼핑">
+            <span>쇼핑</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="역사">
+            <span>역사</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="전통문화">
+            <span>전통문화</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="랜드마크">
+            <span>랜드마크</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="카페">
+            <span>카페</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="공원">
+            <span>공원</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="음식">
+            <span>음식</span>
+        </label>
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="자연">
+            <span>자연</span>
+        </label>
+        <label class="concept-item">
+            <input type="checkbox" name="concept" value="바다">
+            <span>바다</span>
+        </label>
+
+    </div>
+
+</div>
+
+<div class="form-group">
+
+    <label>
+        교통 수단
+    </label>
+
+    <div class="concept-list">
+
+        <label class="concept-item">
+            <input type="checkbox" name="traffic" value="car">
+            <span>차</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="traffic" value="walk">
+            <span>도보</span>
+        </label>
+        
+        <label class="concept-item">
+            <input type="checkbox" name="traffic" value="public transport">
+            <span>대중교통</span>
+        </label>
+
+        <label class="concept-item">
+            <input type="checkbox" name="traffic" value="bike">
+            <span>자전거</span>
+        </label>
+    </div>
+
+</div>
 
                     <div class="date-group">
 
@@ -164,7 +250,9 @@
                                 여행 시작일
                             </label>
 
-                            <input type="date">
+                            <input
+                                type="date"
+                                name="t_start">
 
                         </div>
 
@@ -175,8 +263,9 @@
                                 여행 종료일
                             </label>
 
-                            <input type="date">
-
+                            <input
+                                type="date"
+                                name="t_end">
                         </div>
 
 
@@ -195,13 +284,13 @@
                         </a>
 
 
-                        <a
-                            href="{% url 'travel_detail' travel_id=1 %}"
+                        <button
+                            type="submit"
                             class="btn btn-primary">
 
                             여행 만들기
 
-                        </a>
+                        </button>
 
 
                     </div>

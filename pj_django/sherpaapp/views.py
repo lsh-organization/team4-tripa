@@ -1,6 +1,6 @@
 from django.http import HttpResponse, JsonResponse
 from django.template import loader
-from django.db.models import Q, Prefetch
+from django.db.models import Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
 
@@ -47,7 +47,7 @@ def place_search_search(request):
     # GET 방식으로 검색어 받기
     query = request.GET.get("query", "").strip()
 
-    # GET 검색 결과 저장
+    # 검색 결과 저장
     places = []
 
     # 검색어가 없으면
@@ -57,7 +57,8 @@ def place_search_search(request):
             "sherpaapp/place_search.html",
             {
                 "places": places,
-                "query": query
+                "query": query,
+                "KAKAO_MAP_API_KEY": settings.KAKAO_MAP_API_KEY
             }
         )
 
@@ -72,7 +73,7 @@ def place_search_search(request):
     }
 
     # ============================================
-    # 1. 카카오 장소 검색
+    # 카카오 장소 검색
     # ============================================
 
     place_url = (
@@ -139,7 +140,6 @@ def place_search_search(request):
         # ========================================
 
         places.append({
-
             "name": place_name,
 
             "address":
@@ -171,7 +171,8 @@ def place_search_search(request):
 
     context = {
         "places": places,
-        "query": query
+        "query": query,
+        "KAKAO_MAP_API_KEY": settings.KAKAO_MAP_API_KEY
     }
 
     return render(
@@ -186,11 +187,54 @@ def place_search_search(request):
 # ==============================================
 
 def travel_create(request):
-    template = loader.get_template(
-        'sherpaapp/travel_create.html'
-    )
-    return HttpResponse(
-        template.render({}, request)
+
+    login_user = request.session.get('login_ok_user')
+
+    # 로그인하지 않은 경우
+    if not login_user:
+        return redirect('login')
+
+    try:
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+        return redirect('login')
+
+    # 여행 생성
+    if request.method == 'POST':
+
+        title = request.POST.get('t_title')
+        place = request.POST.get('t_place')
+        start = request.POST.get('t_start')
+        end = request.POST.get('t_end')
+
+        traffic = ','.join(
+            request.POST.getlist('traffic')
+        )
+
+        travel = Travel.objects.create(
+            member=member,
+            t_title=title,
+            t_place=place,
+            t_start=start,
+            t_end=end,
+            t_day=start,
+            t_way=traffic
+        )
+
+        return redirect(
+            'travel_detail',
+            travel_id=travel.t_id
+        )
+
+    return render(
+        request,
+        'sherpaapp/travel_create.html',
+        {
+            'member': member
+        }
     )
 
 
@@ -199,11 +243,32 @@ def travel_create(request):
 # ==============================================
 
 def travel_list(request):
-    template = loader.get_template(
-        'sherpaapp/travel_list.html'
+
+    login_user = request.session.get('login_ok_user')
+
+    if not login_user:
+        return redirect('login')
+
+    try:
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+        return redirect('login')
+
+    # 로그인 회원의 여행만 조회
+    travels = Travel.objects.filter(
+        member=member
     )
-    return HttpResponse(
-        template.render({}, request)
+
+    return render(
+        request,
+        'sherpaapp/travel_list.html',
+        {
+            'member': member,
+            'travels': travels
+        }
     )
 
 
@@ -237,11 +302,12 @@ def travel_detail(request, travel_id):
             member = Member.objects.get(
                 email=login_user
             )
+
         except Member.DoesNotExist:
             member = None
 
     # ==========================================
-    # 일정에 연결된 장소 조회
+    # 일정 장소 조회
     #
     # SCHEDULE_PLACES
     #        ↓
@@ -255,7 +321,7 @@ def travel_detail(request, travel_id):
     )
 
     # ==========================================
-    # 현재 여행의 일정 조회
+    # 해당 여행 일정 조회
     #
     # TRAVEL
     #   ↓
@@ -279,7 +345,7 @@ def travel_detail(request, travel_id):
     )
 
     # ==========================================
-    # DAY별 데이터 생성
+    # DAY별 일정
     # ==========================================
 
     days = []
@@ -297,7 +363,7 @@ def travel_detail(request, travel_id):
 
     # ==========================================
     # 방문 장소 목록
-    # 중복 장소 제거
+    # 같은 장소 중복 제거
     # ==========================================
 
     visited_places = []
@@ -336,14 +402,10 @@ def travel_detail(request, travel_id):
     # ==========================================
 
     context = {
-
-        # 로그인 사용자
+        'travel': travel,
         'member': member,
 
-        # 여행 정보
-        'travel': travel,
-
-        # 전체 일정
+        # 일정
         'schedules': schedules,
 
         # DAY별 일정
@@ -352,10 +414,10 @@ def travel_detail(request, travel_id):
         # 방문 장소
         'visited_places': visited_places,
 
-        # 여행 기간
+        # 여행 일수
         'travel_days': travel_days,
 
-        # 방문 장소 수
+        # 방문 장소 개수
         'place_count': len(visited_places),
     }
 
@@ -371,7 +433,79 @@ def travel_detail(request, travel_id):
 # ==============================================
 
 def travel_update(request, travel_id):
-    pass
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id
+    )
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+    member = None
+
+    if login_user:
+        try:
+            member = Member.objects.get(
+                email=login_user
+            )
+
+        except Member.DoesNotExist:
+            member = None
+
+    # ==========================================
+    # 수정 저장
+    # ==========================================
+
+    if request.method == 'POST':
+
+        travel.t_title = request.POST.get(
+            't_title'
+        )
+
+        travel.t_place = request.POST.get(
+            't_place'
+        )
+
+        travel.t_start = request.POST.get(
+            't_start'
+        )
+
+        travel.t_end = request.POST.get(
+            't_end'
+        )
+
+        traffic = ','.join(
+            request.POST.getlist('traffic')
+        )
+
+        travel.t_way = traffic
+
+        # T_DAY도 시작일 기준으로 맞춤
+        travel.t_day = request.POST.get(
+            't_start'
+        )
+
+        travel.save()
+
+        return redirect(
+            'travel_detail',
+            travel_id=travel.t_id
+        )
+
+    # ==========================================
+    # 수정 페이지
+    # ==========================================
+
+    return render(
+        request,
+        'sherpaapp/travel_update.html',
+        {
+            'travel': travel,
+            'member': member
+        }
+    )
 
 
 # ==============================================
@@ -379,7 +513,18 @@ def travel_update(request, travel_id):
 # ==============================================
 
 def travel_delete(request, travel_id):
-    pass
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id
+    )
+
+    if request.method == 'POST':
+        travel.delete()
+
+    return redirect(
+        'travel_list'
+    )
 
 
 # ==============================================
@@ -399,10 +544,12 @@ def index(request):
     member = None
 
     if login_user:
+
         try:
             member = Member.objects.get(
                 email=login_user
             )
+
         except Member.DoesNotExist:
             member = None
 
@@ -421,11 +568,16 @@ def index(request):
 # ==============================================
 
 def budget(request):
+
     template = loader.get_template(
         'sherpaapp/budget.html'
     )
+
     return HttpResponse(
-        template.render({}, request)
+        template.render(
+            {},
+            request
+        )
     )
 
 
@@ -435,7 +587,9 @@ def budget(request):
 
 def check_email(request):
 
-    email = request.GET.get('email')
+    email = request.GET.get(
+        'email'
+    )
 
     exists = Member.objects.filter(
         email=email
@@ -452,12 +606,26 @@ def check_email(request):
 
 def join_ok(request):
 
-    email = request.POST.get('email')
-    pwd = request.POST.get('pwd')
-    name = request.POST.get('name')
-    nickname = request.POST.get('nickname')
+    email = request.POST.get(
+        'email'
+    )
 
+    pwd = request.POST.get(
+        'pwd'
+    )
+
+    name = request.POST.get(
+        'name'
+    )
+
+    nickname = request.POST.get(
+        'nickname'
+    )
+
+    # ==========================================
     # 이메일 중복 확인
+    # ==========================================
+
     if Member.objects.filter(
         email=email
     ).exists():
@@ -469,7 +637,10 @@ def join_ok(request):
             </script>
         """)
 
+    # ==========================================
     # 회원가입
+    # ==========================================
+
     Member.objects.create(
         email=email,
         pwd=pwd,
@@ -491,8 +662,13 @@ def join_ok(request):
 
 def login_ok(request):
 
-    email = request.POST.get('email')
-    pwd = request.POST.get('pwd')
+    email = request.POST.get(
+        'email'
+    )
+
+    pwd = request.POST.get(
+        'pwd'
+    )
 
     try:
 
@@ -500,7 +676,10 @@ def login_ok(request):
             email=email
         )
 
+        # ======================================
         # 비밀번호 확인
+        # ======================================
+
         if member.pwd == pwd:
 
             # 로그인 세션 저장
@@ -545,15 +724,21 @@ def mypage(request):
     )
 
     if not login_user:
-        return redirect('login')
+        return redirect(
+            'login'
+        )
 
     try:
+
         member = Member.objects.get(
             email=login_user
         )
 
     except Member.DoesNotExist:
-        return redirect('login')
+
+        return redirect(
+            'login'
+        )
 
     return render(
         request,
@@ -591,7 +776,10 @@ def idpw(request):
     )
 
     return HttpResponse(
-        template.render({}, request)
+        template.render(
+            {},
+            request
+        )
     )
 
 
@@ -601,8 +789,13 @@ def idpw(request):
 
 def id_find(request):
 
-    name = request.POST.get('name')
-    nickname = request.POST.get('nickname')
+    name = request.POST.get(
+        'name'
+    )
+
+    nickname = request.POST.get(
+        'nickname'
+    )
 
     members = Member.objects.filter(
         name=name,
@@ -639,9 +832,18 @@ def id_find(request):
 
 def pw_find(request):
 
-    email = request.POST.get('email')
-    name = request.POST.get('name')
-    new_pwd = request.POST.get('new_pwd')
+    email = request.POST.get(
+        'email'
+    )
+
+    name = request.POST.get(
+        'name'
+    )
+
+    new_pwd = request.POST.get(
+        'new_pwd'
+    )
+
     new_pwd_check = request.POST.get(
         'new_pwd_check'
     )
@@ -653,7 +855,10 @@ def pw_find(request):
             name=name
         )
 
+        # ======================================
         # 새 비밀번호 확인
+        # ======================================
+
         if new_pwd != new_pwd_check:
 
             return HttpResponse("""
@@ -663,8 +868,12 @@ def pw_find(request):
                 </script>
             """)
 
+        # ======================================
         # 비밀번호 변경
+        # ======================================
+
         member.pwd = new_pwd
+
         member.save()
 
         return HttpResponse("""
@@ -696,7 +905,10 @@ def mypage_edit(request):
 
     # 로그인하지 않았다면 로그인 페이지로 이동
     if not login_user:
-        return redirect('login')
+
+        return redirect(
+            'login'
+        )
 
     try:
 
@@ -706,12 +918,20 @@ def mypage_edit(request):
 
     except Member.DoesNotExist:
 
-        return redirect('login')
+        return redirect(
+            'login'
+        )
 
-    # 수정 페이지에서 저장 버튼을 눌렀을 때
+    # ==========================================
+    # 수정 페이지에서 저장 버튼 눌렀을 때
+    # ==========================================
+
     if request.method == 'POST':
 
-        name = request.POST.get('name')
+        name = request.POST.get(
+            'name'
+        )
+
         nickname = request.POST.get(
             'nickname'
         )
@@ -721,9 +941,14 @@ def mypage_edit(request):
 
         member.save()
 
-        return redirect('mypage')
+        return redirect(
+            'mypage'
+        )
 
-    # 처음 수정 페이지에 들어왔을 때
+    # ==========================================
+    # 수정 페이지 처음 접속
+    # ==========================================
+
     return render(
         request,
         'mypage_edit.html',
