@@ -1,91 +1,118 @@
-from django.http import HttpResponse, JsonResponse
-from django.template import loader
-from django.db.models import Prefetch
-from django.shortcuts import render, redirect, get_object_or_404
-from django.conf import settings
-
-from .models import Member
-from .models import Travel
-from .models import Place
-from .models import Schedule
-from .models import Pay
-from .models import Category
-from .models import SchedulePlace
+from datetime import datetime, timedelta
 
 import requests
 
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.template import loader
+
+from .models import (
+    Member,
+    Travel,
+    Place,
+    Schedule,
+    Pay,
+    Category,
+    SchedulePlace,
+)
+
 
 # ==============================================
-# 회원가입
+# 회원가입 페이지
 # ==============================================
 
 def join(request):
-    template = loader.get_template('sherpaapp/join.html')
-    return HttpResponse(template.render({}, request))
+    template = loader.get_template(
+        'sherpaapp/join.html'
+    )
+
+    return HttpResponse(
+        template.render({}, request)
+    )
 
 
 # ==============================================
-# 로그인
+# 로그인 페이지
 # ==============================================
 
 def login(request):
-    template = loader.get_template('sherpaapp/login.html')
-    return HttpResponse(template.render({}, request))
+    template = loader.get_template(
+        'sherpaapp/login.html'
+    )
+
+    return HttpResponse(
+        template.render({}, request)
+    )
 
 
 # ==============================================
-# 장소 검색
+# 장소 검색 페이지
 # ==============================================
 
 def place_search(request):
-    template = loader.get_template('sherpaapp/place_search.html')
-    return HttpResponse(template.render({}, request))
+    template = loader.get_template(
+        'sherpaapp/place_search.html'
+    )
 
+    return HttpResponse(
+        template.render({}, request)
+    )
+
+
+# ==============================================
+# 카카오 장소 검색
+# ==============================================
 
 def place_search_search(request):
 
-    # GET 방식으로 검색어 받기
-    query = request.GET.get("query", "").strip()
+    query = request.GET.get(
+        'query',
+        ''
+    ).strip()
 
-    # 검색 결과 저장
     places = []
 
-    # 검색어가 없으면
     if not query:
+
         return render(
             request,
-            "sherpaapp/place_search.html",
+            'sherpaapp/place_search.html',
             {
-                "places": places,
-                "query": query,
-
-                "KAKAO_MAP_API_KEY":
-                    settings.KAKAO_MAP_API_KEY
+                'places': places,
+                'query': query,
+                'KAKAO_MAP_API_KEY':
+                    settings.KAKAO_MAP_API_KEY,
             }
         )
 
-    # ============================================
-    # 카카오 REST API KEY
-    # ============================================
 
-    REST_API_KEY = settings.KAKAO_REST_API_KEY
+    # ==========================================
+    # 카카오 REST API KEY
+    # ==========================================
+
+    REST_API_KEY = (
+        settings.KAKAO_REST_API_KEY
+    )
 
     headers = {
-        "Authorization": f"KakaoAK {REST_API_KEY}"
+        'Authorization':
+            f'KakaoAK {REST_API_KEY}'
     }
 
-    # ============================================
-    # 카카오 장소 검색
-    # ============================================
+
+    # ==========================================
+    # 장소 검색
+    # ==========================================
 
     place_url = (
-        "https://dapi.kakao.com/"
-        "v2/local/search/keyword.json"
+        'https://dapi.kakao.com/'
+        'v2/local/search/keyword.json'
     )
 
     params = {
-        "query": query,
-        "size": 5
+        'query': query,
+        'size': 5,
     }
 
     response = requests.get(
@@ -96,30 +123,34 @@ def place_search_search(request):
 
     data = response.json()
 
-    # ============================================
-    # 검색된 장소 반복
-    # ============================================
 
-    for place in data.get("documents", []):
+    # ==========================================
+    # 검색 결과
+    # ==========================================
 
-        # 장소명
+    for place in data.get(
+        'documents',
+        []
+    ):
+
         place_name = place.get(
-            "place_name",
-            ""
+            'place_name',
+            ''
         )
 
-        # ========================================
+
+        # ======================================
         # 이미지 검색
-        # ========================================
+        # ======================================
 
         image_url = (
-            "https://dapi.kakao.com/"
-            "v2/search/image"
+            'https://dapi.kakao.com/'
+            'v2/search/image'
         )
 
         image_params = {
-            "query": place_name,
-            "size": 1
+            'query': place_name,
+            'size': 1,
         }
 
         image_response = requests.get(
@@ -128,58 +159,90 @@ def place_search_search(request):
             params=image_params
         )
 
-        image_data = image_response.json()
+        image_data = (
+            image_response.json()
+        )
 
         image = None
 
-        if image_data.get("documents"):
-            image = image_data["documents"][0].get(
-                "thumbnail_url"
+
+        if image_data.get(
+            'documents'
+        ):
+
+            image = (
+                image_data[
+                    'documents'
+                ][0].get(
+                    'thumbnail_url'
+                )
             )
 
-        # ========================================
-        # 장소 정보 저장
-        # ========================================
+
+        # ======================================
+        # 화면에 전달할 장소 데이터
+        # ======================================
 
         places.append({
-            "name": place_name,
 
-            "address":
-                place.get("road_address_name")
-                or place.get("address_name"),
+            'name':
+                place_name,
 
-            "category":
-                place.get("category_name"),
+            'address':
+                place.get(
+                    'road_address_name'
+                )
+                or
+                place.get(
+                    'address_name'
+                ),
 
-            "phone":
-                place.get("phone"),
+            'category':
+                place.get(
+                    'category_name'
+                ),
 
-            "place_url":
-                place.get("place_url"),
+            'phone':
+                place.get(
+                    'phone'
+                ),
 
-            "x":
-                place.get("x"),
+            'place_url':
+                place.get(
+                    'place_url'
+                ),
 
-            "y":
-                place.get("y"),
+            'x':
+                place.get(
+                    'x'
+                ),
 
-            "image":
-                image
+            'y':
+                place.get(
+                    'y'
+                ),
+
+            'image':
+                image,
         })
 
-    # ============================================
-    # HTML 전달
-    # ============================================
 
     context = {
-        "places": places,
-        "query": query,
-        "KAKAO_MAP_API_KEY": settings.KAKAO_MAP_API_KEY
+
+        'places':
+            places,
+
+        'query':
+            query,
+
+        'KAKAO_MAP_API_KEY':
+            settings.KAKAO_MAP_API_KEY,
     }
+
 
     return render(
         request,
-        "sherpaapp/place_search.html",
+        'sherpaapp/place_search.html',
         context
     )
 
@@ -190,52 +253,92 @@ def place_search_search(request):
 
 def travel_create(request):
 
-    login_user = request.session.get('login_ok_user')
+    login_user = request.session.get(
+        'login_ok_user'
+    )
 
-    # 로그인하지 않은 경우
+
     if not login_user:
-        return redirect('login')
+
+        return redirect(
+            'login'
+        )
+
 
     try:
+
         member = Member.objects.get(
             email=login_user
         )
 
     except Member.DoesNotExist:
-        return redirect('login')
 
-    # 여행 생성
+        return redirect(
+            'login'
+        )
+
+
+    # ==========================================
+    # 여행 저장
+    # ==========================================
+
     if request.method == 'POST':
 
-        title = request.POST.get('t_title')
-        place = request.POST.get('t_place')
-        start = request.POST.get('t_start')
-        end = request.POST.get('t_end')
+        title = request.POST.get(
+            't_title'
+        )
+
+        place = request.POST.get(
+            't_place'
+        )
+
+        start = request.POST.get(
+            't_start'
+        )
+
+        end = request.POST.get(
+            't_end'
+        )
 
         traffic = ','.join(
-            request.POST.getlist('traffic')
+            request.POST.getlist(
+                'traffic'
+            )
         )
 
+
         travel = Travel.objects.create(
+
             member=member,
+
             t_title=title,
+
             t_place=place,
+
             t_start=start,
+
             t_end=end,
+
             t_day=start,
-            t_way=traffic
+
+            t_way=traffic,
+
+            # 기본 예산
+            t_budget=100000
         )
+
 
         return redirect(
             'travel_detail',
             travel_id=travel.t_id
         )
 
+
     return render(
         request,
         'sherpaapp/travel_create.html',
         {
-            'member': member
+            'member': member,
         }
     )
 
@@ -246,167 +349,305 @@ def travel_create(request):
 
 def travel_list(request):
 
-    login_user = request.session.get('login_ok_user')
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
 
     if not login_user:
-        return redirect('login')
+
+        return redirect(
+            'login'
+        )
+
 
     try:
+
         member = Member.objects.get(
             email=login_user
         )
 
     except Member.DoesNotExist:
-        return redirect('login')
 
-    # 로그인 회원의 여행만 조회
-    travels = Travel.objects.filter(
-        member=member
+        return redirect(
+            'login'
+        )
+
+
+    travels = (
+        Travel.objects
+        .filter(
+            member=member
+        )
+        .order_by(
+            '-t_id'
+        )
     )
+
 
     return render(
         request,
         'sherpaapp/travel_list.html',
         {
             'member': member,
-            'travels': travels
+            'travels': travels,
         }
     )
 
 
 # ==============================================
-# 여행 상세 + 일정 관리
+# 여행 상세 DAY AJAX
 # ==============================================
 
-from django.shortcuts import render, get_object_or_404
-from .models import (
-    Travel,
-    Member,
-    Schedule,
-    SchedulePlace,
-    Pay
-)
+def travel_detail_day(
+    request,
+    travel_id,
+    day
+):
 
-def travel_detail_day(request, travel_id, day):
-
-    # 여행 정보
     travel = get_object_or_404(
         Travel,
         t_id=travel_id
     )
 
-    # 해당 여행의 DAY 목록
-    schedules = Schedule.objects.filter(travel=travel).order_by('s_day')
 
-    # DAY가 존재하지 않는 경우
+    # ==========================================
+    # 여행 DAY 목록
+    # ==========================================
+
+    schedules = (
+        Schedule.objects
+        .filter(
+            travel=travel
+        )
+        .order_by(
+            's_day'
+        )
+    )
+
+
     if not schedules.exists():
+
         return JsonResponse({
             'success': False,
-            'message': '등록된 여행 일정이 없습니다.'
+            'message':
+                '등록된 여행 일정이 없습니다.',
         })
 
-    # DAY 번호 범위 확인
-    if day < 1 or day > schedules.count():
+
+    if (
+        day < 1
+        or
+        day > schedules.count()
+    ):
+
         return JsonResponse({
             'success': False,
-            'message': '존재하지 않는 DAY입니다.'
+            'message':
+                '존재하지 않는 DAY입니다.',
         })
 
+
+    # ==========================================
     # 해당 DAY
-    schedule = schedules[day - 1]
+    # ==========================================
 
-    # 해당 DAY의 장소 일정
+    schedule = schedules[
+        day - 1
+    ]
+
+
+    # ==========================================
+    # 일정 장소
+    # ==========================================
+
     schedule_places = (
         SchedulePlace.objects
-        .filter(schedule=schedule)
-        .select_related('place')
-        .order_by('visit_order')
+        .filter(
+            schedule=schedule
+        )
+        .select_related(
+            'place'
+        )
+        .order_by(
+            'visit_order'
+        )
     )
 
-    # 해당 DAY의 비용
-    pays = Pay.objects.filter(
-        schedule=schedule
+
+    # ==========================================
+    # 해당 DAY 비용
+    # ==========================================
+
+    pays = (
+        Pay.objects
+        .filter(
+            schedule=schedule
+        )
+        .select_related(
+            'place'
+        )
     )
 
-    # 총 비용
+
     total_pay = sum(
-        pay.pay_pay for pay in pays
+        pay.pay_pay or 0
+        for pay in pays
     )
 
-    # 장소 데이터
+
+    # ==========================================
+    # 장소 JSON
+    # ==========================================
+
     places = []
+
 
     for sp in schedule_places:
 
         places.append({
-            'sp_id': sp.sp_id,
-            'visit_order': sp.visit_order,
+
+            'sp_id':
+                sp.sp_id,
+
+            'visit_order':
+                sp.visit_order,
 
             'arrive_time': (
-                sp.arrive_time.strftime('%H:%M')
-                if sp.arrive_time else ''
+                sp.arrive_time.strftime(
+                    '%H:%M'
+                )
+                if sp.arrive_time
+                else ''
             ),
 
-            'stay_time': sp.stay_time,
+            'stay_time':
+                sp.stay_time,
 
             'start_time': (
-                sp.start_time.strftime('%H:%M')
-                if sp.start_time else ''
+                sp.start_time.strftime(
+                    '%H:%M'
+                )
+                if sp.start_time
+                else ''
             ),
-            
-            'place_id': sp.place.p_id,
-            'place_name': sp.place.p_name,
-            'place_addr': sp.place.p_addr,
-            'place_kind': sp.place.p_kind,
-            'place_image': sp.place.p_image or '',
+
+            'place_id':
+                sp.place.p_id,
+
+            'place_name':
+                sp.place.p_name,
+
+            'place_addr':
+                sp.place.p_addr,
+
+            'place_kind':
+                sp.place.p_kind,
+
+            'place_image':
+                sp.place.p_image or '',
         })
 
-    # 비용 데이터
+
+    # ==========================================
+    # 비용 JSON
+    # ==========================================
+
     payments = []
+
 
     for pay in pays:
 
         payments.append({
-            'pay_context': pay.pay_context,
-            'pay_pay': pay.pay_pay,
+
+            'pay_id':
+                pay.pay_id,
+
+            'pay_context':
+                pay.pay_context,
+
+            'pay_pay':
+                pay.pay_pay,
+
+            'place_id': (
+                pay.place.p_id
+                if pay.place
+                else None
+            ),
+
+            'place_name': (
+                pay.place.p_name
+                if pay.place
+                else ''
+            ),
         })
 
+
     return JsonResponse({
-        'success': True,
-        'travel_id': travel_id,
-        'day': day,
-        'schedule_id': schedule.s_id,
-        's_day': schedule.s_day.strftime('%Y.%m.%d'),
-        'places': places,
-        'pays': payments,
-        'total_pay': total_pay,
+
+        'success':
+            True,
+
+        'travel_id':
+            travel_id,
+
+        'day':
+            day,
+
+        'schedule_id':
+            schedule.s_id,
+
+        's_day':
+            schedule.s_day.strftime(
+                '%Y.%m.%d'
+            ),
+
+        'places':
+            places,
+
+        'pays':
+            payments,
+
+        'total_pay':
+            total_pay,
     })
+
 
 # ==============================================
 # 여행 수정
 # ==============================================
 
-def travel_update(request, travel_id):
+def travel_update(
+    request,
+    travel_id
+):
 
     travel = get_object_or_404(
         Travel,
         t_id=travel_id
     )
 
+
     login_user = request.session.get(
         'login_ok_user'
     )
 
+
     member = None
 
+
     if login_user:
+
         try:
+
             member = Member.objects.get(
                 email=login_user
             )
 
         except Member.DoesNotExist:
+
             member = None
+
 
     # ==========================================
     # 수정 저장
@@ -414,50 +655,65 @@ def travel_update(request, travel_id):
 
     if request.method == 'POST':
 
-        travel.t_title = request.POST.get(
-            't_title'
+        travel.t_title = (
+            request.POST.get(
+                't_title'
+            )
         )
 
-        travel.t_place = request.POST.get(
-            't_place'
+        travel.t_place = (
+            request.POST.get(
+                't_place'
+            )
         )
 
-        travel.t_start = request.POST.get(
-            't_start'
+        travel.t_start = (
+            request.POST.get(
+                't_start'
+            )
         )
 
-        travel.t_end = request.POST.get(
-            't_end'
+        travel.t_end = (
+            request.POST.get(
+                't_end'
+            )
         )
+
 
         traffic = ','.join(
-            request.POST.getlist('traffic')
+            request.POST.getlist(
+                'traffic'
+            )
         )
 
-        travel.t_way = traffic
 
-        # T_DAY도 시작일 기준으로 맞춤
-        travel.t_day = request.POST.get(
-            't_start'
+        travel.t_way = (
+            traffic
         )
+
+
+        travel.t_day = (
+            request.POST.get(
+                't_start'
+            )
+        )
+
 
         travel.save()
+
 
         return redirect(
             'travel_detail',
             travel_id=travel.t_id
         )
 
-    # ==========================================
-    # 수정 페이지
-    # ==========================================
 
     return render(
         request,
         'sherpaapp/travel_update.html',
         {
             'travel': travel,
-            'member': member
+            'member': member,
         }
     )
 
@@ -466,15 +722,21 @@ def travel_update(request, travel_id):
 # 여행 삭제
 # ==============================================
 
-def travel_delete(request, travel_id):
+def travel_delete(
+    request,
+    travel_id
+):
 
     travel = get_object_or_404(
         Travel,
         t_id=travel_id
     )
 
+
     if request.method == 'POST':
+
         travel.delete()
+
 
     return redirect(
         'travel_list'
@@ -491,26 +753,32 @@ def index(request):
         'index.html'
     )
 
+
     login_user = request.session.get(
         'login_ok_user'
     )
 
+
     member = None
+
 
     if login_user:
 
         try:
+
             member = Member.objects.get(
                 email=login_user
             )
 
         except Member.DoesNotExist:
+
             member = None
+
 
     return HttpResponse(
         template.render(
             {
-                'member': member
+                'member': member,
             },
             request
         )
@@ -521,17 +789,697 @@ def index(request):
 # 비용 관리
 # ==============================================
 
-def budget(request):
+def budget(
+    request,
+    travel_id=None
+):
 
-    template = loader.get_template(
-        'sherpaapp/budget.html'
+    # ==========================================
+    # 로그인 확인
+    # ==========================================
+
+    login_user = request.session.get(
+        'login_ok_user'
     )
 
-    return HttpResponse(
-        template.render(
-            {},
-            request
+
+    if not login_user:
+
+        return redirect(
+            'login'
         )
+
+
+    try:
+
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+
+        return redirect(
+            'login'
+        )
+
+
+    # ==========================================
+    # 회원의 전체 여행
+    # ==========================================
+
+    travels = (
+        Travel.objects
+        .filter(
+            member=member
+        )
+        .order_by(
+            '-t_id'
+        )
+    )
+
+
+    # ==========================================
+    # 현재 선택된 여행
+    # ==========================================
+
+    if travel_id:
+
+        travel = get_object_or_404(
+            Travel,
+            t_id=travel_id,
+            member=member
+        )
+
+    else:
+
+        travel = travels.first()
+
+
+    # ==========================================
+    # 여행이 없을 경우
+    # ==========================================
+
+    if not travel:
+
+        return render(
+            request,
+            'sherpaapp/budget.html',
+            {
+                'member':
+                    member,
+
+                'travels':
+                    travels,
+
+                'travel':
+                    None,
+
+                'pays':
+                    [],
+
+                'total_budget':
+                    0,
+
+                'used_money':
+                    0,
+
+                'remain_money':
+                    0,
+
+                'budget_percent':
+                    0,
+            }
+        )
+
+
+    # ==========================================
+    # 해당 여행 비용
+    # ==========================================
+
+    pays = (
+        Pay.objects
+        .filter(
+            schedule__travel=travel
+        )
+        .select_related(
+            'schedule',
+            'place'
+        )
+        .order_by(
+            '-schedule__s_day',
+            '-pay_id'
+        )
+    )
+
+
+    # ==========================================
+    # 총 예산
+    # TRAVEL.T_BUDGET 사용
+    # ==========================================
+
+    total_budget = (
+        travel.t_budget
+        or 0
+    )
+
+
+    # ==========================================
+    # 사용 금액
+    # ==========================================
+
+    used_money = sum(
+        pay.pay_pay or 0
+        for pay in pays
+    )
+
+
+    # ==========================================
+    # 남은 금액
+    # ==========================================
+
+    remain_money = (
+        total_budget
+        - used_money
+    )
+
+
+    # ==========================================
+    # 예산 사용률
+    # ==========================================
+
+    if total_budget > 0:
+
+        budget_percent = int(
+            used_money
+            / total_budget
+            * 100
+        )
+
+    else:
+
+        budget_percent = 0
+
+
+    # 진행바는 100%까지만 표시
+    if budget_percent > 100:
+
+        budget_percent = 100
+
+
+    return render(
+        request,
+        'sherpaapp/budget.html',
+        {
+            'member':
+                member,
+
+            'travels':
+                travels,
+
+            'travel':
+                travel,
+
+            'pays':
+                pays,
+
+            'total_budget':
+                total_budget,
+
+            'used_money':
+                used_money,
+
+            'remain_money':
+                remain_money,
+
+            'budget_percent':
+                budget_percent,
+        }
+    )
+
+
+# ==============================================
+# 총 예산 수정
+# ==============================================
+
+def budget_update_total(
+    request,
+    travel_id
+):
+
+    # ==========================================
+    # POST만 허용
+    # ==========================================
+
+    if request.method != 'POST':
+
+        return redirect(
+            'budget_travel',
+            travel_id=travel_id
+        )
+
+
+    # ==========================================
+    # 로그인 확인
+    # ==========================================
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+
+    if not login_user:
+
+        return redirect(
+            'login'
+        )
+
+
+    try:
+
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+
+        return redirect(
+            'login'
+        )
+
+
+    # ==========================================
+    # 해당 회원의 여행인지 확인
+    # ==========================================
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id,
+        member=member
+    )
+
+
+    # ==========================================
+    # 입력된 총 예산
+    # ==========================================
+
+    budget_value = request.POST.get(
+        'total_budget'
+    )
+
+
+    try:
+
+        budget_value = int(
+            budget_value
+        )
+
+
+        if budget_value < 0:
+
+            raise ValueError
+
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return HttpResponse("""
+            <script>
+                alert('올바른 예산 금액을 입력해주세요.');
+                history.back();
+            </script>
+        """)
+
+
+    # ==========================================
+    # 예산 저장
+    # ==========================================
+
+    travel.t_budget = (
+        budget_value
+    )
+
+
+    travel.save(
+        update_fields=[
+            't_budget'
+        ]
+    )
+
+
+    return redirect(
+        'budget_travel',
+        travel_id=travel.t_id
+    )
+
+
+# ==============================================
+# 비용 추가
+# ==============================================
+
+def budget_add(
+    request,
+    travel_id
+):
+
+    # ==========================================
+    # POST만 허용
+    # ==========================================
+
+    if request.method != 'POST':
+
+        return redirect(
+            'budget_travel',
+            travel_id=travel_id
+        )
+
+
+    # ==========================================
+    # 로그인 확인
+    # ==========================================
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+
+    if not login_user:
+
+        return redirect(
+            'login'
+        )
+
+
+    try:
+
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+
+        return redirect(
+            'login'
+        )
+
+
+    # ==========================================
+    # 여행 확인
+    # ==========================================
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id,
+        member=member
+    )
+
+
+    # ==========================================
+    # FORM 값
+    # ==========================================
+
+    amount = request.POST.get(
+        'expense_amount'
+    )
+
+
+    category = request.POST.get(
+        'expense_category',
+        ''
+    ).strip()
+
+
+    place_name = request.POST.get(
+        'expense_place',
+        ''
+    ).strip()
+
+
+    memo = request.POST.get(
+        'expense_memo',
+        ''
+    ).strip()
+
+
+    expense_date = request.POST.get(
+        'expense_date'
+    )
+
+
+    # ==========================================
+    # 금액 검사
+    # ==========================================
+
+    try:
+
+        amount = int(
+            amount
+        )
+
+
+        if amount <= 0:
+
+            raise ValueError
+
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return HttpResponse("""
+            <script>
+                alert('올바른 금액을 입력해주세요.');
+                history.back();
+            </script>
+        """)
+
+
+    # ==========================================
+    # 날짜 확인
+    # ==========================================
+
+    if not expense_date:
+
+        return HttpResponse("""
+            <script>
+                alert('날짜를 선택해주세요.');
+                history.back();
+            </script>
+        """)
+
+
+    # ==========================================
+    # 여행 시작일 이전인지 확인
+    # ==========================================
+
+    if travel.t_start:
+
+        if (
+            expense_date
+            <
+            str(travel.t_start)
+        ):
+
+            return HttpResponse("""
+                <script>
+                    alert('여행 시작일 이전 날짜입니다.');
+                    history.back();
+                </script>
+            """)
+
+
+    # ==========================================
+    # 여행 종료일 이후인지 확인
+    # ==========================================
+
+    if travel.t_end:
+
+        if (
+            expense_date
+            >
+            str(travel.t_end)
+        ):
+
+            return HttpResponse("""
+                <script>
+                    alert('여행 종료일 이후 날짜입니다.');
+                    history.back();
+                </script>
+            """)
+
+
+    # ==========================================
+    # 해당 날짜 Schedule 찾기
+    # ==========================================
+
+    schedule = (
+        Schedule.objects
+        .filter(
+            travel=travel,
+            s_day=expense_date
+        )
+        .first()
+    )
+
+
+    # 없으면 생성
+    if not schedule:
+
+        schedule = (
+            Schedule.objects.create(
+                travel=travel,
+                s_day=expense_date
+            )
+        )
+
+
+    # ==========================================
+    # 입력한 장소가 PLACE에 이미 존재하면
+    # P_ID 연결
+    # ==========================================
+
+    place = None
+
+
+    if place_name:
+
+        place = (
+            Place.objects
+            .filter(
+                travel=travel,
+                p_name=place_name
+            )
+            .first()
+        )
+
+
+    # ==========================================
+    # 메모를 입력하지 않았을 경우
+    # ==========================================
+
+    if not memo:
+
+        if (
+            place_name
+            and
+            category
+        ):
+
+            memo = (
+                f'{place_name} '
+                f'{category}'
+            )
+
+        elif place_name:
+
+            memo = (
+                f'{place_name} 비용'
+            )
+
+        elif category:
+
+            memo = (
+                category
+            )
+
+        else:
+
+            memo = (
+                '기타 비용'
+            )
+
+
+    # ==========================================
+    # PAY 저장
+    # ==========================================
+
+    Pay.objects.create(
+
+        schedule=
+            schedule,
+
+        place=
+            place,
+
+        pay_context=
+            memo,
+
+        pay_pay=
+            amount
+    )
+
+
+    return redirect(
+        'budget_travel',
+        travel_id=travel.t_id
+    )
+
+
+# ==============================================
+# 비용 삭제
+# ==============================================
+
+def budget_delete(
+    request,
+    travel_id,
+    pay_id
+):
+
+    # ==========================================
+    # POST만 허용
+    # ==========================================
+
+    if request.method != 'POST':
+
+        return redirect(
+            'budget_travel',
+            travel_id=travel_id
+        )
+
+
+    # ==========================================
+    # 로그인 확인
+    # ==========================================
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+
+    if not login_user:
+
+        return redirect(
+            'login'
+        )
+
+
+    try:
+
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+
+        return redirect(
+            'login'
+        )
+
+
+    # ==========================================
+    # 여행 확인
+    # ==========================================
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id,
+        member=member
+    )
+
+
+    # ==========================================
+    # 비용 확인
+    # ==========================================
+
+    pay = get_object_or_404(
+        Pay,
+        pay_id=pay_id,
+        schedule__travel=travel
+    )
+
+
+    # ==========================================
+    # 삭제
+    # ==========================================
+
+    pay.delete()
+
+
+    return redirect(
+        'budget_travel',
+        travel_id=travel.t_id
     )
 
 
@@ -545,12 +1493,19 @@ def check_email(request):
         'email'
     )
 
-    exists = Member.objects.filter(
-        email=email
-    ).exists()
+
+    exists = (
+        Member.objects
+        .filter(
+            email=email
+        )
+        .exists()
+    )
+
 
     return JsonResponse({
-        'is_exists': exists
+        'is_exists':
+            exists,
     })
 
 
@@ -576,13 +1531,18 @@ def join_ok(request):
         'nickname'
     )
 
+
     # ==========================================
     # 이메일 중복 확인
     # ==========================================
 
-    if Member.objects.filter(
-        email=email
-    ).exists():
+    if (
+        Member.objects
+        .filter(
+            email=email
+        )
+        .exists()
+    ):
 
         return HttpResponse("""
             <script>
@@ -590,6 +1550,7 @@ def join_ok(request):
                 history.back();
             </script>
         """)
+
 
     # ==========================================
     # 회원가입
@@ -601,6 +1562,7 @@ def join_ok(request):
         name=name,
         nickname=nickname
     )
+
 
     return HttpResponse("""
         <script>
@@ -624,22 +1586,20 @@ def login_ok(request):
         'pwd'
     )
 
+
     try:
 
         member = Member.objects.get(
             email=email
         )
 
-        # ======================================
-        # 비밀번호 확인
-        # ======================================
 
         if member.pwd == pwd:
 
-            # 로그인 세션 저장
             request.session[
                 'login_ok_user'
             ] = member.email
+
 
             return HttpResponse("""
                 <script>
@@ -647,6 +1607,7 @@ def login_ok(request):
                     location.href = '../';
                 </script>
             """)
+
 
         else:
 
@@ -656,6 +1617,7 @@ def login_ok(request):
                     history.back();
                 </script>
             """)
+
 
     except Member.DoesNotExist:
 
@@ -677,10 +1639,13 @@ def mypage(request):
         'login_ok_user'
     )
 
+
     if not login_user:
+
         return redirect(
             'login'
         )
+
 
     try:
 
@@ -694,11 +1659,12 @@ def mypage(request):
             'login'
         )
 
+
     return render(
         request,
         'mypage.html',
         {
-            'member': member
+            'member': member,
         }
     )
 
@@ -710,6 +1676,7 @@ def mypage(request):
 def logout(request):
 
     request.session.flush()
+
 
     return HttpResponse("""
         <script>
@@ -728,6 +1695,7 @@ def idpw(request):
     template = loader.get_template(
         'idpw.html'
     )
+
 
     return HttpResponse(
         template.render(
@@ -751,10 +1719,12 @@ def id_find(request):
         'nickname'
     )
 
+
     members = Member.objects.filter(
         name=name,
         nickname=nickname
     )
+
 
     if members.exists():
 
@@ -763,12 +1733,14 @@ def id_find(request):
             for member in members
         ]
 
+
         return HttpResponse(f"""
             <script>
                 alert('회원님의 아이디는 {", ".join(emails)} 입니다.');
                 location.href = '../idpw/';
             </script>
         """)
+
 
     else:
 
@@ -802,6 +1774,7 @@ def pw_find(request):
         'new_pwd_check'
     )
 
+
     try:
 
         member = Member.objects.get(
@@ -809,11 +1782,12 @@ def pw_find(request):
             name=name
         )
 
-        # ======================================
-        # 새 비밀번호 확인
-        # ======================================
 
-        if new_pwd != new_pwd_check:
+        if (
+            new_pwd
+            !=
+            new_pwd_check
+        ):
 
             return HttpResponse("""
                 <script>
@@ -822,13 +1796,14 @@ def pw_find(request):
                 </script>
             """)
 
-        # ======================================
-        # 비밀번호 변경
-        # ======================================
 
-        member.pwd = new_pwd
+        member.pwd = (
+            new_pwd
+        )
+
 
         member.save()
+
 
         return HttpResponse("""
             <script>
@@ -836,6 +1811,7 @@ def pw_find(request):
                 location.href = '../login/';
             </script>
         """)
+
 
     except Member.DoesNotExist:
 
@@ -857,12 +1833,13 @@ def mypage_edit(request):
         'login_ok_user'
     )
 
-    # 로그인하지 않았다면 로그인 페이지로 이동
+
     if not login_user:
 
         return redirect(
             'login'
         )
+
 
     try:
 
@@ -876,8 +1853,9 @@ def mypage_edit(request):
             'login'
         )
 
+
     # ==========================================
-    # 수정 페이지에서 저장 버튼 눌렀을 때
+    # 정보 수정
     # ==========================================
 
     if request.method == 'POST':
@@ -890,292 +1868,635 @@ def mypage_edit(request):
             'nickname'
         )
 
-        member.name = name
-        member.nickname = nickname
+
+        member.name = (
+            name
+        )
+
+        member.nickname = (
+            nickname
+        )
+
 
         member.save()
+
 
         return redirect(
             'mypage'
         )
 
-    # 처음 수정 페이지에 들어왔을 때
-    return render(request, 'mypage_edit.html', {
-        'member': member
-    })
 
-def travel_detail(request, travel_id):
+    return render(
+        request,
+        'mypage_edit.html',
+        {
+            'member': member,
+        }
+    )
+
+
+# ==============================================
+# 여행 상세
+# ==============================================
+
+def travel_detail(
+    request,
+    travel_id
+):
+
     travel = get_object_or_404(
         Travel,
         t_id=travel_id
     )
 
-    # 로그인 사용자
-    login_user = request.session.get('login_ok_user')
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
 
     member = None
 
+
     if login_user:
+
         try:
+
             member = Member.objects.get(
                 email=login_user
             )
+
         except Member.DoesNotExist:
+
             member = None
 
-    # 해당 여행의 DAY 목록
+
+    # ==========================================
+    # DAY 일정
+    # ==========================================
+
     schedules = (
         Schedule.objects
-        .filter(travel=travel)
-        .order_by('s_day')
+        .filter(
+            travel=travel
+        )
+        .order_by(
+            's_day'
+        )
     )
+
 
     return render(
         request,
         'sherpaapp/travel_detail.html',
         {
-            'travel': travel,
-            'member': member,
+            'travel':
+                travel,
 
-            # DAY
-            'schedules': schedules,
-    
-            # 카카오맵
-            'KAKAO_MAP_API_KEY': settings.KAKAO_MAP_API_KEY,
+            'member':
+                member,
+
+            'schedules':
+                schedules,
+
+            'KAKAO_MAP_API_KEY':
+                settings.KAKAO_MAP_API_KEY,
         }
     )
 
+
+# ==============================================
+# 일정 장소 추가
+# ==============================================
+
 def schedule_place_add(request):
+
     if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '잘못된 요청입니다.'
-        }, status=400)
 
-    schedule_id = request.POST.get('schedule_id')
-    place_id = request.POST.get('place_id')
-    arrive_time = request.POST.get('arrive_time')
+        return JsonResponse(
+            {
+                'success':
+                    False,
 
+                'message':
+                    '잘못된 요청입니다.',
+            },
+            status=400
+        )
+
+
+    schedule_id = request.POST.get(
+        'schedule_id'
+    )
+
+    place_id = request.POST.get(
+        'place_id'
+    )
+
+    arrive_time = request.POST.get(
+        'arrive_time'
+    )
+
+
+    # ==========================================
     # 방문시간 확인
+    # ==========================================
+
     if not arrive_time:
-        return JsonResponse({
-            'success': False,
-            'message': '방문 시간을 먼저 입력해주세요'
-        }, status=400)
 
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '방문 시간을 먼저 입력해주세요',
+            },
+            status=400
+        )
+
+
+    # ==========================================
     # 필수값 확인
-    if not schedule_id or not place_id:
-        return JsonResponse({
-            'success': False,
-            'message': '필수 정보가 없습니다.'
-        }, status=400)
+    # ==========================================
 
-    # Schedule 조회
+    if (
+        not schedule_id
+        or
+        not place_id
+    ):
+
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '필수 정보가 없습니다.',
+            },
+            status=400
+        )
+
+
     schedule = get_object_or_404(
         Schedule,
         s_id=schedule_id
     )
 
-    # Place 조회
+
     place = get_object_or_404(
         Place,
         p_id=place_id
     )
 
+
+    # ==========================================
     # 방문시간 변환
+    # ==========================================
+
     try:
+
         arrival = datetime.strptime(
             arrive_time,
             '%H:%M'
         ).time()
-    except ValueError:
-        return JsonResponse({
-            'success': False,
-            'message': '방문시간 형식이 올바르지 않습니다.'
-        }, status=400)
 
-    # --------------------------------
+
+    except ValueError:
+
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '방문시간 형식이 올바르지 않습니다.',
+            },
+            status=400
+        )
+
+
+    # ==========================================
     # 체류시간 기본값
-    # --------------------------------
-    kind = place.p_kind or ''
+    # ==========================================
+
+    kind = (
+        place.p_kind
+        or ''
+    )
+
 
     if '관광' in kind:
+
         stay_time = 120
+
+
     elif '쇼핑' in kind:
+
         stay_time = 120
+
+
     elif '공원' in kind:
+
         stay_time = 90
+
+
     elif '카페' in kind:
-        stay_time = 60
-    elif '음식' in kind or '식당' in kind:
-        stay_time = 60
-    else:
+
         stay_time = 60
 
-    # --------------------------------
+
+    elif (
+        '음식' in kind
+        or
+        '식당' in kind
+    ):
+
+        stay_time = 60
+
+
+    else:
+
+        stay_time = 60
+
+
+    # ==========================================
     # 방문 순서
-    # --------------------------------
+    # ==========================================
+
     last_place = (
         SchedulePlace.objects
-        .filter(schedule=schedule)
-        .order_by('-visit_order')
+        .filter(
+            schedule=schedule
+        )
+        .order_by(
+            '-visit_order'
+        )
         .first()
     )
 
+
     if last_place:
-        visit_order = last_place.visit_order + 1
+
+        visit_order = (
+            last_place.visit_order
+            + 1
+        )
+
+
     else:
+
         visit_order = 1
 
-    # --------------------------------
+
+    # ==========================================
     # 출발시간 계산
-    # 방문시간 + 체류시간
-    # --------------------------------
-    arrival_datetime = datetime.combine(
-        schedule.s_day,
-        arrival
+    # ==========================================
+
+    arrival_datetime = (
+        datetime.combine(
+            schedule.s_day,
+            arrival
+        )
     )
+
 
     start_datetime = (
-        arrival_datetime +
-        timedelta(minutes=stay_time)
+        arrival_datetime
+        +
+        timedelta(
+            minutes=stay_time
+        )
     )
 
-    start_time = start_datetime.time()
 
-    # --------------------------------
+    start_time = (
+        start_datetime.time()
+    )
+
+
+    # ==========================================
     # 일정 저장
-    # --------------------------------
-    schedule_place = SchedulePlace.objects.create(
-        schedule=schedule,
-        place=place,
-        visit_order=visit_order,
-        stay_time=stay_time,
-        arrive_time=arrival,
-        start_time=start_time
+    # ==========================================
+
+    schedule_place = (
+        SchedulePlace.objects.create(
+
+            schedule=
+                schedule,
+
+            place=
+                place,
+
+            visit_order=
+                visit_order,
+
+            stay_time=
+                stay_time,
+
+            arrive_time=
+                arrival,
+
+            start_time=
+                start_time
+        )
     )
+
 
     return JsonResponse({
-        'success': True,
-        'message': '일정이 추가되었습니다.',
-        'sp_id': schedule_place.sp_id,
-        'visit_order': visit_order,
-        'place_name': place.p_name,
-        'address': place.p_addr,
-        'kind': place.p_kind,
-        'arrive_time': arrival.strftime('%H:%M'),
-        'stay_time': stay_time,
-        'start_time': start_time.strftime('%H:%M')
+
+        'success':
+            True,
+
+        'message':
+            '일정이 추가되었습니다.',
+
+        'sp_id':
+            schedule_place.sp_id,
+
+        'visit_order':
+            visit_order,
+
+        'place_name':
+            place.p_name,
+
+        'address':
+            place.p_addr,
+
+        'kind':
+            place.p_kind,
+
+        'arrive_time':
+            arrival.strftime(
+                '%H:%M'
+            ),
+
+        'stay_time':
+            stay_time,
+
+        'start_time':
+            start_time.strftime(
+                '%H:%M'
+            ),
     })
+
+
+# ==============================================
+# 일정 장소 삭제
+# ==============================================
 
 def schedule_place_delete(request):
-    if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '잘못된 요청입니다.'
-        }, status=400)
 
-    sp_id = request.POST.get('sp_id')
+    if request.method != 'POST':
+
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '잘못된 요청입니다.',
+            },
+            status=400
+        )
+
+
+    sp_id = request.POST.get(
+        'sp_id'
+    )
+
 
     if not sp_id:
-        return JsonResponse({
-            'success': False,
-            'message': '삭제할 일정 정보가 없습니다.'
-        }, status=400)
 
-    # 삭제할 일정 조회
-    schedule_place = get_object_or_404(
-        SchedulePlace,
-        sp_id=sp_id
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '삭제할 일정 정보가 없습니다.',
+            },
+            status=400
+        )
+
+
+    schedule_place = (
+        get_object_or_404(
+            SchedulePlace,
+            sp_id=sp_id
+        )
     )
 
-    # 같은 DAY의 Schedule 저장
-    schedule = schedule_place.schedule
 
-    # 일정 삭제
+    schedule = (
+        schedule_place.schedule
+    )
+
+
+    # ==========================================
+    # 삭제
+    # ==========================================
+
     schedule_place.delete()
 
-    # 삭제 후 방문 순서 다시 정렬
+
+    # ==========================================
+    # 방문 순서 재정렬
+    # ==========================================
+
     remaining_places = (
         SchedulePlace.objects
-        .filter(schedule=schedule)
-        .order_by('visit_order', 'sp_id')
+        .filter(
+            schedule=schedule
+        )
+        .order_by(
+            'visit_order',
+            'sp_id'
+        )
     )
 
-    for index, item in enumerate(remaining_places, start=1):
-        if item.visit_order != index:
-            item.visit_order = index
-            item.save(update_fields=['visit_order'])
+
+    for index, item in enumerate(
+        remaining_places,
+        start=1
+    ):
+
+        if (
+            item.visit_order
+            !=
+            index
+        ):
+
+            item.visit_order = (
+                index
+            )
+
+
+            item.save(
+                update_fields=[
+                    'visit_order'
+                ]
+            )
+
 
     return JsonResponse({
-        'success': True,
-        'message': '일정이 삭제되었습니다.'
+        'success':
+            True,
+
+        'message':
+            '일정이 삭제되었습니다.',
     })
 
-def schedule_place_time_update(request):
+
+# ==============================================
+# 일정 방문시간 수정
+# ==============================================
+
+def schedule_place_time_update(
+    request
+):
+
     if request.method != 'POST':
-        return JsonResponse({
-            'success': False,
-            'message': '잘못된 요청입니다.'
-        }, status=400)
 
-    sp_id = request.POST.get('sp_id')
-    arrive_time = request.POST.get('arrive_time')
+        return JsonResponse(
+            {
+                'success':
+                    False,
 
-    # 필수값 확인
-    if not sp_id or not arrive_time:
-        return JsonResponse({
-            'success': False,
-            'message': '방문시간을 입력해주세요.'
-        }, status=400)
+                'message':
+                    '잘못된 요청입니다.',
+            },
+            status=400
+        )
 
-    # 일정 조회
-    schedule_place = get_object_or_404(
-        SchedulePlace,
-        sp_id=sp_id
+
+    sp_id = request.POST.get(
+        'sp_id'
     )
 
-    # 방문시간 변환
+    arrive_time = request.POST.get(
+        'arrive_time'
+    )
+
+
+    if (
+        not sp_id
+        or
+        not arrive_time
+    ):
+
+        return JsonResponse(
+            {
+                'success':
+                    False,
+
+                'message':
+                    '방문시간을 입력해주세요.',
+            },
+            status=400
+        )
+
+
+    schedule_place = (
+        get_object_or_404(
+            SchedulePlace,
+            sp_id=sp_id
+        )
+    )
+
+
     try:
+
         arrival = datetime.strptime(
             arrive_time,
             '%H:%M'
         ).time()
+
+
     except ValueError:
-        return JsonResponse({
-            'success': False,
-            'message': '방문시간 형식이 올바르지 않습니다.'
-        }, status=400)
 
-    # 체류시간
-    stay_time = schedule_place.stay_time or 0
+        return JsonResponse(
+            {
+                'success':
+                    False,
 
-    # 방문시간 + 체류시간 계산
-    arrival_datetime = datetime.combine(
-        schedule_place.schedule.s_day,
+                'message':
+                    '방문시간 형식이 올바르지 않습니다.',
+            },
+            status=400
+        )
+
+
+    stay_time = (
+        schedule_place.stay_time
+        or 0
+    )
+
+
+    # ==========================================
+    # 방문시간 + 체류시간
+    # ==========================================
+
+    arrival_datetime = (
+        datetime.combine(
+            schedule_place
+            .schedule
+            .s_day,
+            arrival
+        )
+    )
+
+
+    start_datetime = (
+        arrival_datetime
+        +
+        timedelta(
+            minutes=stay_time
+        )
+    )
+
+
+    start_time = (
+        start_datetime.time()
+    )
+
+
+    # ==========================================
+    # DB 수정
+    # ==========================================
+
+    schedule_place.arrive_time = (
         arrival
     )
 
-    start_datetime = (
-        arrival_datetime +
-        timedelta(minutes=stay_time)
+    schedule_place.start_time = (
+        start_time
     )
 
-    start_time = start_datetime.time()
 
-    # DB 업데이트
-    schedule_place.arrive_time = arrival
-    schedule_place.start_time = start_time
     schedule_place.save(
         update_fields=[
             'arrive_time',
-            'start_time'
+            'start_time',
         ]
     )
 
+
     return JsonResponse({
-        'success': True,
-        'message': '방문시간이 변경되었습니다.',
-        'arrive_time': arrival.strftime('%H:%M'),
-        'start_time': start_time.strftime('%H:%M')
+
+        'success':
+            True,
+
+        'message':
+            '방문시간이 변경되었습니다.',
+
+        'arrive_time':
+            arrival.strftime(
+                '%H:%M'
+            ),
+
+        'start_time':
+            start_time.strftime(
+                '%H:%M'
+            ),
     })
