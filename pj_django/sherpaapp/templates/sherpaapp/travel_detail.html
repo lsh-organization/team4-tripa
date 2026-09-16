@@ -204,28 +204,13 @@
                 <div class="detail-map">
 
 
-                    <div class="map-text">
-                        실제 지도 API가 표시될 영역
-                    </div>
-
-
-                    <div class="route-line route1"></div>
-
-                    <div class="route-line route2"></div>
-
-
-                    <div class="marker marker1">
-                        ①
-                    </div>
-
-
-                    <div class="marker marker2">
-                        ②
-                    </div>
-
-
-                    <div class="marker marker3">
-                        ③
+                    <div
+                        id="map"
+                        style="
+                            width: 100%;
+                            height: 500px;
+                            border-radius: 12px;
+                        ">
                     </div>
 
 
@@ -252,6 +237,8 @@
                         <div
                             class="day {% if forloop.first %}active{% endif %}"
                             data-day="{{ day.day_number }}"
+                            data-schedule-id="{{ day.schedule.s_id }}"
+                            onclick="drawSchedule({{ day.schedule.s_id }})"
                         >
 
 
@@ -681,81 +668,335 @@
 
 
 <!-- =========================
-     DAY 선택
+     카카오 지도 SDK
+========================= -->
+
+<script
+    type="text/javascript"
+    src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
+</script>
+
+
+<!-- =========================
+     카카오 지도 + DAY 선택
 ========================= -->
 
 <script>
 
+let map = null;
+let overlays = [];
+let routePolyline = null;
+
+
+/* ==========================================
+   지도 초기화
+========================================== */
+
+function initMap() {
+
+    const mapContainer =
+        document.getElementById('map');
+
+    if (!mapContainer) {
+        return;
+    }
+
+    const mapOption = {
+        center: new kakao.maps.LatLng(
+            37.5665,
+            126.9780
+        ),
+        level: 6
+    };
+
+    map = new kakao.maps.Map(
+        mapContainer,
+        mapOption
+    );
+}
+
+
+/* ==========================================
+   기존 번호 마커 / 경로선 제거
+========================================== */
+
+function clearMap() {
+
+    overlays.forEach(
+        function (overlay) {
+            overlay.setMap(null);
+        }
+    );
+
+    overlays = [];
+
+
+    if (routePolyline) {
+
+        routePolyline.setMap(null);
+
+        routePolyline = null;
+    }
+}
+
+
+/* ==========================================
+   선택한 DAY의 지도 표시
+========================================== */
+
+function drawSchedule(scheduleId) {
+
+    if (!map || !scheduleId) {
+        return;
+    }
+
+    fetch(`/api/route/${scheduleId}/`)
+
+        .then(function (response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    `경로 API 오류: ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+
+        .then(function (data) {
+
+            clearMap();
+
+            const places =
+                Array.isArray(data.places)
+                    ? data.places
+                    : [];
+
+            const routePoints =
+                Array.isArray(data.route_points)
+                    ? data.route_points
+                    : [];
+
+            const bounds =
+                new kakao.maps.LatLngBounds();
+
+
+            /* ==================================
+               번호 붙은 장소 마커
+            ================================== */
+
+            places.forEach(
+                function (place) {
+
+                    const lat =
+                        Number(place.lat);
+
+                    const lon =
+                        Number(place.lon);
+
+                    if (
+                        Number.isNaN(lat)
+                        || Number.isNaN(lon)
+                    ) {
+                        return;
+                    }
+
+                    const position =
+                        new kakao.maps.LatLng(
+                            lat,
+                            lon
+                        );
+
+
+                    const markerContent = `
+                        <div
+                            class="schedule-map-marker"
+                            title="${place.name || ''}"
+                            style="
+                                width: 38px;
+                                height: 38px;
+                                background: #2f6ee5;
+                                color: #ffffff;
+                                border-radius: 50%;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                font-weight: 700;
+                                font-size: 15px;
+                                border: 3px solid #ffffff;
+                                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                                cursor: pointer;
+                                box-sizing: border-box;
+                            "
+                        >
+                            ${place.order}
+                        </div>
+                    `;
+
+
+                    const overlay =
+                        new kakao.maps.CustomOverlay({
+                            position: position,
+                            content: markerContent,
+                            yAnchor: 0.5
+                        });
+
+
+                    overlay.setMap(map);
+
+                    overlays.push(
+                        overlay
+                    );
+
+                    bounds.extend(
+                        position
+                    );
+                }
+            );
+
+
+            /* ==================================
+               실제 이동 경로선
+            ================================== */
+
+            const path = [];
+
+            routePoints.forEach(
+                function (point) {
+
+                    const lat =
+                        Number(point.lat);
+
+                    const lon =
+                        Number(point.lon);
+
+                    if (
+                        Number.isNaN(lat)
+                        || Number.isNaN(lon)
+                    ) {
+                        return;
+                    }
+
+                    const position =
+                        new kakao.maps.LatLng(
+                            lat,
+                            lon
+                        );
+
+                    path.push(
+                        position
+                    );
+
+                    bounds.extend(
+                        position
+                    );
+                }
+            );
+
+
+            if (path.length >= 2) {
+
+                routePolyline =
+                    new kakao.maps.Polyline({
+                        map: map,
+                        path: path,
+                        strokeWeight: 5,
+                        strokeColor: '#2f6ee5',
+                        strokeOpacity: 0.9,
+                        strokeStyle: 'solid'
+                    });
+            }
+
+
+            /* ==================================
+               모든 마커/경로가 보이도록 범위 조절
+            ================================== */
+
+            if (
+                places.length > 0
+                || path.length > 0
+            ) {
+
+                map.setBounds(
+                    bounds
+                );
+            }
+
+        })
+
+        .catch(function (error) {
+
+            console.error(
+                '일정 지도 표시 실패:',
+                error
+            );
+
+        });
+}
+
+
+/* ==========================================
+   DAY 버튼 + 타임라인 + 지도 연결
+========================================== */
 
 document.addEventListener(
     'DOMContentLoaded',
     function () {
 
+        initMap();
+
 
         const dayButtons =
             document.querySelectorAll('.day');
 
-
         const schedules =
-            document.querySelectorAll('.day-schedule');
-
+            document.querySelectorAll(
+                '.day-schedule'
+            );
 
 
         dayButtons.forEach(
             function (button) {
 
-
                 button.addEventListener(
                     'click',
                     function () {
 
-
                         const dayNumber =
                             this.dataset.day;
 
+                        const scheduleId =
+                            this.dataset.scheduleId;
 
-                        /*
-                         * 모든 DAY 버튼 active 제거
-                         */
 
+                        // 모든 DAY 버튼 active 제거
                         dayButtons.forEach(
                             function (btn) {
 
                                 btn.classList.remove(
                                     'active'
                                 );
-
                             }
                         );
 
 
-                        /*
-                         * 클릭한 DAY 활성화
-                         */
-
+                        // 클릭한 DAY 활성화
                         this.classList.add(
                             'active'
                         );
 
 
-                        /*
-                         * 모든 일정 숨기기
-                         */
-
+                        // 모든 일정 숨김
                         schedules.forEach(
                             function (schedule) {
 
                                 schedule.style.display =
                                     'none';
-
                             }
                         );
 
 
-                        /*
-                         * 선택한 일정 표시
-                         */
-
+                        // 선택 DAY 일정 표시
                         const selectedSchedule =
                             document.getElementById(
                                 'day-' + dayNumber
@@ -766,24 +1007,30 @@ document.addEventListener(
 
                             selectedSchedule.style.display =
                                 'block';
-
                         }
 
 
+                        // 지도 변경은 DAY 요소의 onclick에서 처리
                     }
                 );
-
-
             }
         );
 
 
+        /* ======================================
+           첫 화면에서 DAY 1 자동 표시
+        ====================================== */
+
+        {% if days %}
+            drawSchedule(
+                {{ days.0.schedule.s_id }}
+            );
+        {% endif %}
+
     }
 );
 
-
 </script>
-
 
 </body>
 

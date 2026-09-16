@@ -3,7 +3,8 @@ from django.template import loader
 from django.db.models import Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-
+from .services.schedule_service import generate_schedule
+from .services.route_service import get_kakao_route
 from .models import Member
 from .models import Travel
 from .models import Place
@@ -11,6 +12,7 @@ from .models import Schedule
 from .models import Pay
 from .models import Category
 from .models import SchedulePlace
+from .models import TravelCategory
 
 import requests
 
@@ -224,18 +226,24 @@ def travel_create(request):
             t_way=traffic
         )
 
+        # 자동 일정 생성
+        generate_schedule(travel)
+
         return redirect(
             'travel_detail',
             travel_id=travel.t_id
         )
-
+    categories = Category.objects.all()
     return render(
         request,
         'sherpaapp/travel_create.html',
         {
-            'member': member
+            'member': member,
+            'categories': categories
         }
     )
+
+    
 
 
 # ==============================================
@@ -427,6 +435,109 @@ def travel_detail(request, travel_id):
         context
     )
 
+def travel_route(request, schedule_id):
+
+    schedule = get_object_or_404(
+        Schedule,
+        s_id=schedule_id
+    )
+
+    travel = schedule.travel
+
+    schedule_places = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .select_related('place')
+        .order_by('visit_order')
+    )
+
+    places = []
+
+    for sp in schedule_places:
+
+        place = sp.place
+
+        if (
+            place.p_lat is None
+            or place.p_lon is None
+        ):
+            continue
+
+        places.append({
+            'id': place.p_id,
+            'name': place.p_name,
+            'address': place.p_addr,
+
+            'lat': float(place.p_lat),
+            'lon': float(place.p_lon),
+
+            'order': sp.visit_order,
+
+            'arrival_time':
+                sp.arrive_time.strftime('%H:%M')
+                if sp.arrive_time
+                else None,
+
+            'stay_time':
+                sp.stay_time,
+        })
+
+
+    # ==========================================
+    # 장소 사이 실제 경로
+    # ==========================================
+
+    route_points = []
+
+    total_duration = 0
+    total_distance = 0
+
+
+    for i in range(
+        len(places) - 1
+    ):
+
+        start = places[i]
+        end = places[i + 1]
+
+        route = get_kakao_route(
+            start['lat'],
+            start['lon'],
+            end['lat'],
+            end['lon'],
+            travel.t_way
+        )
+
+        if not route:
+            continue
+
+        route_points.extend(
+            route['points']
+        )
+
+        total_duration += (
+            route['duration']
+        )
+
+        total_distance += (
+            route['distance']
+        )
+
+
+    return JsonResponse({
+        'transport': travel.t_way,
+
+        'places': places,
+
+        'route_points':
+            route_points,
+
+        'total_duration':
+            total_duration,
+
+        'total_distance':
+            total_distance,
+    })
 
 # ==============================================
 # 여행 수정
@@ -476,9 +587,7 @@ def travel_update(request, travel_id):
             't_end'
         )
 
-        traffic = ','.join(
-            request.POST.getlist('traffic')
-        )
+        traffic = request.POST.getlist('traffic')
 
         travel.t_way = traffic
 
