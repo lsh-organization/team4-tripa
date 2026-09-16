@@ -496,17 +496,8 @@
 
                 <div class="detail-map">
 
-
-                    <div
-                        id="map"
-                        style="
-                            width: 100%;
-                            height: 500px;
-                            border-radius: 12px;
-                        ">
-                    </div>
-
-
+                    <div id="map"></div>
+                        
                 </div>
 
 
@@ -849,7 +840,24 @@
 
 
 
+<!-- =========================================================
+     카카오 지도 SDK
+========================================================== -->
+<script
+    type="text/javascript"
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
+</script>
+
+
 <script>
+
+/* =========================================================
+   전역 상태
+========================================================= */
+
+let map = null;
+let overlays = [];
+let routePolyline = null;
 
 
 /* =========================================================
@@ -860,212 +868,52 @@ function getCookie(name) {
 
     let cookieValue = null;
 
-    if (
-        document.cookie &&
-        document.cookie !== ""
-    ) {
+    if (document.cookie && document.cookie !== "") {
 
-        const cookies =
-            document.cookie.split(";");
+        const cookies = document.cookie.split(";");
 
-        for (
-            let i = 0;
-            i < cookies.length;
-            i++
-        ) {
+        for (let i = 0; i < cookies.length; i++) {
 
-            const cookie =
-                cookies[i].trim();
+            const cookie = cookies[i].trim();
 
             if (
-                cookie.substring(
-                    0,
-                    name.length + 1
-                ) ===
-                (
-                    name + "="
-                )
+                cookie.substring(0, name.length + 1)
+                === (name + "=")
             ) {
-
-                cookieValue =
-                    decodeURIComponent(
-                        cookie.substring(
-                            name.length + 1
-                        )
-                    );
+                cookieValue = decodeURIComponent(
+                    cookie.substring(name.length + 1)
+                );
 
                 break;
-
             }
-
         }
-
     }
 
     return cookieValue;
-
 }
 
 
-
 /* =========================================================
-   DAY 선택
+   카카오 지도 초기화
 ========================================================= */
-
-function selectDay(day) {
-
-
-    currentDay = day;
-
-
-    /* DAY 버튼 active 제거 */
-
-    document
-        .querySelectorAll(".day")
-        .forEach(function(element) {
-
-            element.classList.remove(
-                "active"
-            );
-
-        });
-
-
-
-    /* 선택한 DAY active */
-
-    const dayButtons =
-        document.querySelectorAll(".day");
-
-
-    if (
-        dayButtons[day - 1]
-    ) {
-
-        dayButtons[day - 1]
-            .classList.add("active");
-
-    }
-
-
-    /* 해당 DAY 데이터 */
-
-    loadDay(day);
-
-}
-
-
-
-/* =========================================================
-   DAY 데이터 조회
-========================================================= */
-
-function loadDay(day) {
-
-
-    currentDay = day;
-
-
-    fetch(
-        `/travel_detail_day/${travelId}/${day}/`
-    )
-
-        .then(response => {
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "서버 응답 오류"
-                );
-
-            }
-
-
-            return response.json();
-
-        })
-
-
-        .then(data => {
-
-
-            if (!data.success) {
-
-                alert(
-                    data.message
-                );
-
-                return;
-
-            }
-
-
-            console.log(
-                "DAY 데이터:",
-                data
-            );
-
-
-            /* 현재 Schedule ID 저장 */
-
-            currentScheduleId =
-                data.schedule_id;
-
-
-            /* 일정 출력 */
-
-            renderSchedule(data);
-
-
-            /* 비용 출력 */
-
-            renderPayment(data);
-
-
-            /* DAY 제목 */
-
-            document
-                .getElementById(
-                    "currentDayTitle"
-                )
-                .innerText =
-                `📅 DAY ${data.day} 일정`;
-
-        })
-
-
-        .catch(error => {
-
-
-            console.error(
-                "DAY 데이터 조회 실패:",
-                error
-            );
-
-
-
-<script
-    type="text/javascript"
-    src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
-</script>
-
-
-<!-- =========================
-     카카오 지도 + DAY 선택
-            alert(
-                "일정 데이터를 불러오지 못했습니다."
-            );
-
-        });
-
 
 function initMap() {
 
     const mapContainer =
-        document.getElementById('map');
+        document.getElementById("map");
 
     if (!mapContainer) {
+        console.error("map 요소를 찾을 수 없습니다.");
+        return;
+    }
+
+    if (
+        typeof kakao === "undefined"
+        || !kakao.maps
+    ) {
+        console.error(
+            "카카오 지도 SDK가 로드되지 않았습니다."
+        );
         return;
     }
 
@@ -1081,38 +929,51 @@ function initMap() {
         mapContainer,
         mapOption
     );
+
+    console.log("카카오 지도 생성 완료");
+
+    setTimeout(function () {
+        map.relayout();
+    }, 100);
 }
 
 
-/* ==========================================
+/* =========================================================
    기존 번호 마커 / 경로선 제거
+========================================================= */
 
 function clearMap() {
 
-    overlays.forEach(
-        function (overlay) {
-            overlay.setMap(null);
-        }
-    );
+    overlays.forEach(function (overlay) {
+        overlay.setMap(null);
+    });
 
     overlays = [];
 
-
     if (routePolyline) {
-
         routePolyline.setMap(null);
-
         routePolyline = null;
     }
 }
 
 
-/* ==========================================
+/* =========================================================
    선택한 DAY의 지도 표시
+========================================================= */
 
 function drawSchedule(scheduleId) {
 
-    if (!map || !scheduleId) {
+    if (!map) {
+        console.error(
+            "map 객체가 아직 생성되지 않았습니다."
+        );
+        return;
+    }
+
+    if (!scheduleId) {
+        console.error(
+            "scheduleId가 없습니다."
+        );
         return;
     }
 
@@ -1131,6 +992,11 @@ function drawSchedule(scheduleId) {
 
         .then(function (data) {
 
+            console.log(
+                "지도 API 데이터:",
+                data
+            );
+
             clearMap();
 
             const places =
@@ -1147,9 +1013,7 @@ function drawSchedule(scheduleId) {
                 new kakao.maps.LatLngBounds();
 
 
-            /* ==================================
-               번호 붙은 장소 마커
-            ================================== */
+            /* 번호 마커 */
 
             places.forEach(
                 function (place) {
@@ -1173,32 +1037,30 @@ function drawSchedule(scheduleId) {
                             lon
                         );
 
-
                     const markerContent = `
                         <div
                             class="schedule-map-marker"
-                            title="${place.name || ''}"
+                            title="${place.name || ""}"
                             style="
-                                width: 38px;
-                                height: 38px;
-                                background: #2f6ee5;
-                                color: #ffffff;
-                                border-radius: 50%;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: 700;
-                                font-size: 15px;
-                                border: 3px solid #ffffff;
-                                box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-                                cursor: pointer;
-                                box-sizing: border-box;
+                                width:38px;
+                                height:38px;
+                                background:#2f6ee5;
+                                color:#ffffff;
+                                border-radius:50%;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                font-weight:700;
+                                font-size:15px;
+                                border:3px solid #ffffff;
+                                box-shadow:0 2px 8px rgba(0,0,0,0.25);
+                                cursor:pointer;
+                                box-sizing:border-box;
                             "
                         >
                             ${place.order}
                         </div>
                     `;
-
 
                     const overlay =
                         new kakao.maps.CustomOverlay({
@@ -1206,7 +1068,6 @@ function drawSchedule(scheduleId) {
                             content: markerContent,
                             yAnchor: 0.5
                         });
-
 
                     overlay.setMap(map);
 
@@ -1221,9 +1082,7 @@ function drawSchedule(scheduleId) {
             );
 
 
-            /* ==================================
-               실제 이동 경로선
-            ================================== */
+            /* 실제 이동 경로선 */
 
             const path = [];
 
@@ -1267,46 +1126,137 @@ function drawSchedule(scheduleId) {
                         map: map,
                         path: path,
                         strokeWeight: 5,
-                        strokeColor: '#2f6ee5',
+                        strokeColor: "#2f6ee5",
                         strokeOpacity: 0.9,
-                        strokeStyle: 'solid'
+                        strokeStyle: "solid"
                     });
             }
 
-
-            /* ==================================
-               모든 마커/경로가 보이도록 범위 조절
-            ================================== */
 
             if (
                 places.length > 0
                 || path.length > 0
             ) {
 
+                map.relayout();
+
                 map.setBounds(
                     bounds
                 );
             }
-
         })
 
         .catch(function (error) {
 
             console.error(
-                '일정 지도 표시 실패:',
+                "일정 지도 표시 실패:",
                 error
             );
-
         });
 }
 
 
-/* ==========================================
-   DAY 버튼 + 타임라인 + 지도 연결
+/* =========================================================
+   DAY 선택
+========================================================= */
+
+function selectDay(day) {
+
+    currentDay = day;
+
+    document
+        .querySelectorAll(".day")
+        .forEach(function (element) {
+
+            element.classList.remove(
+                "active"
+            );
+        });
+
+    const dayButtons =
+        document.querySelectorAll(".day");
+
+    if (dayButtons[day - 1]) {
+
+        dayButtons[day - 1]
+            .classList.add("active");
+    }
+
+    loadDay(day);
 }
 
 
-        initMap();
+/* =========================================================
+   DAY 데이터 조회
+========================================================= */
+
+function loadDay(day) {
+
+    currentDay = day;
+
+    fetch(
+        `/travel_detail_day/${travelId}/${day}/`
+    )
+
+        .then(function (response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    "서버 응답 오류"
+                );
+            }
+
+            return response.json();
+        })
+
+        .then(function (data) {
+
+            if (!data.success) {
+
+                alert(
+                    data.message
+                );
+
+                return;
+            }
+
+            console.log(
+                "DAY 데이터:",
+                data
+            );
+
+            currentScheduleId =
+                data.schedule_id;
+
+            renderSchedule(data);
+
+            renderPayment(data);
+
+            document
+                .getElementById(
+                    "currentDayTitle"
+                )
+                .innerText =
+                `📅 DAY ${data.day} 일정`;
+
+            // DAY 조회가 끝난 뒤 해당 스케줄 지도를 그림
+            drawSchedule(
+                data.schedule_id
+            );
+        })
+
+        .catch(function (error) {
+
+            console.error(
+                "DAY 데이터 조회 실패:",
+                error
+            );
+
+            alert(
+                "일정 데이터를 불러오지 못했습니다."
+            );
+        });
+}
 
 
 /* =========================================================
@@ -1315,69 +1265,43 @@ function drawSchedule(scheduleId) {
 
 function renderSchedule(data) {
 
-
     const container =
         document.getElementById(
             "timelineContainer"
         );
 
-
     container.innerHTML = "";
 
-
-    /* 일정이 없는 경우 */
-
     if (
-        !data.places ||
-        data.places.length === 0
+        !data.places
+        || data.places.length === 0
     ) {
 
-
         container.innerHTML = `
-
             <div class="empty-schedule">
-
                 등록된 일정이 없습니다.
-
             </div>
-
         `;
 
-
         return;
-
     }
 
-
-
-    /* 장소 반복 */
-
     data.places.forEach(
-        function(sp) {
-
-
-            /* -----------------------------------------
-               사진
-            ------------------------------------------ */
+        function (sp) {
 
             let imageHtml;
 
-
             if (
-                sp.place_image &&
-                sp.place_image.trim() !== ""
+                sp.place_image
+                && sp.place_image.trim() !== ""
             ) {
 
-
                 imageHtml = `
-
                     <div class="schedule-image">
-
                         <img
                             src="${sp.place_image}"
                             alt="${sp.place_name}"
                             loading="lazy"
-
                             onerror="
                                 this.style.display='none';
                                 this.nextElementSibling.style.display='flex';
@@ -1387,664 +1311,419 @@ function renderSchedule(data) {
                         <div
                             class="no-place-image"
                             style="display:none;">
-
                             📍
-
                         </div>
-
                     </div>
-
                 `;
-
 
             } else {
 
-
                 imageHtml = `
-
                     <div class="schedule-image">
-
                         <div class="no-place-image">
-
                             📍
-
                         </div>
-
                     </div>
-
                 `;
-
             }
-
-
-
-            /* -----------------------------------------
-               주소
-            ------------------------------------------ */
 
             const address =
                 sp.place_addr
-                ?
-                sp.place_addr
-                :
-                "주소 정보 없음";
-
-
-            /* -----------------------------------------
-               카테고리
-            ------------------------------------------ */
+                    ? sp.place_addr
+                    : "주소 정보 없음";
 
             const category =
                 sp.place_kind
-                ?
-                sp.place_kind
-                :
-                "기타";
-
-
-            /* -----------------------------------------
-               카드 HTML
-            ------------------------------------------ */
+                    ? sp.place_kind
+                    : "기타";
 
             const html = `
-
-
                 <div class="timeline-item">
-
-
-                    <!-- 방문시간 -->
 
                     <div
                         class="time"
                         onclick="editTime(this, ${sp.sp_id})">
-
                         ${sp.arrive_time || ""}
-
                     </div>
-
-
-
-                    <!-- 일정 카드 -->
 
                     <div class="schedule-card">
 
-
-                        <!-- 사진 -->
-
                         ${imageHtml}
-
-
-
-                        <!-- 장소 정보 -->
 
                         <div class="schedule-info">
 
-
                             <h3>
-
-                                📍
-                                ${sp.visit_order}.
-                                ${sp.place_name}
-
+                                📍 ${sp.visit_order}. ${sp.place_name}
                             </h3>
 
-
-                            <!-- 상세 주소 -->
-
                             <p class="schedule-address">
-
                                 ${address}
-
                             </p>
-
-
-                            <!-- 카테고리 -->
 
                             <div>
-
                                 <span class="schedule-category">
-
                                     ${category}
-
                                 </span>
-
                             </div>
 
-
-                            <!-- 체류시간 -->
-
                             <p>
-
                                 체류시간 :
                                 ${sp.stay_time}분
-
                             </p>
-
-
-                            <!-- 출발시간 -->
 
                             <p>
-
                                 출발시간 :
                                 ${sp.start_time || ""}
-
                             </p>
 
-
                         </div>
-
-
-
-                        <!--
-                            삭제 버튼
-                            오른쪽 위 고정
-                        -->
 
                         <button
                             type="button"
                             class="schedule-delete"
                             onclick="deleteSchedulePlace(${sp.sp_id})">
-
                             삭제
-
                         </button>
-
 
                     </div>
 
-
                 </div>
-
             `;
-
 
             container.insertAdjacentHTML(
                 "beforeend",
                 html
             );
-
         }
     );
-
 }
-
 
 
 /* =========================================================
    일정 삭제
+========================================================= */
 
 function deleteSchedulePlace(spId) {
-
 
     if (
         !confirm(
             "이 장소를 일정에서 삭제하시겠습니까?"
         )
     ) {
-
         return;
-
     }
-
 
     const body =
         new URLSearchParams();
-
 
     body.append(
         "sp_id",
         spId
     );
 
-
     fetch(
         "/schedule_place_delete/",
         {
-
             method: "POST",
 
             headers: {
-
                 "Content-Type":
                     "application/x-www-form-urlencoded;charset=UTF-8",
 
                 "X-CSRFToken":
                     getCookie("csrftoken")
-
             },
 
             body: body.toString()
-
         }
     )
 
-        .then(response => {
-
+        .then(function (response) {
 
             if (!response.ok) {
-
                 throw new Error(
                     "삭제 요청 실패"
                 );
-
             }
 
-
             return response.json();
-
         })
 
+        .then(function (data) {
 
-        .then(data => {
-
-
-            if (
-                data.success
-            ) {
-
-
-                /* 삭제 후 현재 DAY 다시 조회 */
+            if (data.success) {
 
                 loadDay(
                     currentDay
                 );
 
-
             } else {
-
 
                 alert(
                     data.message
-                    ||
-                    "일정 삭제에 실패했습니다."
+                    || "일정 삭제에 실패했습니다."
                 );
-
             }
-
         })
 
-
-        .catch(error => {
-
+        .catch(function (error) {
 
             console.error(
                 "일정 삭제 오류:",
                 error
             );
 
-
             alert(
                 "일정 삭제 중 오류가 발생했습니다."
             );
-
         });
-
 }
-
 
 
 /* =========================================================
    비용 출력
+========================================================= */
 
 function renderPayment(data) {
-
 
     const payBox =
         document.getElementById(
             "payBox"
         );
 
-
-    /*
-        여기에는 + 추가 버튼을 넣지 않음.
-        추가 버튼은 DAY 일정 제목 오른쪽에 있음.
-    */
-
     let html = `
-
-
         <div class="section-title">
-
             💰 DAY ${data.day} 여행 비용
-
         </div>
-
     `;
 
-
-
-    /* 비용 없음 */
-
     if (
-        !data.pays ||
-        data.pays.length === 0
+        !data.pays
+        || data.pays.length === 0
     ) {
 
-
         html += `
-
-
             <div class="pay-item">
-
-
                 <span>
-
                     등록된 비용이 없습니다.
-
                 </span>
 
-
                 <strong>
-
                     0원
-
                 </strong>
-
-
             </div>
-
         `;
-
 
     } else {
 
-
-        /* 비용 목록 */
-
         data.pays.forEach(
-            function(pay) {
-
+            function (pay) {
 
                 html += `
-
-
                     <div class="pay-item">
-
-
                         <span>
-
                             ${pay.pay_context}
-
                         </span>
 
-
                         <strong>
-
                             ${Number(
                                 pay.pay_pay
                             ).toLocaleString()}원
-
                         </strong>
-
-
                     </div>
-
                 `;
-
-
             }
         );
-
     }
 
-
-
-    /* 총 비용 */
-
     html += `
-
-
         <div class="pay-item total-pay">
 
-
             <span>
-
                 DAY ${data.day} 총 비용
-
             </span>
 
-
             <strong>
-
                 ${Number(
                     data.total_pay || 0
                 ).toLocaleString()}원
-
             </strong>
 
-
         </div>
-
     `;
-
 
     payBox.innerHTML =
         html;
-
 }
-
 
 
 /* =========================================================
    장소 추가 Modal 열기
+========================================================= */
 
 function openPlaceSearch() {
-
 
     const modal =
         document.getElementById(
             "placeModal"
         );
 
-
     modal.style.display =
         "flex";
-
 
     const input =
         document.getElementById(
             "placeSearchInput"
         );
 
-
     if (input) {
 
         setTimeout(
-            function() {
-
+            function () {
                 input.focus();
-
             },
             100
         );
-
     }
-
 }
-
 
 
 /* =========================================================
    장소 추가 Modal 닫기
+========================================================= */
 
 function closePlaceModal() {
-
 
     const modal =
         document.getElementById(
             "placeModal"
         );
 
-
     modal.style.display =
         "none";
-
 }
-
 
 
 /* =========================================================
    일정에 장소 추가
+========================================================= */
 
 function addSchedule(placeId) {
-
 
     const visitTime =
         document.getElementById(
             "visitTime"
         ).value;
 
-
     if (!visitTime) {
-
 
         alert(
             "방문 시간을 먼저 입력해주세요."
         );
 
-
         return;
-
     }
 
-
     if (!currentScheduleId) {
-
 
         alert(
             "현재 DAY 정보를 찾을 수 없습니다."
         );
 
-
         return;
-
     }
-
-
 
     const body =
         new URLSearchParams();
-
 
     body.append(
         "schedule_id",
         currentScheduleId
     );
 
-
     body.append(
         "place_id",
         placeId
     );
-
 
     body.append(
         "arrive_time",
         visitTime
     );
 
-
-
     fetch(
         "/schedule_place_add/",
         {
-
             method: "POST",
 
             headers: {
-
                 "Content-Type":
                     "application/x-www-form-urlencoded;charset=UTF-8",
 
                 "X-CSRFToken":
                     getCookie("csrftoken")
-
             },
 
             body:
                 body.toString()
-
         }
     )
 
-        .then(response =>
-            response.json()
-        )
+        .then(function (response) {
+            return response.json();
+        })
 
+        .then(function (data) {
 
-        .then(data => {
-
-
-            if (
-                data.success
-            ) {
-
+            if (data.success) {
 
                 closePlaceModal();
-
 
                 loadDay(
                     currentDay
                 );
 
-
             } else {
-
 
                 alert(
                     data.message
                 );
-
             }
-
         })
 
-
-        .catch(error => {
-
+        .catch(function (error) {
 
             console.error(
                 "일정 추가 오류:",
                 error
             );
 
-
             alert(
                 "일정 추가 중 오류가 발생했습니다."
             );
-
         });
-
 }
-
 
 
 /* =========================================================
    장소 검색
-   기존 장소 검색 API 코드가 있다면
-   이 부분에 그대로 넣으면 됨.
+========================================================= */
 
 function searchPlace() {
-
 
     const visitTime =
         document.getElementById(
             "visitTime"
         ).value;
 
-
     if (!visitTime) {
-
 
         alert(
             "방문 시간을 먼저 입력해주세요."
         );
 
-
         return;
-
     }
-
 
     const keyword =
         document
@@ -2054,47 +1733,30 @@ function searchPlace() {
             .value
             .trim();
 
-
     if (!keyword) {
-
 
         alert(
             "장소를 검색해주세요."
         );
 
-
         return;
-
     }
 
-
     /*
-        ============================================
-        기존 카카오 장소 검색 코드 사용 부분
-
-        검색 결과 버튼에서는 예를 들어
-
-        onclick="addSchedule(장소ID)"
-
-        형태로 연결하면 됨.
-        ============================================
+        기존 카카오 장소 검색 코드가 있다면
+        이 부분에 연결하면 됩니다.
     */
-
-
 }
-
 
 
 /* =========================================================
    시간 수정
-   기존 시간 수정 코드가 있다면 그대로 사용 가능
+========================================================= */
 
 function editTime(element, spId) {
 
-
     const oldTime =
         element.innerText.trim();
-
 
     const newTime =
         prompt(
@@ -2102,141 +1764,104 @@ function editTime(element, spId) {
             oldTime
         );
 
-
     if (
-        !newTime ||
-        newTime === oldTime
+        !newTime
+        || newTime === oldTime
     ) {
-
         return;
-
     }
-
 
     const body =
         new URLSearchParams();
-
 
     body.append(
         "sp_id",
         spId
     );
 
-
     body.append(
         "arrive_time",
         newTime
     );
 
-
     fetch(
         "/schedule_place_time_update/",
         {
-
             method: "POST",
 
             headers: {
-
                 "Content-Type":
                     "application/x-www-form-urlencoded;charset=UTF-8",
 
                 "X-CSRFToken":
                     getCookie("csrftoken")
-
             },
 
             body:
                 body.toString()
-
         }
     )
 
-        .then(response =>
-            response.json()
-        )
+        .then(function (response) {
+            return response.json();
+        })
 
+        .then(function (data) {
 
-        .then(data => {
-
-
-            if (
-                data.success
-            ) {
-
+            if (data.success) {
 
                 loadDay(
                     currentDay
                 );
 
-
             } else {
-
 
                 alert(
                     data.message
                 );
-
             }
-
         })
 
-
-        .catch(error => {
-
+        .catch(function (error) {
 
             console.error(
                 "방문시간 수정 오류:",
                 error
             );
 
-
             alert(
                 "방문시간 변경 중 오류가 발생했습니다."
             );
-
         });
-
 }
 
 
-
 /* =========================================================
-   페이지 처음 열었을 때 DAY 1 자동 조회
+   페이지 처음 열었을 때
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    function() {
+    function () {
 
+        initMap();
 
         const firstDay =
             document.querySelector(
                 ".day"
             );
 
-
         if (firstDay) {
-
 
             currentDay = 1;
 
             loadDay(1);
-
         }
-
-        /* ======================================
-           첫 화면에서 DAY 1 자동 표시
-        ====================================== */
-
-        {% if days %}
-            drawSchedule(
-                {{ days.0.schedule.s_id }}
-            );
-        {% endif %}
-
     }
 );
 
 </script>
+
 
 </body>
 

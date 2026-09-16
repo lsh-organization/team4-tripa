@@ -537,6 +537,112 @@ def travel_detail(
     )
 
 
+
+# ==============================================
+# 일정별 지도 경로 API
+# ==============================================
+
+
+def travel_route(request, schedule_id):
+
+    schedule = get_object_or_404(
+        Schedule,
+        s_id=schedule_id
+    )
+
+    travel = schedule.travel
+
+    schedule_places = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .select_related('place')
+        .order_by('visit_order')
+    )
+
+    places = []
+
+    for sp in schedule_places:
+        place = sp.place
+
+        if (
+            place.p_lat is None
+            or place.p_lon is None
+        ):
+            continue
+
+        places.append({
+            'id': place.p_id,
+            'name': place.p_name,
+            'address': place.p_addr,
+            'lat': float(place.p_lat),
+            'lon': float(place.p_lon),
+            'order': sp.visit_order,
+            'arrival_time': (
+                sp.arrive_time.strftime('%H:%M')
+                if sp.arrive_time
+                else None
+            ),
+            'stay_time': sp.stay_time,
+        })
+
+    # ==========================================
+    # 장소 사이 실제 경로
+    # ==========================================
+
+    route_points = []
+    total_duration = 0
+    total_distance = 0
+
+    for i in range(len(places) - 1):
+        start_place = places[i]
+        end_place = places[i + 1]
+
+        try:
+            route = get_kakao_route(
+                start_place['lat'],
+                start_place['lon'],
+                end_place['lat'],
+                end_place['lon'],
+                travel.t_way
+            )
+
+        except Exception as e:
+            print(
+                f'경로 조회 실패: '
+                f'{start_place["name"]} -> {end_place["name"]}'
+            )
+            print(e)
+            continue
+
+        if not route:
+            continue
+
+        route_points.extend(
+            route.get('points', [])
+        )
+
+        total_duration += route.get(
+            'duration',
+            0
+        )
+
+        total_distance += route.get(
+            'distance',
+            0
+        )
+
+    return JsonResponse({
+        'success': True,
+        'schedule_id': schedule.s_id,
+        's_day': schedule.s_day.strftime('%Y.%m.%d'),
+        'transport': travel.t_way,
+        'places': places,
+        'route_points': route_points,
+        'total_duration': total_duration,
+        'total_distance': total_distance,
+    })
+
+
 # ==============================================
 # 여행 DAY 상세 AJAX
 # ==============================================
