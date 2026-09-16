@@ -15,6 +15,7 @@ from .models import SchedulePlace
 from .models import TravelCategory
 
 import requests
+from datetime import datetime, timedelta
 
 
 # ==============================================
@@ -286,14 +287,6 @@ def travel_list(request):
 # 여행 상세 + 일정 관리
 # ==============================================
 
-from django.shortcuts import render, get_object_or_404
-from .models import (
-    Travel,
-    Member,
-    Schedule,
-    SchedulePlace,
-    Pay
-)
 
 def travel_detail_day(request, travel_id, day):
 
@@ -304,21 +297,25 @@ def travel_detail_day(request, travel_id, day):
     )
 
     # 해당 여행의 DAY 목록
-    schedules = Schedule.objects.filter(travel=travel).order_by('s_day')
+    schedules = (
+        Schedule.objects
+        .filter(travel=travel)
+        .order_by('s_day')
+    )
 
     # DAY가 존재하지 않는 경우
     if not schedules.exists():
         return JsonResponse({
             'success': False,
             'message': '등록된 여행 일정이 없습니다.'
-        })
+        }, status=404)
 
     # DAY 번호 범위 확인
     if day < 1 or day > schedules.count():
         return JsonResponse({
             'success': False,
             'message': '존재하지 않는 DAY입니다.'
-        })
+        }, status=404)
 
     # 해당 DAY
     schedule = schedules[day - 1]
@@ -345,35 +342,31 @@ def travel_detail_day(request, travel_id, day):
     places = []
 
     for sp in schedule_places:
+        place = sp.place
 
         places.append({
             'sp_id': sp.sp_id,
             'visit_order': sp.visit_order,
-
             'arrive_time': (
                 sp.arrive_time.strftime('%H:%M')
                 if sp.arrive_time else ''
             ),
-
             'stay_time': sp.stay_time,
-
             'start_time': (
                 sp.start_time.strftime('%H:%M')
                 if sp.start_time else ''
             ),
-            
-            'place_id': sp.place.p_id,
-            'place_name': sp.place.p_name,
-            'place_addr': sp.place.p_addr,
-            'place_kind': sp.place.p_kind,
-            'place_image': sp.place.p_image or '',
+            'place_id': place.p_id,
+            'place_name': place.p_name,
+            'place_addr': place.p_addr,
+            'place_kind': place.p_kind,
+            'place_image': getattr(place, 'p_image', '') or '',
         })
 
     # 비용 데이터
     payments = []
 
     for pay in pays:
-
         payments.append({
             'pay_context': pay.pay_context,
             'pay_pay': pay.pay_pay,
@@ -381,7 +374,7 @@ def travel_detail_day(request, travel_id, day):
 
     return JsonResponse({
         'success': True,
-        'travel_id': travel_id,
+        'travel_id': travel.t_id,
         'day': day,
         'schedule_id': schedule.s_id,
         's_day': schedule.s_day.strftime('%Y.%m.%d'),
@@ -389,6 +382,112 @@ def travel_detail_day(request, travel_id, day):
         'pays': payments,
         'total_pay': total_pay,
     })
+
+
+# ==============================================
+# 일정별 지도 경로 API
+# ==============================================
+
+
+def travel_route(request, schedule_id):
+
+    schedule = get_object_or_404(
+        Schedule,
+        s_id=schedule_id
+    )
+
+    travel = schedule.travel
+
+    schedule_places = (
+        SchedulePlace.objects
+        .filter(schedule=schedule)
+        .select_related('place')
+        .order_by('visit_order')
+    )
+
+    places = []
+
+    for sp in schedule_places:
+        place = sp.place
+
+        if (
+            place.p_lat is None
+            or place.p_lon is None
+        ):
+            continue
+
+        places.append({
+            'id': place.p_id,
+            'name': place.p_name,
+            'address': place.p_addr,
+            'lat': float(place.p_lat),
+            'lon': float(place.p_lon),
+            'order': sp.visit_order,
+            'arrival_time': (
+                sp.arrive_time.strftime('%H:%M')
+                if sp.arrive_time
+                else None
+            ),
+            'stay_time': sp.stay_time,
+        })
+
+    # ==========================================
+    # 장소 사이 실제 경로
+    # ==========================================
+
+    route_points = []
+    total_duration = 0
+    total_distance = 0
+
+    for i in range(len(places) - 1):
+        start_place = places[i]
+        end_place = places[i + 1]
+
+        try:
+            route = get_kakao_route(
+                start_place['lat'],
+                start_place['lon'],
+                end_place['lat'],
+                end_place['lon'],
+                travel.t_way
+            )
+
+        except Exception as e:
+            print(
+                f'경로 조회 실패: '
+                f'{start_place["name"]} -> {end_place["name"]}'
+            )
+            print(e)
+            continue
+
+        if not route:
+            continue
+
+        route_points.extend(
+            route.get('points', [])
+        )
+
+        total_duration += route.get(
+            'duration',
+            0
+        )
+
+        total_distance += route.get(
+            'distance',
+            0
+        )
+
+    return JsonResponse({
+        'success': True,
+        'schedule_id': schedule.s_id,
+        's_day': schedule.s_day.strftime('%Y.%m.%d'),
+        'transport': travel.t_way,
+        'places': places,
+        'route_points': route_points,
+        'total_duration': total_duration,
+        'total_distance': total_distance,
+    })
+
 
 # ==============================================
 # 여행 수정

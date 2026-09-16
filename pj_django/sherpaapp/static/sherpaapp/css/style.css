@@ -834,6 +834,8 @@ nav a:hover {
     grid-template-columns: 2fr 1fr;
 
     gap: 25px;
+
+    align-items: stretch;
 }
 
 
@@ -862,14 +864,21 @@ nav a:hover {
 /* Map */
 
 .map-box {
-    min-height: 430px;
+    display:flex;
+    flex-direction: column;
+    height: 100%; 
 }
 
 
 .detail-map {
-    position: relative;
 
-    height: 360px;
+    flex: 1;
+
+    width: 100%;
+
+    min-height: 650px;
+
+    position: relative;
 
     border-radius: 10px;
 

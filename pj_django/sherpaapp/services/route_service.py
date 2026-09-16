@@ -15,6 +15,36 @@ def get_kakao_route(
     transport
 ):
 
+    # ==========================================
+    # 교통수단 값 통일
+    # ==========================================
+
+    transport = str(transport).strip().lower()
+
+    transport_map = {
+        'car': 'car',
+        '자동차': 'car',
+        '차': 'car',
+
+        'walk': 'walk',
+        '도보': 'walk',
+
+        'public transport': 'public_transport',
+        'public_transport': 'public_transport',
+        'public': 'public_transport',
+        '대중교통': 'public_transport',
+
+        'bike': 'bike',
+        '자전거': 'bike',
+    }
+
+    transport = transport_map.get(
+        transport,
+        transport
+    )
+
+    # ↓ 기존 코드 계속
+
     headers = {
         'Authorization':
             f'KakaoAK {settings.KAKAO_REST_API_KEY}'
