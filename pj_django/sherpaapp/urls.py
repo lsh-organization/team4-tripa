@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
 
     # ==========================================
-    # 홈페이지
+    # 메인
     # ==========================================
 
     path(
@@ -32,6 +32,12 @@ urlpatterns = [
     ),
 
     path(
+        'check_email/',
+        views.check_email,
+        name='check_email'
+    ),
+
+    path(
         'join_ok/',
         views.join_ok,
         name='join_ok'
@@ -48,17 +54,6 @@ urlpatterns = [
         views.logout,
         name='logout'
     ),
-
-    path(
-        'check_email/',
-        views.check_email,
-        name='check_email'
-    ),
-
-
-    # ==========================================
-    # 아이디 / 비밀번호 찾기
-    # ==========================================
 
     path(
         'idpw/',
@@ -178,17 +173,29 @@ urlpatterns = [
 
 
     # ==========================================
+    # 경로 계산
+    # 팀원 기능 유지
+    # ==========================================
+
+    path(
+        'api/route/<int:schedule_id>/',
+        views.travel_route,
+        name='travel_route'
+    ),
+
+
+    # ==========================================
     # 비용 관리
     # ==========================================
 
-    # 비용 관리 기본 페이지
+    # 비용관리 기본
     path(
         'budget/',
         views.budget,
         name='budget'
     ),
 
-    # 특정 여행 비용 관리
+    # 특정 여행 비용관리
     path(
         'budget/<int:travel_id>/',
         views.budget,
