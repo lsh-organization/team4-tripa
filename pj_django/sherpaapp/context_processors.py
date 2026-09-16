@@ -18,6 +18,6 @@ def login_member(request):
 
 def kakao_api_key(request):
     return {
-            "KAKAO_MAP_API_KEY":
-                settings.KAKAO_MAP_API_KEY
+        "KAKAO_MAP_API_KEY":
+            settings.KAKAO_MAP_API_KEY
     }

@@ -32,8 +32,9 @@
 
 
         <div class="logo">
-            <a href="{% url 'index' %}">🏔️ TRIPA</a>
-            
+            <a href="{% url 'index' %}">
+                🏔️ TRIPA
+            </a>
         </div>
 
 
@@ -43,7 +44,6 @@
 
 
         <ul class="menu">
-
 
             <li>
                 <a href="{% url 'travel_list' %}">
@@ -80,19 +80,28 @@
                 </a>
             </li>
 
-
         </ul>
 
 
-            {% if member %}
-                <a href="{% url 'mypage' %}" class="user-profile">
-                    👤 {{ member.nickname }}
-                </a>
-            {% else %}
-                <a href="{% url 'login' %}" class="user-profile">
-                    👤 로그인
-                </a>
-            {% endif %}
+        {% if member %}
+
+            <a href="{% url 'mypage' %}"
+               class="user-profile">
+
+                👤 {{ member.nickname }}
+
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'login' %}"
+               class="user-profile">
+
+                👤 로그인
+
+            </a>
+
+        {% endif %}
 
 
     </aside>
@@ -121,14 +130,21 @@
         <div class="create-layout">
 
 
-            <!-- 여행 정보 입력 -->
+            <!-- =========================
+                 여행 정보 입력
+            ========================= -->
 
             <div class="card">
 
 
                 <form method="POST">
+
                     {% csrf_token %}
 
+
+                    <!-- =========================
+                         여행 제목
+                    ========================= -->
 
                     <div class="form-group">
 
@@ -139,9 +155,15 @@
                         <input
                             type="text"
                             name="t_title"
-                            placeholder="예) 서울 3박 4일 여행">
+                            placeholder="예) 서울 3박 4일 여행"
+                            required>
+
                     </div>
 
+
+                    <!-- =========================
+                         여행 지역
+                    ========================= -->
 
                     <div class="form-group">
 
@@ -152,94 +174,115 @@
                         <input
                             type="text"
                             name="t_place"
-                            placeholder="예) 서울">
+                            placeholder="예) 서울"
+                            required>
+
                     </div>
 
-<div class="form-group">
 
-    <label>
-        여행 컨셉
-    </label>
+                    <!-- =========================
+                         여행 컨셉
+                    ========================= -->
 
-    <div class="concept-list">
+                    <div class="form-group">
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="쇼핑">
-            <span>쇼핑</span>
-        </label>
+                        <label>
+                            여행 컨셉
+                        </label>
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="역사">
-            <span>역사</span>
-        </label>
+                        <div class="concept-list">
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="전통문화">
-            <span>전통문화</span>
-        </label>
+                            {% for category in categories %}
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="랜드마크">
-            <span>랜드마크</span>
-        </label>
+                                <label class="concept-item">
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="카페">
-            <span>카페</span>
-        </label>
+                                    <input
+                                        type="checkbox"
+                                        name="categories"
+                                        value="{{ category.c_id }}">
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="공원">
-            <span>공원</span>
-        </label>
+                                    <span>
+                                        {{ category.c_name }}
+                                    </span>
 
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="음식">
-            <span>음식</span>
-        </label>
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="자연">
-            <span>자연</span>
-        </label>
-        <label class="concept-item">
-            <input type="checkbox" name="concept" value="바다">
-            <span>바다</span>
-        </label>
+                                </label>
 
-    </div>
+                            {% empty %}
 
-</div>
+                                <p>
+                                    등록된 여행 컨셉이 없습니다.
+                                </p>
 
-<div class="form-group">
+                            {% endfor %}
 
-    <label>
-        교통 수단
-    </label>
+                        </div>
 
-    <div class="concept-list">
+                    </div>
 
-        <label class="concept-item">
-            <input type="checkbox" name="traffic" value="car">
-            <span>차</span>
-        </label>
 
-        <label class="concept-item">
-            <input type="checkbox" name="traffic" value="walk">
-            <span>도보</span>
-        </label>
-        
-        <label class="concept-item">
-            <input type="checkbox" name="traffic" value="public transport">
-            <span>대중교통</span>
-        </label>
+                    <!-- =========================
+                         교통 수단
+                    ========================= -->
 
-        <label class="concept-item">
-            <input type="checkbox" name="traffic" value="bike">
-            <span>자전거</span>
-        </label>
-    </div>
+                    <div class="form-group">
 
-</div>
+                        <label>
+                            교통 수단
+                        </label>
+
+                        <div class="concept-list">
+
+                            <label class="concept-item">
+
+                                <input type="radio" name="traffic" value="car">
+
+                                <span>
+                                    차
+                                </span>
+
+                            </label>
+
+
+                            <label class="concept-item">
+
+                                <input type="radio" name="traffic" value="walk">
+
+                                <span>
+                                    도보
+                                </span>
+
+                            </label>
+
+
+                            <label class="concept-item">
+
+                                <input type="radio" name="traffic" value="public_transport">
+
+                                <span>
+                                    대중교통
+                                </span>
+
+                            </label>
+
+
+                            <label class="concept-item">
+
+                                <input type="radio" name="traffic" value="bike">
+
+                                <span>
+                                    자전거
+                                </span>
+
+                            </label>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =========================
+                         여행 기간
+                    ========================= -->
 
                     <div class="date-group">
 
@@ -252,7 +295,8 @@
 
                             <input
                                 type="date"
-                                name="t_start">
+                                name="t_start"
+                                required>
 
                         </div>
 
@@ -265,12 +309,18 @@
 
                             <input
                                 type="date"
-                                name="t_end">
+                                name="t_end"
+                                required>
+
                         </div>
 
 
                     </div>
 
+
+                    <!-- =========================
+                         버튼
+                    ========================= -->
 
                     <div class="button-group">
 
@@ -302,7 +352,9 @@
             </div>
 
 
-            <!-- 안내 -->
+            <!-- =========================
+                 안내
+            ========================= -->
 
             <div class="card guide-card">
 
@@ -323,12 +375,22 @@
 
 
                 <p>
-                    3. 여행 기간을 선택합니다.
+                    3. 원하는 여행 컨셉을 선택합니다.
                 </p>
 
 
                 <p>
-                    4. 여행을 생성한 후 장소를 추가합니다.
+                    4. 사용할 교통수단을 선택합니다.
+                </p>
+
+
+                <p>
+                    5. 여행 기간을 선택합니다.
+                </p>
+
+
+                <p>
+                    6. 여행 만들기를 눌러 여행을 생성합니다.
                 </p>
 
 
@@ -345,4 +407,5 @@
 
 
 </body>
+
 </html>
