@@ -138,18 +138,92 @@ def travel_create(request):
     # 로그인 확인
     if not login_user:
         return redirect('login')
+
     try:
         member = Member.objects.get(email=login_user)
     except Member.DoesNotExist:
         return redirect('login')
 
+    # ==========================================
     # 여행 저장
+    # ==========================================
     if request.method == 'POST':
         title = request.POST.get('t_title')
         place = request.POST.get('t_place')
-        start = request.POST.get('t_start')
-        end = request.POST.get('t_end')
-        traffic = ','.join(request.POST.getlist('traffic'))
+        start_str = request.POST.get('t_start')
+        end_str = request.POST.get('t_end')
+
+        # 날짜 문자열 -> date 객체
+        try:
+            start = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end = datetime.strptime(end_str, '%Y-%m-%d').date()
+        except (TypeError, ValueError):
+            categories = Category.objects.all().order_by('c_id')
+            return render(
+                request,
+                'sherpaapp/travel_create.html',
+                {
+                    'member': member,
+                    'categories': categories,
+                    'error_message': '여행 날짜를 올바르게 입력해주세요.',
+                }
+            )
+
+        traffic = ','.join(
+            value for value in request.POST.getlist('traffic')
+            if value
+        )
+
+        # ======================================
+        # 선택한 여행 컨셉 조회
+        #
+        # 현재 템플릿(name="categories", value=C_ID)과
+        # 예전 템플릿(name="concept", value=C_NAME)을
+        # 둘 다 지원한다.
+        # ======================================
+        category_ids = [
+            value
+            for value in request.POST.getlist('categories')
+            if value
+        ]
+
+        concept_names = [
+            value.strip()
+            for value in request.POST.getlist('concept')
+            if value and value.strip()
+        ]
+
+        selected_categories = []
+
+        if category_ids:
+            selected_categories = list(
+                Category.objects.filter(
+                    c_id__in=category_ids
+                ).order_by('c_id')
+            )
+        elif concept_names:
+            selected_categories = list(
+                Category.objects.filter(
+                    c_name__in=concept_names
+                ).order_by('c_id')
+            )
+
+        # 컨셉이 하나도 전달되지 않았으면 자동 추천을 만들 수 없음
+        if not selected_categories:
+            categories = Category.objects.all().order_by('c_id')
+            return render(
+                request,
+                'sherpaapp/travel_create.html',
+                {
+                    'member': member,
+                    'categories': categories,
+                    'error_message': '여행 컨셉을 1개 이상 선택해주세요.',
+                }
+            )
+
+        # ======================================
+        # TRAVEL 생성
+        # ======================================
         travel = Travel.objects.create(
             member=member,
             t_title=title,
@@ -158,15 +232,49 @@ def travel_create(request):
             t_end=end,
             t_day=start,
             t_way=traffic,
-            t_budget=100000)
-        
-        # 팀원 자동 일정 생성 기능 유지
+            t_budget=100000,
+        )
+
+        # ======================================
+        # 중요: 자동 일정 생성 전에
+        # TRAVEL_CATEGORY를 먼저 저장해야 함.
+        # generate_schedule()은 이 값을 읽어
+        # 추천 장소를 검색한다.
+        # ======================================
+        for category in selected_categories:
+            TravelCategory.objects.get_or_create(
+                travel=travel,
+                category=category,
+            )
+
+        print(
+            '자동 일정 생성 카테고리:',
+            [category.c_name for category in selected_categories]
+        )
+
+        # ======================================
+        # 자동 일정 생성
+        # ======================================
         generate_schedule(travel)
-        return redirect('travel_detail',travel_id=travel.t_id)
-   
-    # 카테고리
-    categories = (Category.objects.all())
-    return render(request,'sherpaapp/travel_create.html',{'member':member,'categories':categories})
+
+        return redirect(
+            'travel_detail',
+            travel_id=travel.t_id
+        )
+
+    # ==========================================
+    # GET - 카테고리 목록
+    # ==========================================
+    categories = Category.objects.all().order_by('c_id')
+
+    return render(
+        request,
+        'sherpaapp/travel_create.html',
+        {
+            'member': member,
+            'categories': categories,
+        }
+    )
 
 # 여행 목록
 def travel_list(request):
