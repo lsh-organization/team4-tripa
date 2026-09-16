@@ -33,4 +33,5 @@ urlpatterns = [
     path('idpw/', views.idpw, name='idpw'),
     path('id_find/', views.id_find, name='id_find'),
     path('pw_find/', views.pw_find, name='pw_find'),
+    path('api/route/<int:schedule_id>/', views.travel_route, name='travel_route'),
 ]

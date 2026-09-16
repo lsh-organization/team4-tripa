@@ -3,7 +3,8 @@ from django.template import loader
 from django.db.models import Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 from django.conf import settings
-
+from .services.schedule_service import generate_schedule
+from .services.route_service import get_kakao_route
 from .models import Member
 from .models import Travel
 from .models import Place
@@ -11,6 +12,7 @@ from .models import Schedule
 from .models import Pay
 from .models import Category
 from .models import SchedulePlace
+from .models import TravelCategory
 
 import requests
 
@@ -226,18 +228,24 @@ def travel_create(request):
             t_way=traffic
         )
 
+        # 자동 일정 생성
+        generate_schedule(travel)
+
         return redirect(
             'travel_detail',
             travel_id=travel.t_id
         )
-
+    categories = Category.objects.all()
     return render(
         request,
         'sherpaapp/travel_create.html',
         {
-            'member': member
+            'member': member,
+            'categories': categories
         }
     )
+
+    
 
 
 # ==============================================
@@ -430,9 +438,7 @@ def travel_update(request, travel_id):
             't_end'
         )
 
-        traffic = ','.join(
-            request.POST.getlist('traffic')
-        )
+        traffic = request.POST.getlist('traffic')
 
         travel.t_way = traffic
 
