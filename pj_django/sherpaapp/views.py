@@ -298,22 +298,16 @@ def travel_create(request):
     # 로그인 확인
     if not login_user:
 
-        return redirect(
-            'login'
-        )
+        return redirect('login')
 
 
     try:
 
-        member = Member.objects.get(
-            email=login_user
-        )
+        member = Member.objects.get(email=login_user)
 
     except Member.DoesNotExist:
 
-        return redirect(
-            'login'
-        )
+        return redirect('login')
 
 
     # ==========================================
@@ -322,66 +316,93 @@ def travel_create(request):
 
     if request.method == 'POST':
 
-        title = request.POST.get(
-            't_title'
-        )
+        title = request.POST.get('t_title')
 
-        place = request.POST.get(
-            't_place'
-        )
+        place = request.POST.get('t_place')
 
-        start = request.POST.get(
-            't_start'
-        )
+        start = request.POST.get('t_start')
 
-        end = request.POST.get(
-            't_end'
-        )
+        end = request.POST.get('t_end')
 
+        # 문자열 → date 객체 변환
+        start = datetime.strptime(
+            request.POST.get('t_start'),
+            '%Y-%m-%d'
+        ).date()
+
+        end = datetime.strptime(
+            request.POST.get('t_end'),
+            '%Y-%m-%d'
+        ).date()
+
+        # ==========================================
+        # 교통수단
+        # ==========================================
 
         traffic = ','.join(
-            request.POST.getlist(
-                'traffic'
-            )
+            request.POST.getlist('traffic')
         )
 
+        # ==========================================
+        # 선택한 여행 컨셉
+        # ==========================================
+
+        category_ids = request.POST.getlist(
+            'categories'
+        )
+
+
+        print(
+            '선택 카테고리:',
+            category_ids
+        )
+
+        # ==========================================
+        # 여행 저장
+        # ==========================================
 
         travel = Travel.objects.create(
 
-            member=
-                member,
+            member=member,
 
-            t_title=
-                title,
+            t_title=title,
 
-            t_place=
-                place,
+            t_place=place,
 
-            t_start=
-                start,
+            t_start=start,
 
-            t_end=
-                end,
+            t_end=end,
 
-            t_day=
-                start,
+            t_day=start,
 
-            t_way=
-                traffic,
+            t_way=traffic,
 
             # 기본 총 예산
-            t_budget=
-                100000
+            t_budget=100000
         )
+
+        # ==========================================
+        # 여행 ↔ 카테고리 저장
+        # ==========================================
+
+        for category_id in category_ids:
+
+            category = Category.objects.get(
+                c_id=category_id
+            )
+
+            TravelCategory.objects.create(
+                travel=travel,
+                category=category
+            )
 
 
         # ======================================
-        # 팀원 자동 일정 생성 기능 유지
+        # 자동 일정 생성
+        # 반드시 카테고리 저장 이후 실행
         # ======================================
 
-        generate_schedule(
-            travel
-        )
+        generate_schedule(travel)
 
 
         return redirect(
@@ -394,20 +415,15 @@ def travel_create(request):
     # 카테고리
     # ==========================================
 
-    categories = (
-        Category.objects.all()
-    )
+    categories = Category.objects.all()
 
 
     return render(
         request,
         'sherpaapp/travel_create.html',
         {
-            'member':
-                member,
-
-            'categories':
-                categories
+            'member': member,
+            'categories': categories
         }
     )
 
@@ -542,6 +558,9 @@ def travel_detail(
 # 일정별 지도 경로 API
 # ==============================================
 
+# ==============================================
+# 일정별 지도 경로 API
+# ==============================================
 
 def travel_route(request, schedule_id):
 
@@ -552,12 +571,101 @@ def travel_route(request, schedule_id):
 
     travel = schedule.travel
 
-    schedule_places = (
+
+    # ==========================================
+    # 일정 장소 조회
+    # ==========================================
+
+    schedule_places = list(
         SchedulePlace.objects
-        .filter(schedule=schedule)
-        .select_related('place')
-        .order_by('visit_order')
+        .filter(
+            schedule=schedule
+        )
+        .select_related(
+            'place'
+        )
+        .order_by(
+            'visit_order'
+        )
     )
+
+
+    # ==========================================
+    # 교통수단
+    # ==========================================
+
+    transport = request.GET.get(
+        'transport'
+    )
+
+
+    if not transport:
+
+        transport = (
+            travel.t_way
+            or 'car'
+        )
+
+
+    # 여러 개 저장된 경우 첫 번째 사용
+    transport = (
+        str(transport)
+        .split(',')[0]
+        .strip()
+        .lower()
+    )
+
+
+    # ==========================================
+    # 한글 / 영문 교통수단 통일
+    # ==========================================
+
+    transport_map = {
+
+        'car':
+            'car',
+
+        '자동차':
+            'car',
+
+        '차':
+            'car',
+
+        'walk':
+            'walk',
+
+        '도보':
+            'walk',
+
+        'bike':
+            'bike',
+
+        '자전거':
+            'bike',
+
+        'public_transport':
+            'public_transport',
+
+        'public transport':
+            'public_transport',
+
+        'public':
+            'public_transport',
+
+        '대중교통':
+            'public_transport',
+    }
+
+
+    transport = transport_map.get(
+        transport,
+        transport
+    )
+
+
+    # ==========================================
+    # 지도에 표시할 장소
+    # ==========================================
 
     places = []
 
@@ -566,80 +674,304 @@ def travel_route(request, schedule_id):
 
         if (
             place.p_lat is None
-            or place.p_lon is None
+            or
+            place.p_lon is None
         ):
             continue
 
         places.append({
-            'id': place.p_id,
-            'name': place.p_name,
-            'address': place.p_addr,
-            'lat': float(place.p_lat),
-            'lon': float(place.p_lon),
-            'order': sp.visit_order,
+
+            'id':
+                place.p_id,
+
+            'name':
+                place.p_name,
+
+            'address':
+                place.p_addr,
+
+            'lat':
+                float(
+                    place.p_lat
+                ),
+
+            'lon':
+                float(
+                    place.p_lon
+                ),
+
+            'order':
+                sp.visit_order,
+
             'arrival_time': (
-                sp.arrive_time.strftime('%H:%M')
+                sp.arrive_time.strftime(
+                    '%H:%M'
+                )
                 if sp.arrive_time
                 else None
             ),
-            'stay_time': sp.stay_time,
+
+            'stay_time':
+                sp.stay_time,
+
+            'travel_time':
+                sp.travel_time,
         })
 
+
     # ==========================================
-    # 장소 사이 실제 경로
+    # 경로 결과
     # ==========================================
 
     route_points = []
-    total_duration = 0
+
+    routes = []
+
     total_distance = 0
 
-    for i in range(len(places) - 1):
-        start_place = places[i]
-        end_place = places[i + 1]
+    total_duration = 0
 
-        try:
-            route = get_kakao_route(
-                start_place['lat'],
-                start_place['lon'],
-                end_place['lat'],
-                end_place['lon'],
-                travel.t_way
+
+    # ==========================================
+    # 장소가 2개 이상일 때만 경로 조회
+    # ==========================================
+
+    if len(places) >= 2:
+
+        for index in range(
+            len(places) - 1
+        ):
+
+            start_place = (
+                places[index]
             )
 
-        except Exception as e:
-            print(
-                f'경로 조회 실패: '
-                f'{start_place["name"]} -> {end_place["name"]}'
+            end_place = (
+                places[index + 1]
             )
-            print(e)
-            continue
 
-        if not route:
-            continue
 
-        route_points.extend(
-            route.get('points', [])
-        )
+            try:
 
-        total_duration += route.get(
-            'duration',
-            0
-        )
+                route_data = get_kakao_route(
 
-        total_distance += route.get(
-            'distance',
-            0
-        )
+                    start_lat=
+                        start_place['lat'],
+
+                    start_lon=
+                        start_place['lon'],
+
+                    end_lat=
+                        end_place['lat'],
+
+                    end_lon=
+                        end_place['lon'],
+
+                    transport=
+                        transport
+                )
+
+
+            except Exception as e:
+
+                print(
+                    '경로 조회 실패:',
+                    start_place['name'],
+                    '->',
+                    end_place['name']
+                )
+
+                print(e)
+
+
+                routes.append({
+
+                    'from_place':
+                        start_place['name'],
+
+                    'to_place':
+                        end_place['name'],
+
+                    'success':
+                        False,
+
+                    'message':
+                        str(e),
+
+                    'points':
+                        [],
+
+                    'distance':
+                        0,
+
+                    'duration':
+                        0,
+                })
+
+
+                continue
+
+
+            if not route_data:
+
+                routes.append({
+
+                    'from_place':
+                        start_place['name'],
+
+                    'to_place':
+                        end_place['name'],
+
+                    'success':
+                        False,
+
+                    'points':
+                        [],
+
+                    'distance':
+                        0,
+
+                    'duration':
+                        0,
+                })
+
+
+                continue
+
+
+            # ==================================
+            # 경로 정보
+            # ==================================
+
+            points = route_data.get(
+                'points',
+                []
+            )
+
+
+            distance = (
+                route_data.get(
+                    'distance',
+                    0
+                )
+                or 0
+            )
+
+
+            duration = (
+                route_data.get(
+                    'duration',
+                    0
+                )
+                or 0
+            )
+
+
+            route_points.extend(
+                points
+            )
+
+
+            total_distance += (
+                distance
+            )
+
+
+            total_duration += (
+                duration
+            )
+
+
+            routes.append({
+
+                'from_place':
+                    start_place['name'],
+
+                'to_place':
+                    end_place['name'],
+
+                'success':
+                    True,
+
+                'points':
+                    points,
+
+                'distance':
+                    distance,
+
+                'duration':
+                    duration,
+            })
+
+
+    # ==========================================
+    # JSON 반환
+    #
+    # 기존 HTML용 키와
+    # 새 routes용 키를 둘 다 제공
+    # ==========================================
 
     return JsonResponse({
-        'success': True,
-        'schedule_id': schedule.s_id,
-        's_day': schedule.s_day.strftime('%Y.%m.%d'),
-        'transport': travel.t_way,
-        'places': places,
-        'route_points': route_points,
-        'total_duration': total_duration,
-        'total_distance': total_distance,
+
+        'success':
+            True,
+
+        'schedule_id':
+            schedule.s_id,
+
+        's_day':
+            schedule.s_day.strftime(
+                '%Y.%m.%d'
+            ),
+
+        'transport':
+            transport,
+
+
+        # ======================================
+        # 현재 travel_detail.html이 사용하는 값
+        # ======================================
+
+        'places':
+            places,
+
+        'route_points':
+            route_points,
+
+        'total_duration':
+            total_duration,
+
+        'total_distance':
+            total_distance,
+
+
+        # ======================================
+        # 구간별 상세 경로용
+        # ======================================
+
+        'routes':
+            routes,
+
+
+        # ======================================
+        # 이전 코드와의 호환성
+        # ======================================
+
+        'points':
+            route_points,
+
+        'duration':
+            total_duration,
+
+        'distance':
+            total_distance,
+
+
+        'message': (
+            '경로를 계산할 장소가 부족합니다.'
+            if len(places) < 2
+            else ''
+        )
     })
 
 
@@ -2603,336 +2935,4 @@ def schedule_place_time_update(request):
             start_time.strftime(
                 '%H:%M'
             )
-    })
-
-
-# ==============================================
-# 경로 조회
-# ==============================================
-
-def travel_route(
-    request,
-    schedule_id
-):
-
-    schedule = get_object_or_404(
-        Schedule,
-        s_id=schedule_id
-    )
-
-
-    schedule_places = list(
-        SchedulePlace.objects
-        .filter(
-            schedule=schedule
-        )
-        .select_related(
-            'place'
-        )
-        .order_by(
-            'visit_order'
-        )
-    )
-
-
-    # ==========================================
-    # 장소가 2개 미만이면 경로 없음
-    # ==========================================
-
-    if len(
-        schedule_places
-    ) < 2:
-
-        return JsonResponse({
-            'success':
-                True,
-
-            'message':
-                '경로를 계산할 장소가 부족합니다.',
-
-            'points':
-                [],
-
-            'routes':
-                [],
-
-            'distance':
-                0,
-
-            'duration':
-                0
-        })
-
-
-    # ==========================================
-    # 교통수단
-    # ==========================================
-
-    transport = request.GET.get(
-        'transport'
-    )
-
-
-    if not transport:
-
-        transport = (
-            schedule.travel.t_way
-            or 'car'
-        )
-
-
-    # 여러 교통수단 저장돼 있으면 첫 번째 사용
-    transport = (
-        str(transport)
-        .split(',')[0]
-        .strip()
-        .lower()
-    )
-
-
-    # ==========================================
-    # 한글/영문 통일
-    # ==========================================
-
-    transport_map = {
-
-        'car':
-            'car',
-
-        '자동차':
-            'car',
-
-        'walk':
-            'walk',
-
-        '도보':
-            'walk',
-
-        'bike':
-            'bike',
-
-        '자전거':
-            'bike',
-
-        'public_transport':
-            'public_transport',
-
-        'public transport':
-            'public_transport',
-
-        '대중교통':
-            'public_transport'
-    }
-
-
-    transport = (
-        transport_map.get(
-            transport,
-            transport
-        )
-    )
-
-
-    routes = []
-
-    all_points = []
-
-    total_distance = 0
-
-    total_duration = 0
-
-
-    # ==========================================
-    # 장소 → 다음 장소 경로
-    # ==========================================
-
-    for index in range(
-        len(schedule_places) - 1
-    ):
-
-        start_sp = (
-            schedule_places[index]
-        )
-
-        end_sp = (
-            schedule_places[index + 1]
-        )
-
-
-        start_place = (
-            start_sp.place
-        )
-
-        end_place = (
-            end_sp.place
-        )
-
-
-        # 좌표 없으면 건너뜀
-        if (
-            start_place.p_lat is None
-            or
-            start_place.p_lon is None
-            or
-            end_place.p_lat is None
-            or
-            end_place.p_lon is None
-        ):
-
-            continue
-
-
-        try:
-
-            route_data = get_kakao_route(
-
-                start_lat=
-                    start_place.p_lat,
-
-                start_lon=
-                    start_place.p_lon,
-
-                end_lat=
-                    end_place.p_lat,
-
-                end_lon=
-                    end_place.p_lon,
-
-                transport=
-                    transport
-            )
-
-
-        except Exception as e:
-
-            routes.append({
-
-                'from_place':
-                    start_place.p_name,
-
-                'to_place':
-                    end_place.p_name,
-
-                'success':
-                    False,
-
-                'message':
-                    str(e),
-
-                'points':
-                    [],
-
-                'distance':
-                    0,
-
-                'duration':
-                    0
-            })
-
-            continue
-
-
-        if not route_data:
-
-            routes.append({
-
-                'from_place':
-                    start_place.p_name,
-
-                'to_place':
-                    end_place.p_name,
-
-                'success':
-                    False,
-
-                'points':
-                    [],
-
-                'distance':
-                    0,
-
-                'duration':
-                    0
-            })
-
-            continue
-
-
-        points = route_data.get(
-            'points',
-            []
-        )
-
-
-        distance = route_data.get(
-            'distance',
-            0
-        ) or 0
-
-
-        duration = route_data.get(
-            'duration',
-            0
-        ) or 0
-
-
-        all_points.extend(
-            points
-        )
-
-
-        total_distance += (
-            distance
-        )
-
-
-        total_duration += (
-            duration
-        )
-
-
-        routes.append({
-
-            'from_place':
-                start_place.p_name,
-
-            'to_place':
-                end_place.p_name,
-
-            'success':
-                True,
-
-            'points':
-                points,
-
-            'distance':
-                distance,
-
-            'duration':
-                duration
-        })
-
-
-    return JsonResponse({
-
-        'success':
-            True,
-
-        'transport':
-            transport,
-
-        'schedule_id':
-            schedule.s_id,
-
-        'points':
-            all_points,
-
-        'routes':
-            routes,
-
-        'distance':
-            total_distance,
-
-        'duration':
-            total_duration
     })
