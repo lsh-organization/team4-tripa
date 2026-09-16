@@ -6,6 +6,7 @@ from django.db import models
 # ==============================================
 
 class Member(models.Model):
+
     m_id = models.AutoField(
         primary_key=True,
         db_column='M_ID'
@@ -95,6 +96,15 @@ class Travel(models.Model):
         db_column='T_END',
         null=True,
         blank=True
+    )
+
+    # ==========================================
+    # 총 예산
+    # ==========================================
+
+    t_budget = models.IntegerField(
+        db_column='T_BUDGET',
+        default=100000
     )
 
     # ==========================================
@@ -286,6 +296,7 @@ class Place(models.Model):
         null=True,
         blank=True
     )
+
     class Meta:
         db_table = 'PLACE'
 
@@ -395,7 +406,11 @@ class SchedulePlace(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.schedule.s_day} - {self.visit_order}. {self.place.p_name}'
+        return (
+            f'{self.schedule.s_day}'
+            f' - {self.visit_order}. '
+            f'{self.place.p_name}'
+        )
 
     @property
     def stay_time_display(self):
@@ -403,7 +418,10 @@ class SchedulePlace(models.Model):
         if self.stay_time is None:
             return ''
 
-        hours, minutes = divmod(self.stay_time, 60)
+        hours, minutes = divmod(
+            self.stay_time,
+            60
+        )
 
         if hours and minutes:
             return f'{hours}시간 {minutes}분'
@@ -427,17 +445,35 @@ class Pay(models.Model):
 
     pay_context = models.CharField(
         max_length=100,
-        db_column='PAY_CONTENT'
+        db_column='PAY_CONTENT',
+        null=True,
+        blank=True
     )
 
     pay_pay = models.IntegerField(
-        db_column='PAY_PAY'
+        db_column='PAY_PAY',
+        null=True,
+        blank=True
     )
 
+    # 어느 날짜의 비용인지
     schedule = models.ForeignKey(
         Schedule,
         on_delete=models.CASCADE,
         db_column='S_ID',
+        null=True,
+        blank=True,
+        related_name='payments'
+    )
+
+    # 어느 장소에서 발생한 비용인지
+    # 장소와 관계없는 비용은 NULL 가능
+    place = models.ForeignKey(
+        Place,
+        on_delete=models.SET_NULL,
+        db_column='P_ID',
+        null=True,
+        blank=True,
         related_name='payments'
     )
 
@@ -445,4 +481,8 @@ class Pay(models.Model):
         db_table = 'PAY'
 
     def __str__(self):
-        return f'{self.pay_context} - {self.pay_pay}원'
+
+        if self.pay_context:
+            return f'{self.pay_context} - {self.pay_pay or 0}원'
+
+        return f'{self.pay_pay or 0}원'
