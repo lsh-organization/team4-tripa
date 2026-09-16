@@ -2,7 +2,6 @@
 <html lang="ko">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta name="viewport"
@@ -15,18 +14,317 @@
     <link rel="stylesheet"
           href="{% static 'sherpaapp/css/style.css' %}">
 
+    <!-- =====================================================
+         travel_detail 전용 보정 CSS
+    ====================================================== -->
+    <style>
+
+        /* =========================================
+           DAY 일정 제목 + 추가 버튼
+        ========================================= */
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .timeline-header .section-title {
+            margin-bottom: 0;
+        }
+
+        .add-schedule-btn {
+            border: none;
+            background: #2563eb;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .add-schedule-btn:hover {
+            background: #1d4ed8;
+        }
+
+
+        /* =========================================
+           타임라인 한 줄
+        ========================================= */
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 65px minmax(0, 1fr);
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 26px;
+        }
+
+
+        /* 방문 시간 */
+        .timeline-item .time {
+            padding-top: 8px;
+            color: #2563eb;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+
+        /* =========================================
+           일정 카드
+        ========================================= */
+        .schedule-card {
+            position: relative;
+
+            display: flex;
+            align-items: flex-start;
+
+            gap: 18px;
+
+            min-height: 125px;
+
+            padding: 16px 90px 16px 16px;
+
+            background: #ffffff;
+
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+        }
+
+
+        /* =========================================
+           장소 사진
+        ========================================= */
+        .schedule-image {
+            flex: 0 0 150px;
+
+            width: 150px;
+            height: 115px;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            background: #f1f5f9;
+        }
+
+        .schedule-image img {
+            display: block;
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+        }
+
+        .no-place-image {
+            display: flex;
+
+            justify-content: center;
+            align-items: center;
+
+            width: 100%;
+            height: 100%;
+
+            background: #f1f5f9;
+
+            color: #94a3b8;
+            font-size: 32px;
+        }
+
+
+        /* =========================================
+           장소 정보
+        ========================================= */
+        .schedule-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .schedule-info h3 {
+            margin: 0 0 8px 0;
+
+            color: #111827;
+
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .schedule-info p {
+            margin: 4px 0;
+
+            color: #475569;
+
+            font-size: 14px;
+
+            line-height: 1.5;
+        }
+
+        .schedule-address {
+            word-break: keep-all;
+        }
+
+
+        /* 카테고리 */
+        .schedule-category {
+            display: inline-block;
+
+            margin: 2px 0 6px;
+
+            padding: 4px 9px;
+
+            background: #eff6ff;
+
+            color: #2563eb;
+
+            font-size: 12px;
+            font-weight: 700;
+
+            border-radius: 999px;
+        }
+
+
+        /* =========================================
+           삭제 버튼
+           → 카드 오른쪽 위 고정
+        ========================================= */
+        .schedule-delete {
+            position: absolute;
+
+            top: 16px;
+            right: 16px;
+
+            border: 1px solid #fecaca;
+
+            background: #ffffff;
+            color: #ef4444;
+
+            padding: 7px 12px;
+
+            border-radius: 7px;
+
+            font-size: 13px;
+            font-weight: 700;
+
+            cursor: pointer;
+        }
+
+        .schedule-delete:hover {
+            background: #fef2f2;
+        }
+
+
+        /* 일정 없을 때 */
+        .empty-schedule {
+            padding: 35px 20px;
+
+            text-align: center;
+
+            color: #94a3b8;
+
+            background: #f8fafc;
+
+            border-radius: 10px;
+        }
+
+
+        /* =========================================
+           장소 검색
+        ========================================= */
+        .timeline-place-search {
+            display: flex;
+
+            gap: 6px;
+
+            margin-top: 12px;
+            margin-bottom: 28px;
+        }
+
+        .timeline-place-search input {
+            width: 260px;
+
+            padding: 9px 12px;
+
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+
+            outline: none;
+        }
+
+        .timeline-place-search input:focus {
+            border-color: #2563eb;
+        }
+
+        .timeline-place-search button {
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            background: #ffffff;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+        }
+
+
+        /* =========================================
+           모바일 대응
+        ========================================= */
+        @media (max-width: 768px) {
+
+            .timeline-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+
+            .schedule-card {
+                flex-direction: column;
+
+                padding-right: 70px;
+            }
+
+            .schedule-image {
+                width: 100%;
+                height: 180px;
+                flex-basis: auto;
+            }
+
+            .timeline-header {
+                align-items: center;
+            }
+        }
+
+    </style>
+
 </head>
 
 
 <body>
 
 
+<script>
+
+    const travelId = {{ travel.t_id }};
+
+    let currentDay = 1;
+
+    let currentScheduleId = null;
+
+</script>
+
+
+
 <div class="detail-container">
 
 
-    <!-- =========================
+    <!-- =====================================================
          SIDEBAR
-    ========================= -->
+    ====================================================== -->
 
     <aside class="sidebar">
 
@@ -99,6 +397,7 @@
         </ul>
 
 
+
         {% if member %}
 
             <a href="{% url 'mypage' %}"
@@ -124,16 +423,17 @@
 
 
 
-    <!-- =========================
+    <!-- =====================================================
          MAIN
-    ========================= -->
+    ====================================================== -->
 
     <main class="detail-content">
 
 
-        <!-- =========================
+
+        <!-- =================================================
              여행 정보
-        ========================= -->
+        ================================================== -->
 
         <section class="travel-header">
 
@@ -142,7 +442,6 @@
 
 
                 <div>
-
 
                     <h1>
                         🗺️ {{ travel.t_title }}
@@ -162,17 +461,12 @@
 
                     </div>
 
-
                 </div>
 
 
-                <a
-                    href="{% url 'travel_update' travel_id=travel.t_id %}"
-                    class="btn btn-primary">
-
-                    여행 수정
-
-                </a>
+                <button class="btn btn-primary">
+                    저장
+                </button>
 
 
             </div>
@@ -182,16 +476,15 @@
 
 
 
-        <!-- =========================
+        <!-- =================================================
              지도 + DAY
-        ========================= -->
+        ================================================== -->
 
         <div class="dashboard">
 
 
-            <!-- =========================
-                 지도
-            ========================= -->
+
+            <!-- 지도 -->
 
             <section class="section-box map-box">
 
@@ -221,62 +514,59 @@
 
 
 
-            <!-- =========================
-                 DAY + 요약
-            ========================= -->
+            <!-- DAY + 여행정보 -->
 
             <div>
 
 
+
+                <!-- DAY -->
+
                 <section class="day-box">
 
 
-                    {% for day in days %}
+                    <div class="section-title">
+                        📅 여행 일정
+                    </div>
 
 
-                        <div
-                            class="day {% if forloop.first %}active{% endif %}"
-                            data-day="{{ day.day_number }}"
-                            data-schedule-id="{{ day.schedule.s_id }}"
-                            onclick="drawSchedule({{ day.schedule.s_id }})"
-                        >
+                    <div id="dayList">
 
 
-                            <strong>
-                                DAY {{ day.day_number }}
-                            </strong>
+                        {% for schedule in schedules %}
 
 
-                            <div class="day-date">
+                            <div
+                                class="day {% if forloop.first %}active{% endif %}"
+                                onclick="selectDay({{ forloop.counter }})">
 
-                                {{ day.schedule.s_day|date:"Y.m.d" }}
+
+                                <strong>
+                                    DAY {{ forloop.counter }}
+                                </strong>
+
+
+                                <div class="day-date">
+
+                                    {{ schedule.s_day|date:"Y.m.d" }}
+
+                                </div>
+
 
                             </div>
 
 
-                        </div>
+                        {% endfor %}
 
 
-                    {% empty %}
-
-
-                        <div class="empty-schedule">
-
-                            등록된 일정이 없습니다.
-
-                        </div>
-
-
-                    {% endfor %}
+                    </div>
 
 
                 </section>
 
 
 
-                <!-- =========================
-                     여행 요약
-                ========================= -->
+                <!-- 여행 요약 -->
 
                 <section class="travel-summary">
 
@@ -302,7 +592,6 @@
                     </div>
 
 
-
                     <div class="summary-item">
 
 
@@ -312,41 +601,7 @@
 
 
                         <div class="summary-value">
-                            {{ travel_days }}일
-                        </div>
-
-
-                    </div>
-
-
-
-                    <div class="summary-item">
-
-
-                        <div class="summary-label">
-                            방문 장소
-                        </div>
-
-
-                        <div class="summary-value">
-                            {{ place_count }}곳
-                        </div>
-
-
-                    </div>
-
-
-
-                    <div class="summary-item">
-
-
-                        <div class="summary-label">
-                            교통 수단
-                        </div>
-
-
-                        <div class="summary-value">
-                            {{ travel.t_way }}
+                            {{ schedules|length }}일
                         </div>
 
 
@@ -363,296 +618,126 @@
 
 
 
-        <!-- =========================
-             TIMELINE
-        ========================= -->
+        <!-- =================================================
+             DAY 일정
+        ================================================== -->
+
+        <section class="timeline-box">
 
 
-        {% for day in days %}
+            <!--
+                DAY N 일정 제목 + 추가 버튼을
+                같은 줄에 배치
+            -->
+
+            <div class="timeline-header">
 
 
-            <section
-                class="timeline-box day-schedule"
-                id="day-{{ day.day_number }}"
+                <div class="section-title"
+                     id="currentDayTitle">
 
-                {% if not forloop.first %}
-                    style="display:none;"
-                {% endif %}
-            >
-
-
-                <div class="section-title">
-
-                    📅 DAY {{ day.day_number }} 일정
+                    📅 DAY 1 일정
 
                 </div>
 
 
+                <button
+                    type="button"
+                    class="add-schedule-btn"
+                    onclick="openPlaceSearch()">
 
-                <div class="timeline">
+                    + 추가
 
+                </button>
 
-                    {% for item in day.places %}
 
-
-                        <div class="timeline-item">
-
-
-                            <!-- =========================
-                                 도착 시간
-                            ========================= -->
-
-                            <div class="time">
-
-
-                                {% if item.arrive_time %}
-
-                                    {{ item.arrive_time|time:"H:i" }}
-
-                                {% else %}
-
-                                    -
-
-                                {% endif %}
-
-
-                            </div>
-
-
-
-                            <div class="timeline-icon">
-                                📍
-                            </div>
-
-
-
-                            <div class="timeline-content">
-
-
-                                <h3>
-
-                                    {{ item.visit_order }}.
-                                    {{ item.place.p_name }}
-
-                                </h3>
-
-
-
-                                <p>
-
-                                    {{ item.place.p_addr }}
-
-                                </p>
-
-
-
-                                <p>
-
-                                    ⏱ 체류 시간 :
-                                    {{ item.stay_time_display }}
-
-                                </p>
-
-
-
-                                <p>
-
-                                    출발 시간 :
-
-                                    {% if item.start_time %}
-
-                                        {{ item.start_time|time:"H:i" }}
-
-                                    {% else %}
-
-                                        -
-
-                                    {% endif %}
-
-                                </p>
-
-
-                            </div>
-
-
-                        </div>
-
-
-                    {% empty %}
-
-
-                        <div class="empty-schedule">
-
-                            등록된 일정이 없습니다.
-
-                        </div>
-
-
-                    {% endfor %}
-
-
-                </div>
-
-
-            </section>
-
-
-        {% empty %}
-
-
-            <section class="timeline-box">
-
-
-                <div class="section-title">
-                    📅 일정
-                </div>
-
-
-                <p class="empty-schedule">
-                    등록된 일정이 없습니다.
-                </p>
-
-
-            </section>
-
-
-        {% endfor %}
-
-
-
-        <!-- =========================
-             방문 장소
-        ========================= -->
-
-        <section class="place-list">
-
-
-            <div class="section-title">
-                📍 방문 장소
             </div>
 
 
 
-            {% for place in visited_places %}
+            <div class="timeline">
 
 
-                <div class="place-card">
-
-
-                    <div class="place-image">
-                        📍
-                    </div>
-
-
-
-                    <div class="place-info">
-
-
-                        <h3>
-
-                            {{ place.p_name }}
-
-                        </h3>
-
-
-                        <p>
-
-                            {{ place.p_addr }}
-
-                        </p>
-
-
-                        <span class="place-category">
-
-                            {{ place.p_kind }}
-
-                        </span>
-
-
-                    </div>
-
+                <div id="timelineContainer">
 
                 </div>
 
 
-            {% empty %}
-
-
-                <div class="empty-schedule">
-
-                    등록된 방문 장소가 없습니다.
-
-                </div>
-
-
-            {% endfor %}
+            </div>
 
 
         </section>
 
 
 
-        <!-- =========================
-             비용
-             현재는 기존 코드 유지
-        ========================= -->
+        <!-- =================================================
+             장소 검색창
+        ================================================== -->
 
-        <section class="pay-box">
+        <div class="timeline-place-search">
+
+
+            <input
+                type="text"
+                id="place-search"
+                placeholder="장소를 검색하세요">
+
+
+            <button
+                type="button"
+                onclick="openPlaceSearch()">
+
+                🔍
+
+            </button>
+
+
+        </div>
+
+
+
+        <!-- =================================================
+             비용
+             + 추가 버튼은 여기서 제거
+        ================================================== -->
+
+        <section class="pay-box"
+                 id="payBox">
 
 
             <div class="section-title">
-                💰 여행 비용
+                💰 DAY 1 여행 비용
             </div>
 
 
             <div class="pay-item">
 
-                <span>
-                    경복궁 입장료
-                </span>
-
-                <strong>
-                    3,000원
-                </strong>
-
-            </div>
-
-
-            <div class="pay-item">
 
                 <span>
-                    식사
+                    등록된 비용이 없습니다.
                 </span>
 
-                <strong>
-                    15,000원
-                </strong>
-
-            </div>
-
-
-            <div class="pay-item">
-
-                <span>
-                    기타 비용
-                </span>
 
                 <strong>
-                    10,000원
+                    0원
                 </strong>
+
 
             </div>
 
 
             <div class="pay-item total-pay">
 
-                <span>
-                    총 비용
-                </span>
 
                 <span>
-                    28,000원
+                    DAY 1 총 비용
                 </span>
+
+
+                <strong>
+                    0원
+                </strong>
+
 
             </div>
 
@@ -667,9 +752,298 @@
 
 
 
-<!-- =========================
-     카카오 지도 SDK
-========================= -->
+<!-- =========================================================
+     장소 추가 MODAL
+========================================================== -->
+
+<div id="placeModal"
+     class="place-modal">
+
+
+    <div class="place-modal-overlay"
+         onclick="closePlaceModal()">
+    </div>
+
+
+    <div class="place-modal-content">
+
+
+        <div class="place-modal-header">
+
+
+            <h2>
+                장소 추가
+            </h2>
+
+
+            <button
+                type="button"
+                onclick="closePlaceModal()">
+
+                ×
+
+            </button>
+
+
+        </div>
+
+
+
+        <div class="place-search-area">
+
+
+            <input
+                type="text"
+                id="placeSearchInput"
+                placeholder="장소를 검색하세요">
+
+
+            <button
+                type="button"
+                onclick="searchPlace()">
+
+                검색
+
+            </button>
+
+
+        </div>
+
+
+
+        <div class="visit-time-area">
+
+
+            <label>
+                방문 시간
+            </label>
+
+
+            <input
+                type="time"
+                id="visitTime">
+
+
+        </div>
+
+
+
+        <div class="place-search-result">
+
+
+            <div id="placeResultList">
+            </div>
+
+
+            <div id="placeMap">
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+
+/* =========================================================
+   CSRF
+========================================================= */
+
+function getCookie(name) {
+
+    let cookieValue = null;
+
+    if (
+        document.cookie &&
+        document.cookie !== ""
+    ) {
+
+        const cookies =
+            document.cookie.split(";");
+
+        for (
+            let i = 0;
+            i < cookies.length;
+            i++
+        ) {
+
+            const cookie =
+                cookies[i].trim();
+
+            if (
+                cookie.substring(
+                    0,
+                    name.length + 1
+                ) ===
+                (
+                    name + "="
+                )
+            ) {
+
+                cookieValue =
+                    decodeURIComponent(
+                        cookie.substring(
+                            name.length + 1
+                        )
+                    );
+
+                break;
+
+            }
+
+        }
+
+    }
+
+    return cookieValue;
+
+}
+
+
+
+/* =========================================================
+   DAY 선택
+========================================================= */
+
+function selectDay(day) {
+
+
+    currentDay = day;
+
+
+    /* DAY 버튼 active 제거 */
+
+    document
+        .querySelectorAll(".day")
+        .forEach(function(element) {
+
+            element.classList.remove(
+                "active"
+            );
+
+        });
+
+
+
+    /* 선택한 DAY active */
+
+    const dayButtons =
+        document.querySelectorAll(".day");
+
+
+    if (
+        dayButtons[day - 1]
+    ) {
+
+        dayButtons[day - 1]
+            .classList.add("active");
+
+    }
+
+
+    /* 해당 DAY 데이터 */
+
+    loadDay(day);
+
+}
+
+
+
+/* =========================================================
+   DAY 데이터 조회
+========================================================= */
+
+function loadDay(day) {
+
+
+    currentDay = day;
+
+
+    fetch(
+        `/travel_detail_day/${travelId}/${day}/`
+    )
+
+        .then(response => {
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "서버 응답 오류"
+                );
+
+            }
+
+
+            return response.json();
+
+        })
+
+
+        .then(data => {
+
+
+            if (!data.success) {
+
+                alert(
+                    data.message
+                );
+
+                return;
+
+            }
+
+
+            console.log(
+                "DAY 데이터:",
+                data
+            );
+
+
+            /* 현재 Schedule ID 저장 */
+
+            currentScheduleId =
+                data.schedule_id;
+
+
+            /* 일정 출력 */
+
+            renderSchedule(data);
+
+
+            /* 비용 출력 */
+
+            renderPayment(data);
+
+
+            /* DAY 제목 */
+
+            document
+                .getElementById(
+                    "currentDayTitle"
+                )
+                .innerText =
+                `📅 DAY ${data.day} 일정`;
+
+        })
+
+
+        .catch(error => {
+
+
+            console.error(
+                "DAY 데이터 조회 실패:",
+                error
+            );
+
+
 
 <script
     type="text/javascript"
@@ -679,18 +1053,12 @@
 
 <!-- =========================
      카카오 지도 + DAY 선택
-========================= -->
+            alert(
+                "일정 데이터를 불러오지 못했습니다."
+            );
 
-<script>
+        });
 
-let map = null;
-let overlays = [];
-let routePolyline = null;
-
-
-/* ==========================================
-   지도 초기화
-========================================== */
 
 function initMap() {
 
@@ -718,7 +1086,6 @@ function initMap() {
 
 /* ==========================================
    기존 번호 마커 / 경로선 제거
-========================================== */
 
 function clearMap() {
 
@@ -742,7 +1109,6 @@ function clearMap() {
 
 /* ==========================================
    선택한 DAY의 지도 표시
-========================================== */
 
 function drawSchedule(scheduleId) {
 
@@ -937,85 +1303,925 @@ function drawSchedule(scheduleId) {
 
 /* ==========================================
    DAY 버튼 + 타임라인 + 지도 연결
-========================================== */
+}
 
-document.addEventListener(
-    'DOMContentLoaded',
-    function () {
 
         initMap();
 
 
-        const dayButtons =
-            document.querySelectorAll('.day');
+/* =========================================================
+   DAY 일정 출력
+========================================================= */
 
-        const schedules =
-            document.querySelectorAll(
-                '.day-schedule'
+function renderSchedule(data) {
+
+
+    const container =
+        document.getElementById(
+            "timelineContainer"
+        );
+
+
+    container.innerHTML = "";
+
+
+    /* 일정이 없는 경우 */
+
+    if (
+        !data.places ||
+        data.places.length === 0
+    ) {
+
+
+        container.innerHTML = `
+
+            <div class="empty-schedule">
+
+                등록된 일정이 없습니다.
+
+            </div>
+
+        `;
+
+
+        return;
+
+    }
+
+
+
+    /* 장소 반복 */
+
+    data.places.forEach(
+        function(sp) {
+
+
+            /* -----------------------------------------
+               사진
+            ------------------------------------------ */
+
+            let imageHtml;
+
+
+            if (
+                sp.place_image &&
+                sp.place_image.trim() !== ""
+            ) {
+
+
+                imageHtml = `
+
+                    <div class="schedule-image">
+
+                        <img
+                            src="${sp.place_image}"
+                            alt="${sp.place_name}"
+                            loading="lazy"
+
+                            onerror="
+                                this.style.display='none';
+                                this.nextElementSibling.style.display='flex';
+                            "
+                        >
+
+                        <div
+                            class="no-place-image"
+                            style="display:none;">
+
+                            📍
+
+                        </div>
+
+                    </div>
+
+                `;
+
+
+            } else {
+
+
+                imageHtml = `
+
+                    <div class="schedule-image">
+
+                        <div class="no-place-image">
+
+                            📍
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+
+
+
+            /* -----------------------------------------
+               주소
+            ------------------------------------------ */
+
+            const address =
+                sp.place_addr
+                ?
+                sp.place_addr
+                :
+                "주소 정보 없음";
+
+
+            /* -----------------------------------------
+               카테고리
+            ------------------------------------------ */
+
+            const category =
+                sp.place_kind
+                ?
+                sp.place_kind
+                :
+                "기타";
+
+
+            /* -----------------------------------------
+               카드 HTML
+            ------------------------------------------ */
+
+            const html = `
+
+
+                <div class="timeline-item">
+
+
+                    <!-- 방문시간 -->
+
+                    <div
+                        class="time"
+                        onclick="editTime(this, ${sp.sp_id})">
+
+                        ${sp.arrive_time || ""}
+
+                    </div>
+
+
+
+                    <!-- 일정 카드 -->
+
+                    <div class="schedule-card">
+
+
+                        <!-- 사진 -->
+
+                        ${imageHtml}
+
+
+
+                        <!-- 장소 정보 -->
+
+                        <div class="schedule-info">
+
+
+                            <h3>
+
+                                📍
+                                ${sp.visit_order}.
+                                ${sp.place_name}
+
+                            </h3>
+
+
+                            <!-- 상세 주소 -->
+
+                            <p class="schedule-address">
+
+                                ${address}
+
+                            </p>
+
+
+                            <!-- 카테고리 -->
+
+                            <div>
+
+                                <span class="schedule-category">
+
+                                    ${category}
+
+                                </span>
+
+                            </div>
+
+
+                            <!-- 체류시간 -->
+
+                            <p>
+
+                                체류시간 :
+                                ${sp.stay_time}분
+
+                            </p>
+
+
+                            <!-- 출발시간 -->
+
+                            <p>
+
+                                출발시간 :
+                                ${sp.start_time || ""}
+
+                            </p>
+
+
+                        </div>
+
+
+
+                        <!--
+                            삭제 버튼
+                            오른쪽 위 고정
+                        -->
+
+                        <button
+                            type="button"
+                            class="schedule-delete"
+                            onclick="deleteSchedulePlace(${sp.sp_id})">
+
+                            삭제
+
+                        </button>
+
+
+                    </div>
+
+
+                </div>
+
+            `;
+
+
+            container.insertAdjacentHTML(
+                "beforeend",
+                html
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   일정 삭제
+
+function deleteSchedulePlace(spId) {
+
+
+    if (
+        !confirm(
+            "이 장소를 일정에서 삭제하시겠습니까?"
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    const body =
+        new URLSearchParams();
+
+
+    body.append(
+        "sp_id",
+        spId
+    );
+
+
+    fetch(
+        "/schedule_place_delete/",
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/x-www-form-urlencoded;charset=UTF-8",
+
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+
+            },
+
+            body: body.toString()
+
+        }
+    )
+
+        .then(response => {
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "삭제 요청 실패"
+                );
+
+            }
+
+
+            return response.json();
+
+        })
+
+
+        .then(data => {
+
+
+            if (
+                data.success
+            ) {
+
+
+                /* 삭제 후 현재 DAY 다시 조회 */
+
+                loadDay(
+                    currentDay
+                );
+
+
+            } else {
+
+
+                alert(
+                    data.message
+                    ||
+                    "일정 삭제에 실패했습니다."
+                );
+
+            }
+
+        })
+
+
+        .catch(error => {
+
+
+            console.error(
+                "일정 삭제 오류:",
+                error
             );
 
 
-        dayButtons.forEach(
-            function (button) {
+            alert(
+                "일정 삭제 중 오류가 발생했습니다."
+            );
 
-                button.addEventListener(
-                    'click',
-                    function () {
+        });
 
-                        const dayNumber =
-                            this.dataset.day;
-
-                        const scheduleId =
-                            this.dataset.scheduleId;
+}
 
 
-                        // 모든 DAY 버튼 active 제거
-                        dayButtons.forEach(
-                            function (btn) {
 
-                                btn.classList.remove(
-                                    'active'
-                                );
-                            }
-                        );
+/* =========================================================
+   비용 출력
+
+function renderPayment(data) {
 
 
-                        // 클릭한 DAY 활성화
-                        this.classList.add(
-                            'active'
-                        );
+    const payBox =
+        document.getElementById(
+            "payBox"
+        );
 
 
-                        // 모든 일정 숨김
-                        schedules.forEach(
-                            function (schedule) {
+    /*
+        여기에는 + 추가 버튼을 넣지 않음.
+        추가 버튼은 DAY 일정 제목 오른쪽에 있음.
+    */
 
-                                schedule.style.display =
-                                    'none';
-                            }
-                        );
+    let html = `
 
 
-                        // 선택 DAY 일정 표시
-                        const selectedSchedule =
-                            document.getElementById(
-                                'day-' + dayNumber
-                            );
+        <div class="section-title">
+
+            💰 DAY ${data.day} 여행 비용
+
+        </div>
+
+    `;
 
 
-                        if (selectedSchedule) {
 
-                            selectedSchedule.style.display =
-                                'block';
-                        }
+    /* 비용 없음 */
+
+    if (
+        !data.pays ||
+        data.pays.length === 0
+    ) {
 
 
-                        // 지도 변경은 DAY 요소의 onclick에서 처리
-                    }
-                );
+        html += `
+
+
+            <div class="pay-item">
+
+
+                <span>
+
+                    등록된 비용이 없습니다.
+
+                </span>
+
+
+                <strong>
+
+                    0원
+
+                </strong>
+
+
+            </div>
+
+        `;
+
+
+    } else {
+
+
+        /* 비용 목록 */
+
+        data.pays.forEach(
+            function(pay) {
+
+
+                html += `
+
+
+                    <div class="pay-item">
+
+
+                        <span>
+
+                            ${pay.pay_context}
+
+                        </span>
+
+
+                        <strong>
+
+                            ${Number(
+                                pay.pay_pay
+                            ).toLocaleString()}원
+
+                        </strong>
+
+
+                    </div>
+
+                `;
+
+
             }
         );
 
+    }
+
+
+
+    /* 총 비용 */
+
+    html += `
+
+
+        <div class="pay-item total-pay">
+
+
+            <span>
+
+                DAY ${data.day} 총 비용
+
+            </span>
+
+
+            <strong>
+
+                ${Number(
+                    data.total_pay || 0
+                ).toLocaleString()}원
+
+            </strong>
+
+
+        </div>
+
+    `;
+
+
+    payBox.innerHTML =
+        html;
+
+}
+
+
+
+/* =========================================================
+   장소 추가 Modal 열기
+
+function openPlaceSearch() {
+
+
+    const modal =
+        document.getElementById(
+            "placeModal"
+        );
+
+
+    modal.style.display =
+        "flex";
+
+
+    const input =
+        document.getElementById(
+            "placeSearchInput"
+        );
+
+
+    if (input) {
+
+        setTimeout(
+            function() {
+
+                input.focus();
+
+            },
+            100
+        );
+
+    }
+
+}
+
+
+
+/* =========================================================
+   장소 추가 Modal 닫기
+
+function closePlaceModal() {
+
+
+    const modal =
+        document.getElementById(
+            "placeModal"
+        );
+
+
+    modal.style.display =
+        "none";
+
+}
+
+
+
+/* =========================================================
+   일정에 장소 추가
+
+function addSchedule(placeId) {
+
+
+    const visitTime =
+        document.getElementById(
+            "visitTime"
+        ).value;
+
+
+    if (!visitTime) {
+
+
+        alert(
+            "방문 시간을 먼저 입력해주세요."
+        );
+
+
+        return;
+
+    }
+
+
+    if (!currentScheduleId) {
+
+
+        alert(
+            "현재 DAY 정보를 찾을 수 없습니다."
+        );
+
+
+        return;
+
+    }
+
+
+
+    const body =
+        new URLSearchParams();
+
+
+    body.append(
+        "schedule_id",
+        currentScheduleId
+    );
+
+
+    body.append(
+        "place_id",
+        placeId
+    );
+
+
+    body.append(
+        "arrive_time",
+        visitTime
+    );
+
+
+
+    fetch(
+        "/schedule_place_add/",
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/x-www-form-urlencoded;charset=UTF-8",
+
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+
+            },
+
+            body:
+                body.toString()
+
+        }
+    )
+
+        .then(response =>
+            response.json()
+        )
+
+
+        .then(data => {
+
+
+            if (
+                data.success
+            ) {
+
+
+                closePlaceModal();
+
+
+                loadDay(
+                    currentDay
+                );
+
+
+            } else {
+
+
+                alert(
+                    data.message
+                );
+
+            }
+
+        })
+
+
+        .catch(error => {
+
+
+            console.error(
+                "일정 추가 오류:",
+                error
+            );
+
+
+            alert(
+                "일정 추가 중 오류가 발생했습니다."
+            );
+
+        });
+
+}
+
+
+
+/* =========================================================
+   장소 검색
+   기존 장소 검색 API 코드가 있다면
+   이 부분에 그대로 넣으면 됨.
+
+function searchPlace() {
+
+
+    const visitTime =
+        document.getElementById(
+            "visitTime"
+        ).value;
+
+
+    if (!visitTime) {
+
+
+        alert(
+            "방문 시간을 먼저 입력해주세요."
+        );
+
+
+        return;
+
+    }
+
+
+    const keyword =
+        document
+            .getElementById(
+                "placeSearchInput"
+            )
+            .value
+            .trim();
+
+
+    if (!keyword) {
+
+
+        alert(
+            "장소를 검색해주세요."
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+        ============================================
+        기존 카카오 장소 검색 코드 사용 부분
+
+        검색 결과 버튼에서는 예를 들어
+
+        onclick="addSchedule(장소ID)"
+
+        형태로 연결하면 됨.
+        ============================================
+    */
+
+
+}
+
+
+
+/* =========================================================
+   시간 수정
+   기존 시간 수정 코드가 있다면 그대로 사용 가능
+
+function editTime(element, spId) {
+
+
+    const oldTime =
+        element.innerText.trim();
+
+
+    const newTime =
+        prompt(
+            "방문 시간을 입력해주세요. 예: 10:30",
+            oldTime
+        );
+
+
+    if (
+        !newTime ||
+        newTime === oldTime
+    ) {
+
+        return;
+
+    }
+
+
+    const body =
+        new URLSearchParams();
+
+
+    body.append(
+        "sp_id",
+        spId
+    );
+
+
+    body.append(
+        "arrive_time",
+        newTime
+    );
+
+
+    fetch(
+        "/schedule_place_time_update/",
+        {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type":
+                    "application/x-www-form-urlencoded;charset=UTF-8",
+
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+
+            },
+
+            body:
+                body.toString()
+
+        }
+    )
+
+        .then(response =>
+            response.json()
+        )
+
+
+        .then(data => {
+
+
+            if (
+                data.success
+            ) {
+
+
+                loadDay(
+                    currentDay
+                );
+
+
+            } else {
+
+
+                alert(
+                    data.message
+                );
+
+            }
+
+        })
+
+
+        .catch(error => {
+
+
+            console.error(
+                "방문시간 수정 오류:",
+                error
+            );
+
+
+            alert(
+                "방문시간 변경 중 오류가 발생했습니다."
+            );
+
+        });
+
+}
+
+
+
+/* =========================================================
+   페이지 처음 열었을 때 DAY 1 자동 조회
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+
+        const firstDay =
+            document.querySelector(
+                ".day"
+            );
+
+
+        if (firstDay) {
+
+
+            currentDay = 1;
+
+            loadDay(1);
+
+        }
 
         /* ======================================
            첫 화면에서 DAY 1 자동 표시
