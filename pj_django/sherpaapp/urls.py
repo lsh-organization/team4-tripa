@@ -7,6 +7,7 @@ urlpatterns = [
     path('login/', views.login, name='login'),
     path('place_search/', views.place_search, name='place_search'),
     path('place_search_search', views.place_search_search, name='place_search_search'),
+    path('schedule_place_search',views.schedule_place_search,name='schedule_place_search'),
     path('travel_create/', views.travel_create, name='travel_create'),
     path('travel_list/', views.travel_list, name='travel_list'),
     path('travel_detail/<int:travel_id>/', views.travel_detail, name='travel_detail'),
@@ -22,4 +23,7 @@ urlpatterns = [
     path('idpw/', views.idpw, name='idpw'),
     path('id_find/', views.id_find, name='id_find'),
     path('pw_find/', views.pw_find, name='pw_find'),
+    path('schedule/update-time/',views.schedule_update_time,name='schedule_update_time'),
+    path('schedule_place_add/',views.schedule_place_add,name='schedule_place_add'),
+    path('schedule_time_update/',views.schedule_time_update,name='schedule_time_update'),
 ]

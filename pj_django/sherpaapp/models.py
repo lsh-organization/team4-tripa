@@ -78,6 +78,12 @@ class Place(models.Model):
         max_length=100,
         db_column='P_KIND'
     )
+    p_image = models.URLField(
+    max_length=500,
+    null=True,
+    blank=True,
+    db_column='P_IMAGE'
+    )
 
     class Meta:
         db_table = 'PLACE'
@@ -97,19 +103,46 @@ class Schedule(models.Model):
     s_day = models.DateField(
         db_column='S_DAY'
     )
-    
+
+    s_turn = models.IntegerField(
+        db_column='S_TURN',
+        null=True
+    )
     travel = models.ForeignKey(
         Travel,
         on_delete=models.CASCADE,
         db_column='T_ID',
-        related_name='Schedules'
+        related_name='schedules'
     )
-    
+    place = models.ForeignKey(
+        Place,
+        on_delete=models.CASCADE,
+        db_column='P_ID',
+        related_name='schedules'
+    )
+
+    arrive_time = models.TimeField(
+        null=True,
+        blank=True,
+        db_column='ARRIVE_TIME'
+    )
+
+    stay_time = models.IntegerField(
+        null=True,
+        blank=True,
+        db_column='STAY_TIME'
+    )
+
+    start_time = models.TimeField(
+        null=True,
+        blank=True,
+        db_column='START_TIME'
+    )
     class Meta:
-        db_table = 'SCHEDULE'
+        db_table = 'schedule'
+
     def __str__(self):
         return str(self.s_day)
-
 # ==============================================
 # 일정 장소
 # ==============================================

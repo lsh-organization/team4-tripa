@@ -383,7 +383,6 @@
 
         {% for day in days %}
 
-
             <section
                 class="timeline-box day-schedule"
                 id="day-{{ day.day_number }}"
@@ -393,106 +392,121 @@
                 {% endif %}
             >
 
+                <div class="section-title schedule-header">
 
-                <div class="section-title">
+                    <span>
+                        📅 DAY {{ day.day_number }} 일정
+                        {{ day.date|date:"Y.m.d" }}
+                    </span>
 
-                    📅 DAY {{ day.day_number }} 일정
+                    <button
+                        type="button"
+                        class="add-place-btn"
+                        onclick="openPlaceSearch({{ travel.t_id }}, '{{ day.date|date:"Y-m-d" }}')">
+
+                        🔍 장소 추가
+
+                    </button>
 
                 </div>
 
 
-
                 <div class="timeline">
 
-
-                    {% for item in day.places %}
-
+                    {% for schedule in day.schedules %}
 
                         <div class="timeline-item">
 
 
-                            <!-- =========================
-                                 도착 시간
-                            ========================= -->
+                            <!-- 도착 시간 -->
 
                             <div class="time">
 
+                                <input
+                                    type="time"
+                                    class="schedule-time-input"
+                                    value="{% if schedule.arrive_time %}{{ schedule.arrive_time|time:'H:i' }}{% endif %}"
+                                    onchange="saveTime(this, {{ schedule.s_id }})"
+                                >
 
-                                {% if item.arrive_time %}
+                            </div>
 
-                                    {{ item.arrive_time|time:"H:i" }}
+
+                            <!-- 장소 사진 -->
+
+                            <div class="schedule-image">
+
+                                {% if schedule.place.p_image %}
+
+                                    <img
+                                        src="{{ schedule.place.p_image }}"
+                                        alt="{{ schedule.place.p_name }}"
+                                    >
 
                                 {% else %}
 
-                                    -
+                                    <div class="no-place-image">
+                                        📍
+                                    </div>
 
                                 {% endif %}
 
-
                             </div>
 
 
-
-                            <div class="timeline-icon">
-                                📍
-                            </div>
-
-
+                            <!-- 장소 정보 -->
 
                             <div class="timeline-content">
 
-
                                 <h3>
 
-                                    {{ item.visit_order }}.
-                                    {{ item.place.p_name }}
+                                    {% if schedule.s_turn %}
+                                        {{ schedule.s_turn }}.
+                                    {% endif %}
+
+                                    {{ schedule.place.p_name }}
 
                                 </h3>
 
 
-
                                 <p>
-
-                                    {{ item.place.p_addr }}
-
+                                    {{ schedule.place.p_addr }}
                                 </p>
 
 
+                                <p>
+                                    🏷️ {{ schedule.place.p_kind }}
+                                </p>
+
 
                                 <p>
-
                                     ⏱ 체류 시간 :
-                                    {{ item.stay_time_display }}
 
-                                </p>
-
-
-
-                                <p>
-
-                                    출발 시간 :
-
-                                    {% if item.start_time %}
-
-                                        {{ item.start_time|time:"H:i" }}
-
+                                    {% if schedule.stay_time %}
+                                        {{ schedule.stay_time }}분
                                     {% else %}
-
                                         -
-
                                     {% endif %}
 
                                 </p>
 
 
-                            </div>
+                                <p>
+                                    출발 시간 :
 
+                                    {% if schedule.start_time %}
+                                        {{ schedule.start_time|time:"H:i" }}
+                                    {% else %}
+                                        -   
+                                    {% endif %}
+
+                                </p>
+
+                            </div>
 
                         </div>
 
-
                     {% empty %}
-
 
                         <div class="empty-schedule">
 
@@ -500,110 +514,84 @@
 
                         </div>
 
-
                     {% endfor %}
 
-
                 </div>
-
 
             </section>
 
 
         {% empty %}
 
-
             <section class="timeline-box">
-
 
                 <div class="section-title">
                     📅 일정
                 </div>
-
+            
 
                 <p class="empty-schedule">
                     등록된 일정이 없습니다.
                 </p>
 
-
             </section>
 
-
         {% endfor %}
-
-
-
+        
         <!-- =========================
-             방문 장소
+     장소 검색 팝업
         ========================= -->
+        {% csrf_token %}
 
-        <section class="place-list">
+        <div id="placeSearchModal" class="place-modal">
+
+            <div class="place-modal-content">
+                {% csrf_token %}
+
+                <div class="place-modal-header">
+
+                    <h2>📍 장소 추가</h2>
+
+                    <button
+                        type="button"
+                        onclick="closePlaceSearch()">
+
+                        ×
+
+                    </button>
+
+                </div>
 
 
-            <div class="section-title">
-                📍 방문 장소
+                <div class="place-search-box">
+
+                    <input
+                        type="text"
+                        id="placeSearchInput"
+                        placeholder="장소를 검색하세요">
+
+                    <button
+                        type="button"
+                        onclick="searchPlaces()">
+
+                        검색        
+
+                    </button>
+
+                </div>
+
+
+                <div id="placeSearchResults">
+
+                    <p class="place-search-empty">
+                        장소를 검색해주세요.
+                    </p>
+
+                </div>
+
             </div>
 
-
-
-            {% for place in visited_places %}
-
-
-                <div class="place-card">
-
-
-                    <div class="place-image">
-                        📍
-                    </div>
-
-
-
-                    <div class="place-info">
-
-
-                        <h3>
-
-                            {{ place.p_name }}
-
-                        </h3>
-
-
-                        <p>
-
-                            {{ place.p_addr }}
-
-                        </p>
-
-
-                        <span class="place-category">
-
-                            {{ place.p_kind }}
-
-                        </span>
-
-
-                    </div>
-
-
-                </div>
-
-
-            {% empty %}
-
-
-                <div class="empty-schedule">
-
-                    등록된 방문 장소가 없습니다.
-
-                </div>
-
-
-            {% endfor %}
-
-
-        </section>
-
-
+        </div>
 
         <!-- =========================
              비용
@@ -783,7 +771,396 @@ document.addEventListener(
 
 
 </script>
+<script>
+function saveTime(input, scheduleId) {
 
+    const newTime = input.value;
+
+    if (!newTime) {
+        return;
+    }
+
+    fetch("{% url 'schedule_time_update' %}", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type":
+                "application/x-www-form-urlencoded",
+
+            "X-CSRFToken":
+                getCookie("csrftoken")
+        },
+
+        body:
+            "schedule_id=" +
+            encodeURIComponent(scheduleId) +
+            "&arrive_time=" +
+            encodeURIComponent(newTime)
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        console.log("저장 결과:", data);
+
+        if (!data.success) {
+
+            alert(
+                data.message ||
+                "시간 저장에 실패했습니다."
+            );
+
+        }
+
+    })
+
+    .catch(error => {
+
+        console.error("시간 저장 오류:", error);
+
+        alert("시간 저장 중 오류가 발생했습니다.");
+
+    });
+}
+</script>
+<script>
+
+let selectedTravelId = null;
+let selectedDate = null;
+
+
+/* ==========================================
+   장소 검색 팝업 열기
+========================================== */
+
+function openPlaceSearch(travelId, date) {
+
+    selectedTravelId = travelId;
+    selectedDate = date;
+
+    document.getElementById(
+        "placeSearchModal"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "placeSearchInput"
+    ).value = "";
+
+    document.getElementById(
+        "placeSearchResults"
+    ).innerHTML = `
+        <p class="place-search-empty">
+            장소를 검색해주세요.
+        </p>
+    `;
+
+}
+
+
+/* ==========================================
+   팝업 닫기
+========================================== */
+
+function closePlaceSearch() {
+
+    document.getElementById(
+        "placeSearchModal"
+    ).style.display = "none";
+
+}
+
+
+/* ==========================================
+   장소 검색
+========================================== */
+
+function searchPlaces() {
+
+    const query =
+        document.getElementById(
+            "placeSearchInput"
+        ).value.trim();
+
+
+    if (!query) {
+
+        alert("검색할 장소를 입력해주세요.");
+
+        return;
+    }
+
+
+    const results =
+        document.getElementById(
+            "placeSearchResults"
+        );
+
+
+    results.innerHTML = `
+        <p class="place-search-empty">
+            🔎 검색 중...
+        </p>
+    `;
+
+
+    fetch(
+        `/schedule_place_search?query=${encodeURIComponent(query)}`
+    )
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        results.innerHTML = "";
+
+
+        if (data.places.length === 0) {
+
+            results.innerHTML = `
+                <p class="place-search-empty">
+                    검색 결과가 없습니다.
+                </p>
+            `;
+
+            return;
+        }
+
+
+        data.places.forEach(function(place) {
+
+            let imageHtml = "";
+
+
+            if (place.image) {
+
+                imageHtml = `
+                    <img
+                        src="${place.image}"
+                        alt="${place.name}"
+                    >
+                `;
+
+            } else {
+
+                imageHtml = `
+                    <div class="no-place-image">
+                        📍
+                    </div>
+                `;
+
+            }
+
+
+            const html = `
+
+                <div class="place-search-result">
+
+                    <div class="place-result-image">
+
+                        ${imageHtml}
+
+                    </div>
+
+
+                    <div class="place-result-info">
+
+                        <h3>
+                            ${place.name}
+                        </h3>
+
+                        <p>
+                            ${place.address || ""}
+                        </p>
+
+                        <p>
+                            🏷️ ${place.category || ""}
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        class="place-select-btn"
+                        onclick='selectPlace(${JSON.stringify(place)})'>
+
+                        선택
+
+                    </button>
+
+                </div>
+
+            `;
+
+
+            results.insertAdjacentHTML(
+                "beforeend",
+                html
+            );
+
+        });
+
+    })
+
+    .catch(error => {
+
+        console.error(error);
+
+        results.innerHTML = `
+            <p class="place-search-empty">
+                검색 중 오류가 발생했습니다.
+            </p>
+        `;
+
+    });
+
+}
+
+
+/* ==========================================
+   Enter 키로 검색
+========================================== */
+
+document.getElementById(
+    "placeSearchInput"
+).addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+
+            searchPlaces();
+
+        }
+
+    }
+);
+
+
+/* ==========================================
+   장소 선택
+========================================== */
+
+function selectPlace(place) {
+    console.log("선택한 장소:", place);
+    console.log("여행 ID:", selectedTravelId);
+    console.log("날짜:", selectedDate);
+    // Django로 보낼 데이터
+    const formData = new FormData();
+    formData.append(
+        "travel_id",
+        selectedTravelId
+    );
+    formData.append(
+        "s_day",
+        selectedDate
+    );
+    formData.append(
+        "place_name",
+        place.name
+    );
+    formData.append(
+        "place_addr",
+        place.address || ""
+    );
+    formData.append(
+        "place_kind",
+        place.category || ""
+    );
+    formData.append(
+        "place_lat",
+        place.y || ""
+    );
+    formData.append(
+        "place_lon",
+        place.x || ""
+    );
+    formData.append(
+        "place_image",
+        place.image || ""
+    );
+    // CSRF 토큰
+    formData.append(
+        "csrfmiddlewaretoken",
+        document.querySelector(
+            '[name=csrfmiddlewaretoken]'
+        ).value
+    );
+    // Django로 전송
+    fetch(
+        "{% url 'schedule_place_add' %}",
+        {
+            method: "POST",
+            body: formData
+        }
+    )
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(
+                "장소 추가에 실패했습니다."
+            );
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            closePlaceSearch();
+            // 일정 화면 새로고침
+            location.reload();
+        } else {
+            alert(
+                data.message ||
+                "장소 추가에 실패했습니다."
+            );
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        alert(
+            "장소 추가 중 오류가 발생했습니다."
+        );
+    });
+}
+
+function getCookie(name) {
+
+    let cookieValue = null;
+
+    if (document.cookie &&
+        document.cookie !== '') {
+
+        const cookies =
+            document.cookie.split(';');
+
+        for (let cookie of cookies) {
+
+            cookie = cookie.trim();
+
+            if (
+                cookie.substring(
+                    0,
+                    name.length + 1
+                ) ===
+                (name + '=')
+            ) {
+
+                cookieValue =
+                    decodeURIComponent(
+                        cookie.substring(
+                            name.length + 1
+                        )
+                    );
+
+                break;
+            }
+        }
+    }
+
+    return cookieValue;
+}
+</script>
 
 </body>
 

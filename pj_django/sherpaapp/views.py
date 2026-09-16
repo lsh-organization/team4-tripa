@@ -11,7 +11,7 @@ from .models import Schedule
 from .models import Pay
 from .models import Category
 from .models import SchedulePlace
-
+from datetime import timedelta
 import requests
 
 
@@ -307,27 +307,11 @@ def travel_detail(request, travel_id):
             member = None
 
     # ==========================================
-    # 일정 장소 조회
-    #
-    # SCHEDULE_PLACES
-    #        ↓
-    #      PLACE
-    # ==========================================
-
-    schedule_place_queryset = (
-        SchedulePlace.objects
-        .select_related('place')
-        .order_by('visit_order')
-    )
-
-    # ==========================================
-    # 해당 여행 일정 조회
+    # 해당 여행의 일정 조회
     #
     # TRAVEL
     #   ↓
     # SCHEDULE
-    #   ↓
-    # SCHEDULE_PLACES
     #   ↓
     # PLACE
     # ==========================================
@@ -335,13 +319,8 @@ def travel_detail(request, travel_id):
     schedules = (
         Schedule.objects
         .filter(travel=travel)
-        .prefetch_related(
-            Prefetch(
-                'schedule_places',
-                queryset=schedule_place_queryset
-            )
-        )
-        .order_by('s_day')
+        .select_related('place')
+        .order_by('s_day', 's_turn')
     )
 
     # ==========================================
@@ -350,43 +329,51 @@ def travel_detail(request, travel_id):
 
     days = []
 
-    for index, schedule in enumerate(
-        schedules,
-        start=1
-    ):
+    if travel.t_start and travel.t_end:
 
-        days.append({
-            'day_number': index,
-            'schedule': schedule,
-            'places': schedule.schedule_places.all()
-        })
+        current_date = travel.t_start
+        day_number = 1
+
+        while current_date <= travel.t_end:
+
+            day_schedules = [
+                schedule
+                for schedule in schedules
+                if schedule.s_day == current_date
+            ]
+
+            days.append({
+                'day_number': day_number,
+                'date': current_date,
+                'schedules': day_schedules,
+            })
+
+            current_date += timedelta(days=1)
+            day_number += 1
 
     # ==========================================
     # 방문 장소 목록
-    # 같은 장소 중복 제거
     # ==========================================
 
     visited_places = []
     visited_place_ids = set()
 
-    for day in days:
+    for schedule in schedules:
 
-        for schedule_place in day['places']:
+        if schedule.place:
 
-            place = schedule_place.place
-
-            if place.p_id not in visited_place_ids:
+            if schedule.place.p_id not in visited_place_ids:
 
                 visited_place_ids.add(
-                    place.p_id
+                    schedule.place.p_id
                 )
 
                 visited_places.append(
-                    place
+                    schedule.place
                 )
 
     # ==========================================
-    # 여행 기간 계산
+    # 여행 기간
     # ==========================================
 
     travel_days = 0
@@ -402,23 +389,21 @@ def travel_detail(request, travel_id):
     # ==========================================
 
     context = {
+
         'travel': travel,
+
         'member': member,
 
-        # 일정
         'schedules': schedules,
 
-        # DAY별 일정
         'days': days,
 
-        # 방문 장소
         'visited_places': visited_places,
 
-        # 여행 일수
         'travel_days': travel_days,
 
-        # 방문 장소 개수
         'place_count': len(visited_places),
+
     }
 
     return render(
@@ -956,3 +941,292 @@ def mypage_edit(request):
             'member': member
         }
     )
+
+def schedule_update_time(request):
+
+    if request.method == 'POST':
+        schedule_id = request.POST.get('schedule_id')
+        arrive_time = request.POST.get('arrive_time')
+        schedule = get_object_or_404(
+            Schedule,
+            s_id=schedule_id
+        )
+        schedule.arrive_time = arrive_time
+        schedule.save()
+        return JsonResponse({
+            'success': True
+        })
+    return JsonResponse({
+        'success': False
+    })
+
+def schedule_place_search(request):
+
+    query = request.GET.get("query", "").strip()
+
+    places = []
+
+    if not query:
+        return JsonResponse({
+            "places": []
+        })
+
+
+    # ==========================================
+    # 카카오 REST API
+    # ==========================================
+
+    REST_API_KEY = settings.KAKAO_REST_API_KEY
+
+    headers = {
+        "Authorization": f"KakaoAK {REST_API_KEY}"
+    }
+
+
+    # ==========================================
+    # 카카오 장소 검색
+    # ==========================================
+
+    place_url = (
+        "https://dapi.kakao.com/"
+        "v2/local/search/keyword.json"
+    )
+
+    params = {
+        "query": query,
+        "size": 5
+    }
+
+    response = requests.get(
+        place_url,
+        headers=headers,
+        params=params
+    )
+
+    data = response.json()
+
+
+    # ==========================================
+    # 장소 반복
+    # ==========================================
+
+    for place in data.get("documents", []):
+
+        place_name = place.get(
+            "place_name",
+            ""
+        )
+
+
+        # ======================================
+        # 이미지 검색
+        # ======================================
+
+        image_url = (
+            "https://dapi.kakao.com/"
+            "v2/search/image"
+        )
+
+        image_params = {
+            "query": place_name,
+            "size": 1
+        }
+
+        image_response = requests.get(
+            image_url,
+            headers=headers,
+            params=image_params
+        )
+
+        image_data = image_response.json()
+
+        image = None
+
+        if image_data.get("documents"):
+
+            image = image_data[
+                "documents"
+            ][0].get(
+                "thumbnail_url"
+            )
+
+
+        # ======================================
+        # 결과 저장
+        # ======================================
+
+        places.append({
+
+            "name":
+                place_name,
+
+            "address":
+                place.get("road_address_name")
+                or place.get("address_name"),
+
+            "category":
+                place.get("category_name"),
+
+            "phone":
+                place.get("phone"),
+
+            "place_url":
+                place.get("place_url"),
+
+            "x":
+                place.get("x"),
+
+            "y":
+                place.get("y"),
+
+            "image":
+                image
+        })
+
+
+    return JsonResponse({
+        "places": places
+    })
+
+def schedule_place_add(request):
+
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '잘못된 요청입니다.'
+        })
+
+
+    # =====================================
+    # 전달받은 데이터
+    # =====================================
+
+    travel_id = request.POST.get('travel_id')
+    s_day = request.POST.get('s_day')
+
+    place_name = request.POST.get('place_name')
+    place_addr = request.POST.get('place_addr')
+    place_kind = request.POST.get('place_kind')
+
+    place_lat = request.POST.get('place_lat')
+    place_lon = request.POST.get('place_lon')
+
+    place_image = request.POST.get('place_image')
+
+
+    # =====================================
+    # 여행 가져오기
+    # =====================================
+
+    travel = get_object_or_404(
+        Travel,
+        t_id=travel_id
+    )
+
+
+    # =====================================
+    # PLACE 저장
+    # =====================================
+
+    place = Place.objects.create(
+
+        travel=travel,
+
+        p_name=place_name,
+
+        p_addr=place_addr,
+
+        p_kind=place_kind,
+
+        p_lat=place_lat or None,
+
+        p_lon=place_lon or None,
+
+        p_image=place_image or None
+    )
+
+
+    # =====================================
+    # 현재 DAY의 마지막 순서 확인
+    # =====================================
+
+    last_schedule = (
+        Schedule.objects
+        .filter(
+            travel=travel,
+            s_day=s_day
+        )
+        .order_by('-s_turn')
+        .first()
+    )
+
+
+    if last_schedule:
+
+        next_turn = last_schedule.s_turn + 1
+
+    else:
+
+        next_turn = 1
+
+
+    # =====================================
+    # SCHEDULE 저장
+    # =====================================
+
+    Schedule.objects.create(
+
+        s_day=s_day,
+
+        s_turn=next_turn,
+
+        travel=travel,
+
+        place=place
+    )
+
+
+    # =====================================
+    # JS로 성공 응답
+    # =====================================
+
+    return JsonResponse({
+
+        'success': True,
+
+        'message':
+            f'{place_name} 장소가 일정에 추가되었습니다.'
+
+    })
+    #DAY 1 일정 시간 저장
+def schedule_time_update(request):
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': '잘못된 요청입니다.'
+        })
+    schedule_id = request.POST.get('schedule_id')
+    arrive_time = request.POST.get('arrive_time')
+
+    print("========== 시간 저장 ==========") #임시
+    print("schedule_id:", schedule_id) #임시
+    print("arrive_time:", arrive_time) #임시
+
+    try:
+        schedule = Schedule.objects.get(
+            s_id=schedule_id
+        )
+        schedule.arrive_time = arrive_time
+        schedule.save(
+            update_fields=['arrive_time']
+        )
+        print("DB 저장 완료:", schedule.arrive_time) #임시
+        
+        return JsonResponse({
+            'success': True
+        })
+    except Schedule.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'message': '일정을 찾을 수 없습니다.'
+        })

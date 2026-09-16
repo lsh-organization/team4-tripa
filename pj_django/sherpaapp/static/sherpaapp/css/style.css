@@ -1101,9 +1101,9 @@ nav a:hover {
 
 .timeline-item {
     display: flex;
-
+    align-items: stretch;
     margin-bottom: 25px;
-
+    gap: 16px;
     align-items: flex-start;
 }
 
@@ -1258,7 +1258,7 @@ nav a:hover {
 .place-image {
     width: 100px;
     height: 100px;
-
+    
     flex-shrink: 0;
 
     background-color: #e5e7eb;
@@ -3159,4 +3159,272 @@ footer {
 .form-group label.concept-item:hover {
     border-color: #2d6cdf;
     background-color: #f5f8ff;
+}
+/* ==========================================
+   일정 시간 입력창
+========================================== */
+
+.schedule-time-input {
+    width: 140px;
+    min-width: 140px;
+    height: 42px;
+    padding: 0 10px;
+    border: 2px solid #2f6fbb;
+    border-radius: 10px;
+    background-color: white;
+    color: #222;
+    font-size: 16px;
+    font-weight: 600;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+
+/* 마우스를 올렸을 때 */
+
+.schedule-time-input:hover {
+    border-color: #1f5ed8;
+
+    box-shadow:
+        0 3px 10px rgba(47, 111, 237, 0.15);
+}
+
+
+/* 클릭했을 때 */
+
+.schedule-time-input:focus {
+    border-color: #2f6fed;
+
+    box-shadow:
+        0 0 0 3px rgba(47, 111, 237, 0.15);
+}
+
+
+/* 시간 영역 */
+
+.timeline-item .time {
+    width: 150px;
+    min-width: 150px;
+    padding-top: 5px;
+    box-sizing: border-box;
+}
+
+
+/* 장소 아이콘과 간격 */
+
+.timeline-item .timeline-icon {
+
+    width: 50px;
+    min-width: 50px;
+
+    margin-left: 5px;
+    margin-right: 15px;
+
+    flex-shrink: 0;
+
+    text-align: center;
+}
+
+.schedule-image {
+    width: 120px;
+    min-width: 120px;
+    align-self: stretch;
+    overflow: hidden;
+    border-radius: 10px;
+    background-color: #f1f3f5;
+}
+
+.schedule-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.no-place-image {
+    font-size: 35px;
+}
+
+/* 장소 검색 버튼 */
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+
+.add-place-btn {
+    border: none;
+    background: #2f6fed;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+
+.add-place-btn:hover {
+    background: #2459c7;
+}
+
+
+/* =========================
+   장소 검색 팝업
+========================= */
+
+.place-modal {
+    display: none;
+
+    position: fixed;
+    inset: 0;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    z-index: 9999;
+
+    align-items: center;
+    justify-content: center;
+}
+
+
+.place-modal-content {
+    width: 600px;
+    max-height: 80vh;
+
+    background: white;
+
+    border-radius: 16px;
+
+    padding: 25px;
+
+    overflow-y: auto;
+
+    box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+}
+
+
+.place-modal-header {
+    display: flex;
+
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 20px;
+}
+
+
+.place-modal-header h2 {
+    margin: 0;
+}
+
+
+.place-modal-header button {
+    border: none;
+    background: none;
+
+    font-size: 30px;
+
+    cursor: pointer;
+}
+
+
+/* 검색창 */
+
+.place-search-box {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+}
+
+
+.place-search-box input {
+    flex: 1;
+
+    height: 45px;
+
+    border: 1px solid #ddd;
+
+    border-radius: 8px;
+
+    padding: 0 15px;
+
+    font-size: 16px;
+}
+
+
+.place-search-box button {
+    width: 80px;
+
+    border: none;
+
+    background: #2f6fed;
+
+    color: white;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+}
+
+
+/* 검색 결과 */
+
+.place-search-result {
+    display: flex;
+
+    gap: 15px;
+
+    padding: 15px;
+
+    border-bottom: 1px solid #eee;
+}
+
+
+.place-search-result img {
+    width: 100px;
+    height: 80px;
+
+    object-fit: cover;
+
+    border-radius: 8px;
+}
+
+
+.place-result-info {
+    flex: 1;
+}
+
+
+.place-result-info h3 {
+    margin: 0 0 7px;
+}
+
+
+.place-result-info p {
+    margin: 4px 0;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+.place-select-btn {
+    align-self: center;
+
+    border: none;
+
+    background: #2f6fed;
+
+    color: white;
+
+    padding: 8px 14px;
+
+    border-radius: 7px;
+
+    cursor: pointer;
 }
