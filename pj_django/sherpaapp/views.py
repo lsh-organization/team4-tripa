@@ -112,24 +112,90 @@ def login(request):
 
 # 장소 검색
 def place_search(request):
-    template = loader.get_template('sherpaapp/place_search.html')
-    return HttpResponse(
-        template.render({},request))
+
+    login_user = request.session.get('login_ok_user')
+
+    member = None
+    travels = Travel.objects.none()
+
+    if login_user:
+        try:
+            member = Member.objects.get(
+                email=login_user
+            )
+
+            travels = (
+                Travel.objects
+                .filter(member=member)
+                .order_by('-t_id')
+            )
+
+        except Member.DoesNotExist:
+            pass
+
+    return render(
+        request,
+        'sherpaapp/place_search.html',
+        {
+            'member': member,
+            'travels': travels,
+            'KAKAO_MAP_API_KEY': settings.KAKAO_MAP_API_KEY,
+        }
+    )
+
+
 # 장소 검색 실행
 def place_search_search(request):
-    query = request.GET.get('query', '').strip()
+
+    query = request.GET.get(
+        'query',
+        ''
+    ).strip()
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+    member = None
+    travels = Travel.objects.none()
+
+    if login_user:
+        try:
+            member = Member.objects.get(
+                email=login_user
+            )
+
+            travels = (
+                Travel.objects
+                .filter(member=member)
+                .order_by('-t_id')
+            )
+
+        except Member.DoesNotExist:
+            pass
 
     try:
-        places = _search_kakao_places(query)
+        places = _search_kakao_places(
+            query
+        )
+
     except requests.RequestException:
         places = []
 
     context = {
+        'member': member,
+        'travels': travels,
         'places': places,
         'query': query,
-        'KAKAO_MAP_API_KEY': settings.KAKAO_MAP_API_KEY,
+        'KAKAO_MAP_API_KEY':
+            settings.KAKAO_MAP_API_KEY,
     }
-    return render(request, 'sherpaapp/place_search.html', context)
+
+    return render(
+        request,
+        'sherpaapp/place_search.html',
+        context
+    )
 
 
 # 여행 생성

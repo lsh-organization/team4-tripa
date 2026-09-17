@@ -21,6 +21,110 @@
     src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{KAKAO_MAP_API_KEY}}">
     </script>
 
+    <style>
+        .schedule-add-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 30000;
+        }
+
+        .schedule-add-modal.show {
+            display: block;
+        }
+
+        .schedule-add-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+        }
+
+        .schedule-add-dialog {
+            position: relative;
+            z-index: 1;
+            width: min(520px, calc(100% - 32px));
+            margin: 80px auto;
+            padding: 24px;
+            border-radius: 16px;
+            background: #fff;
+            box-shadow: 0 20px 55px rgba(15, 23, 42, 0.25);
+        }
+
+        .schedule-add-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .schedule-add-header h2 {
+            margin: 0;
+            font-size: 21px;
+        }
+
+        .schedule-add-close {
+            border: 0;
+            background: transparent;
+            font-size: 26px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .schedule-add-place {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border: 1px solid #dbe3ef;
+            border-radius: 10px;
+            background: #f8fafc;
+        }
+
+        .schedule-add-place strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .schedule-add-place span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .schedule-add-form .form-group {
+            margin-bottom: 15px;
+        }
+
+        .schedule-add-form label {
+            display: block;
+            margin-bottom: 7px;
+            font-weight: 700;
+        }
+
+        .schedule-add-form select,
+        .schedule-add-form input[type="time"] {
+            width: 100%;
+            height: 46px;
+            padding: 0 12px;
+            border: 1px solid #dcdfe5;
+            border-radius: 8px;
+            background: #fff;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .schedule-add-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 22px;
+        }
+
+        .schedule-add-empty {
+            margin: 8px 0 0;
+            color: #dc2626;
+            font-size: 13px;
+        }
+    </style>
+
 </head>
 
 
@@ -203,10 +307,17 @@
                     <br>
 
                     <!-- 일정에 추가 버튼 -->
-                        <button
+                    <button
                         type="button"
                         class="btn btn-primary"
-                        onclick="event.stopPropagation();"
+                        onclick="event.stopPropagation(); openScheduleAddModal(
+                            '{{ place.name|escapejs }}',
+                            '{{ place.address|escapejs }}',
+                            '{{ place.category|escapejs }}',
+                            '{{ place.y|escapejs }}',
+                            '{{ place.x|escapejs }}',
+                            '{{ place.image|default:''|escapejs }}'
+                        );"
                     >
                         일정에 추가
                     </button>
@@ -252,7 +363,542 @@
 
 
 </div>
+
+
+<!-- =========================
+     일정 추가 모달
+========================= -->
+<div
+    id="scheduleAddModal"
+    class="schedule-add-modal"
+    aria-hidden="true"
+>
+    <div
+        class="schedule-add-overlay"
+        onclick="closeScheduleAddModal()"
+    ></div>
+
+    <div class="schedule-add-dialog">
+
+        <div class="schedule-add-header">
+            <h2>📅 일정에 추가</h2>
+
+            <button
+                type="button"
+                class="schedule-add-close"
+                onclick="closeScheduleAddModal()"
+            >
+                ×
+            </button>
+        </div>
+
+        <div class="schedule-add-place">
+            <strong id="scheduleAddPlaceName">선택한 장소</strong>
+            <span id="scheduleAddPlaceAddress"></span>
+        </div>
+
+        <form
+            id="scheduleAddForm"
+            class="schedule-add-form"
+            onsubmit="submitScheduleAdd(event)"
+        >
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="scheduleTravelSelect">
+                    여행 선택
+                </label>
+
+                <select
+                    id="scheduleTravelSelect"
+                    required
+                    onchange="updateScheduleDateOptions()"
+                >
+                    <option value="">
+                        여행을 선택해주세요.
+                    </option>
+
+                    {% for item in travels %}
+                        <option
+                            value="{{ item.t_id }}"
+                            data-start="{{ item.t_start|date:'Y-m-d' }}"
+                            data-end="{{ item.t_end|date:'Y-m-d' }}"
+                        >
+                            {{ item.t_title }}
+                            {% if item.t_place %}
+                                - {{ item.t_place }}
+                            {% endif %}
+                            ({{ item.t_start|date:'Y.m.d' }} ~ {{ item.t_end|date:'Y.m.d' }})
+                        </option>
+                    {% endfor %}
+                </select>
+
+                {% if not travels %}
+                    <p class="schedule-add-empty">
+                        등록된 여행이 없습니다. 먼저 여행을 만들어주세요.
+                    </p>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="scheduleDateSelect">
+                    추가 일자
+                </label>
+
+                <select
+                    id="scheduleDateSelect"
+                    required
+                    disabled
+                >
+                    <option value="">
+                        여행을 먼저 선택해주세요.
+                    </option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="scheduleArriveTime">
+                    방문 시간
+                </label>
+
+                <input
+                    type="time"
+                    id="scheduleArriveTime"
+                    required
+                >
+            </div>
+
+            <div class="schedule-add-buttons">
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    onclick="closeScheduleAddModal()"
+                >
+                    취소
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    {% if not travels %}disabled{% endif %}
+                >
+                    일정에 추가
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
     <script>
+
+        // =========================
+        // 일정 추가 상태
+        // =========================
+
+        let scheduleAddPlace = null;
+
+
+        function parseLocalDate(value) {
+            const parts = String(value || "")
+                .split("-")
+                .map(Number);
+
+            if (parts.length !== 3) {
+                return null;
+            }
+
+            return new Date(
+                parts[0],
+                parts[1] - 1,
+                parts[2]
+            );
+        }
+
+
+        function formatDateValue(date) {
+            const year = date.getFullYear();
+            const month = String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+            const day = String(
+                date.getDate()
+            ).padStart(2, "0");
+
+            return `${year}-${month}-${day}`;
+        }
+
+
+        function formatScheduleDateLabel(
+            date,
+            dayNumber
+        ) {
+            const month = String(
+                date.getMonth() + 1
+            ).padStart(2, "0");
+            const day = String(
+                date.getDate()
+            ).padStart(2, "0");
+
+            return `DAY ${dayNumber} · ${month}.${day}`;
+        }
+
+
+        function openScheduleAddModal(
+            name,
+            address,
+            category,
+            lat,
+            lon,
+            image
+        ) {
+            scheduleAddPlace = {
+                name: name || "",
+                address: address || "",
+                category: category || "",
+                lat: lat || "",
+                lon: lon || "",
+                image: image || ""
+            };
+
+            const modal =
+                document.getElementById(
+                    "scheduleAddModal"
+                );
+
+            document.getElementById(
+                "scheduleAddPlaceName"
+            ).textContent =
+                scheduleAddPlace.name;
+
+            document.getElementById(
+                "scheduleAddPlaceAddress"
+            ).textContent =
+                scheduleAddPlace.address;
+
+            document.getElementById(
+                "scheduleTravelSelect"
+            ).value = "";
+
+            const dateSelect =
+                document.getElementById(
+                    "scheduleDateSelect"
+                );
+
+            dateSelect.innerHTML =
+                '<option value="">여행을 먼저 선택해주세요.</option>';
+
+            dateSelect.disabled = true;
+
+            document.getElementById(
+                "scheduleArriveTime"
+            ).value = "";
+
+            modal.classList.add("show");
+            modal.setAttribute(
+                "aria-hidden",
+                "false"
+            );
+        }
+
+
+        function closeScheduleAddModal() {
+            const modal =
+                document.getElementById(
+                    "scheduleAddModal"
+                );
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.remove("show");
+            modal.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+
+            scheduleAddPlace = null;
+        }
+
+
+        function updateScheduleDateOptions() {
+            const travelSelect =
+                document.getElementById(
+                    "scheduleTravelSelect"
+                );
+
+            const dateSelect =
+                document.getElementById(
+                    "scheduleDateSelect"
+                );
+
+            const option =
+                travelSelect.options[
+                    travelSelect.selectedIndex
+                ];
+
+            if (
+                !option
+                ||
+                !option.value
+            ) {
+                dateSelect.innerHTML =
+                    '<option value="">여행을 먼저 선택해주세요.</option>';
+
+                dateSelect.disabled = true;
+                return;
+            }
+
+            const startDate =
+                parseLocalDate(
+                    option.dataset.start
+                );
+
+            const endDate =
+                parseLocalDate(
+                    option.dataset.end
+                );
+
+            if (
+                !startDate
+                ||
+                !endDate
+                ||
+                endDate < startDate
+            ) {
+                dateSelect.innerHTML =
+                    '<option value="">여행 날짜 정보가 없습니다.</option>';
+
+                dateSelect.disabled = true;
+                return;
+            }
+
+            dateSelect.innerHTML =
+                '<option value="">일자를 선택해주세요.</option>';
+
+            const cursor =
+                new Date(startDate);
+
+            let dayNumber = 1;
+
+            while (cursor <= endDate) {
+                const optionElement =
+                    document.createElement(
+                        "option"
+                    );
+
+                optionElement.value =
+                    formatDateValue(cursor);
+
+                optionElement.textContent =
+                    formatScheduleDateLabel(
+                        cursor,
+                        dayNumber
+                    );
+
+                dateSelect.appendChild(
+                    optionElement
+                );
+
+                cursor.setDate(
+                    cursor.getDate() + 1
+                );
+
+                dayNumber += 1;
+            }
+
+            dateSelect.disabled = false;
+        }
+
+
+        function getCsrfToken() {
+            const tokenInput =
+                document.querySelector(
+                    '#scheduleAddForm input[name="csrfmiddlewaretoken"]'
+                );
+
+            return tokenInput
+                ? tokenInput.value
+                : "";
+        }
+
+
+        function submitScheduleAdd(event) {
+            event.preventDefault();
+
+            if (!scheduleAddPlace) {
+                alert(
+                    "추가할 장소 정보가 없습니다."
+                );
+                return;
+            }
+
+            const travelId =
+                document.getElementById(
+                    "scheduleTravelSelect"
+                ).value;
+
+            const scheduleDate =
+                document.getElementById(
+                    "scheduleDateSelect"
+                ).value;
+
+            const arriveTime =
+                document.getElementById(
+                    "scheduleArriveTime"
+                ).value;
+
+            if (!travelId) {
+                alert(
+                    "여행을 선택해주세요."
+                );
+                return;
+            }
+
+            if (!scheduleDate) {
+                alert(
+                    "추가할 일자를 선택해주세요."
+                );
+                return;
+            }
+
+            if (!arriveTime) {
+                alert(
+                    "방문 시간을 입력해주세요."
+                );
+                return;
+            }
+
+            const body =
+                new URLSearchParams();
+
+            body.append(
+                "travel_id",
+                travelId
+            );
+
+            body.append(
+                "s_day",
+                scheduleDate
+            );
+
+            body.append(
+                "arrive_time",
+                arriveTime
+            );
+
+            body.append(
+                "place_name",
+                scheduleAddPlace.name
+            );
+
+            body.append(
+                "place_addr",
+                scheduleAddPlace.address
+            );
+
+            body.append(
+                "place_kind",
+                scheduleAddPlace.category
+            );
+
+            body.append(
+                "place_lat",
+                scheduleAddPlace.lat
+            );
+
+            body.append(
+                "place_lon",
+                scheduleAddPlace.lon
+            );
+
+            body.append(
+                "place_image",
+                scheduleAddPlace.image
+            );
+
+            fetch(
+                "{% url 'schedule_place_add' %}",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/x-www-form-urlencoded;charset=UTF-8",
+                        "X-CSRFToken":
+                            getCsrfToken()
+                    },
+                    body: body.toString()
+                }
+            )
+                .then(
+                    function(response) {
+                        return response
+                            .json()
+                            .then(
+                                function(data) {
+                                    if (
+                                        !response.ok
+                                    ) {
+                                        throw new Error(
+                                            data.message
+                                            ||
+                                            "일정 추가에 실패했습니다."
+                                        );
+                                    }
+
+                                    return data;
+                                }
+                            );
+                    }
+                )
+                .then(
+                    function(data) {
+                        alert(
+                            data.message
+                            ||
+                            "일정에 추가되었습니다."
+                        );
+
+                        const detailUrl =
+                            "{% url 'travel_detail' travel_id=999999 %}"
+                            .replace(
+                                "999999",
+                                travelId
+                            );
+
+                        window.location.href =
+                            detailUrl;
+                    }
+                )
+                .catch(
+                    function(error) {
+                        console.error(
+                            "일정 추가 오류:",
+                            error
+                        );
+
+                        alert(
+                            error.message
+                            ||
+                            "일정 추가 중 오류가 발생했습니다."
+                        );
+                    }
+                );
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            function(event) {
+                if (
+                    event.key === "Escape"
+                ) {
+                    closeScheduleAddModal();
+                }
+            }
+        );
+
 
         // =========================
         // 지도 생성
