@@ -903,6 +903,36 @@
 
                     </div>
 
+                    <div class="summary-item">
+
+
+                        <div class="summary-label">
+                            방문 장소 수
+                        </div>
+
+
+                        <div class="summary-value" id="placeCount">
+                            0곳
+                        </div>
+
+
+                    </div>
+
+                    <div class="summary-item">
+
+
+                        <div class="summary-label">
+                            교통 수단
+                        </div>
+
+
+                        <div class="summary-value">
+                            {{ travel.t_way }}
+                        </div>
+
+
+                    </div>
+
 
                 </section>
 
@@ -1691,6 +1721,13 @@ function renderSchedule(data) {
         document.getElementById(
             "timelineContainer"
         );
+    const placeCount =
+        document.getElementById("placeCount");
+
+    if (placeCount) {
+        placeCount.innerText =
+            `${data.places ? data.places.length : 0}곳`;
+    }
 
     if (!container) {
         console.error(
