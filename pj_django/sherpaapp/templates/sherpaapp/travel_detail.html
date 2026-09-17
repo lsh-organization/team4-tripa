@@ -90,6 +90,21 @@
 
             border: 1px solid #e5e7eb;
             border-radius: 12px;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                border-color 0.2s ease,
+                background-color 0.2s ease;
+        }
+
+        .schedule-card:hover {
+            border-color: #cbd8ef;
+            background: #ffffff;
+            box-shadow: 0 4px 14px rgba(45, 108, 223, 0.10);
+            transform: translateY(-2px);
         }
 
 
@@ -906,9 +921,11 @@
                     <div class="summary-item">
 
 
+
                         <div class="summary-label">
                             방문 장소 수
                         </div>
+
 
 
                         <div class="summary-value" id="placeCount">
@@ -916,9 +933,11 @@
                         </div>
 
 
+
                     </div>
 
                     <div class="summary-item">
+
 
 
                         <div class="summary-label">
@@ -926,13 +945,14 @@
                         </div>
 
 
+
                         <div class="summary-value">
                             {{ travel.t_way }}
                         </div>
 
 
-                    </div>
 
+                    </div>
 
                 </section>
 
@@ -1083,16 +1103,125 @@ let overlays = [];
 let routePolylines = [];
 let placeMarkerMap = new Map();
 
-const ROUTE_COLORS = [
-    "#2F6DE0",
-    "#E85D75",
-    "#16A085",
-    "#F39C12",
-    "#8E44AD",
-    "#00A8CC",
-    "#E67E22",
-    "#27AE60"
-];
+/* =========================================================
+   장소/경로 색상 자동 생성
+
+   - 고정 색상 배열을 사용하지 않는다.
+   - 장소가 몇 개든 index에 따라 새로운 색상을 계산한다.
+   - golden angle(137.508도)을 사용해서 인접 색상이 최대한
+     겹쳐 보이지 않도록 분산한다.
+========================================================= */
+
+function hslToHex(h, s, l) {
+
+    s /= 100;
+    l /= 100;
+
+    const c =
+        (1 - Math.abs(2 * l - 1)) * s;
+
+    const x =
+        c * (1 - Math.abs((h / 60) % 2 - 1));
+
+    const m =
+        l - c / 2;
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+
+    if (h < 60) {
+        r = c; g = x; b = 0;
+    } else if (h < 120) {
+        r = x; g = c; b = 0;
+    } else if (h < 180) {
+        r = 0; g = c; b = x;
+    } else if (h < 240) {
+        r = 0; g = x; b = c;
+    } else if (h < 300) {
+        r = x; g = 0; b = c;
+    } else {
+        r = c; g = 0; b = x;
+    }
+
+    const toHex = function(value) {
+        return Math.round((value + m) * 255)
+            .toString(16)
+            .padStart(2, "0");
+    };
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+
+function getScheduleColor(index) {
+
+    const safeIndex =
+        Math.max(
+            Number(index) || 0,
+            0
+        );
+
+    /*
+       카카오 지도 배경 위에서 구분이 잘 되는 진한 색을 먼저 사용한다.
+       초록/노랑처럼 도로·공원 색과 겹치기 쉬운 색은 우선 팔레트에서 제외했다.
+    */
+    const HIGH_CONTRAST_COLORS = [
+        "#2563EB", // 파랑
+        "#DC2626", // 빨강
+        "#7C3AED", // 보라
+        "#0891B2", // 청록
+        "#EA580C", // 주황
+        "#DB2777", // 진분홍
+        "#1D4ED8", // 진파랑
+        "#9333EA", // 자주
+        "#C2410C", // 진주황
+        "#0E7490", // 진청록
+        "#BE123C", // 진홍
+        "#4338CA"  // 남보라
+    ];
+
+    if (
+        safeIndex
+        <
+        HIGH_CONTRAST_COLORS.length
+    ) {
+        return HIGH_CONTRAST_COLORS[
+            safeIndex
+        ];
+    }
+
+    /*
+       12개를 넘어가도 제한 없이 자동 생성한다.
+       golden angle로 색상을 분산하고,
+       지도와 섞이기 쉬운 노랑/연두 계열은 다른 영역으로 이동시킨다.
+    */
+    let hue =
+        (
+            218
+            +
+            safeIndex * 137.508
+        ) % 360;
+
+    if (
+        hue >= 45
+        &&
+        hue <= 155
+    ) {
+        hue =
+            (
+                hue
+                +
+                125
+            ) % 360;
+    }
+
+    return hslToHex(
+        hue,
+        82,
+        42
+    );
+}
 
 
 let selectedTravelId = null;
@@ -1326,28 +1455,18 @@ function drawSchedule(scheduleId) {
                         place.name || "";
 
 
-                    // 마커 N은 N → N+1 경로와 같은 색을 사용한다.
-                    // 마지막 마커는 마지막으로 들어오는 경로와 같은 색을 사용한다.
+                    // 장소마다 고유 색상을 자동 생성한다.
+                    // 마지막 장소도 이전 장소와 같은 색을 재사용하지 않는다.
                     const orderIndex =
                         Math.max(
                             Number(place.order || 1) - 1,
                             0
                         );
 
-                    const lastRouteIndex =
-                        Math.max(
-                            places.length - 2,
-                            0
-                        );
-
-                    const markerColorIndex =
-                        Math.min(
-                            orderIndex,
-                            lastRouteIndex
-                        ) % ROUTE_COLORS.length;
-
                     const markerColor =
-                        ROUTE_COLORS[markerColorIndex];
+                        getScheduleColor(
+                            orderIndex
+                        );
 
 
                     markerElement.style.cssText = `
@@ -1529,17 +1648,18 @@ function drawSchedule(scheduleId) {
                                 path,
 
                             strokeWeight:
-                                6,
+                                7,
 
+                            // 각 구간은 "도착지 마커"와 같은 색을 사용한다.
+                            // 예: 1→2 경로 = 2번 마커 색상
+                            //     5→6 경로 = 6번 마커 색상
                             strokeColor:
-                                ROUTE_COLORS[
-                                    index
-                                    %
-                                    ROUTE_COLORS.length
-                                ],
+                                getScheduleColor(
+                                    index + 1
+                                ),
 
                             strokeOpacity:
-                                0.9,
+                                0.96,
 
                             strokeStyle:
                                 "solid"
@@ -1721,6 +1841,7 @@ function renderSchedule(data) {
         document.getElementById(
             "timelineContainer"
         );
+
     const placeCount =
         document.getElementById("placeCount");
 
@@ -2205,7 +2326,7 @@ function searchPlaces() {
     `;
 
     fetch(
-        `/schedule_place_search?query=${encodeURIComponent(query)}`
+        `/schedule_place_search/?query=${encodeURIComponent(query)}`
     )
 
         .then(function (response) {

@@ -171,6 +171,11 @@ urlpatterns = [
         name='schedule_place_time_update'
     ),
 
+    path(
+            'schedule_place_search/',
+            views.schedule_place_search,
+            name='schedule_place_search'
+        ),
 
     # ==========================================
     # 경로 계산
