@@ -792,8 +792,11 @@
                 </div>
 
 
-                <button class="btn btn-primary">
-                    저장
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="openTravelSelectModal()">
+                    여행 선택
                 </button>
 
 
@@ -3174,6 +3177,216 @@ document.addEventListener(
 
 </script>
 
+<script>
+/* =========================================================
+   여행 선택 팝업
+========================================================= */
+
+function openTravelSelectModal() {
+
+    const modal =
+        document.getElementById(
+            "travelSelectModal"
+        );
+
+    const results =
+        document.getElementById(
+            "travelSelectResults"
+        );
+
+    if (!modal || !results) {
+        return;
+    }
+
+    modal.style.display = "flex";
+
+    results.innerHTML = `
+        <p class="place-search-empty">
+            🔎 내 여행 목록을 불러오는 중...
+        </p>
+    `;
+
+    fetch("/travel_list/?select=1")
+
+        .then(function(response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    "여행 목록을 불러오지 못했습니다."
+                );
+            }
+
+            return response.json();
+        })
+
+        .then(function(data) {
+
+            if (!data.success) {
+
+                results.innerHTML = `
+                    <p class="place-search-empty">
+                        ${data.message || "여행 목록이 없습니다."}
+                    </p>
+                `;
+
+                return;
+            }
+
+            const travels =
+                Array.isArray(data.travels)
+                    ? data.travels
+                    : [];
+
+            if (travels.length === 0) {
+
+                results.innerHTML = `
+                    <p class="place-search-empty">
+                        등록된 여행이 없습니다.
+                    </p>
+                `;
+
+                return;
+            }
+
+            results.innerHTML = "";
+
+            travels.forEach(function(travel) {
+
+                const row =
+                    document.createElement("div");
+
+                row.className =
+                    "place-search-result";
+
+                row.style.cursor = "pointer";
+
+                row.innerHTML = `
+                    <div
+                        class="place-result-image"
+                        style="
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:32px;
+                        ">
+                        🗺️
+                    </div>
+
+                    <div class="place-result-info">
+
+                        <h3>
+                            ${travel.title || "제목 없는 여행"}
+                        </h3>
+
+                        <p>
+                            📍 ${travel.place || "지역 없음"}
+                        </p>
+
+                        <p>
+                            📅 ${travel.start || ""}
+                            ~
+                            ${travel.end || ""}
+                        </p>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="place-select-btn">
+                        일정 관리
+                    </button>
+                `;
+
+                row.addEventListener(
+                    "click",
+                    function() {
+
+                        goToTravelDetail(
+                            travel.id
+                        );
+
+                    }
+                );
+
+                results.appendChild(row);
+            });
+        })
+
+        .catch(function(error) {
+
+            console.error(
+                "여행 목록 조회 오류:",
+                error
+            );
+
+            results.innerHTML = `
+                <p class="place-search-empty">
+                    여행 목록을 불러오는 중 오류가 발생했습니다.
+                </p>
+            `;
+        });
+}
+
+
+function closeTravelSelectModal() {
+
+    const modal =
+        document.getElementById(
+            "travelSelectModal"
+        );
+
+    if (modal) {
+        modal.style.display = "none";
+    }
+}
+
+
+function goToTravelDetail(travelId) {
+
+    if (!travelId) {
+        return;
+    }
+
+    window.location.href =
+        `/travel_detail/${travelId}/`;
+}
+</script>
+<!-- =========================================================
+     여행 선택 팝업
+========================================================= -->
+<div id="travelSelectModal"
+     class="place-modal"
+     style="display:none;">
+
+    <div class="place-modal-overlay"
+         onclick="closeTravelSelectModal()">
+    </div>
+
+    <div class="place-modal-content">
+
+        <div class="place-modal-header">
+
+            <h2>✈️ 내 여행 선택</h2>
+
+            <button
+                type="button"
+                onclick="closeTravelSelectModal()">
+                ×
+            </button>
+
+        </div>
+
+        <div id="travelSelectResults">
+
+            <p class="place-search-empty">
+                여행 목록을 불러오는 중...
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
 </body>
 
 </html>

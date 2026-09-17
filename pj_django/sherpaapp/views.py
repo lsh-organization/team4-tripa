@@ -455,15 +455,51 @@ def travel_create(request):
 # 여행 목록
 def travel_list(request):
     login_user = request.session.get('login_ok_user')
+
     if not login_user:
         return redirect('login')
+
     try:
         member = Member.objects.get(email=login_user)
+
     except Member.DoesNotExist:
         return redirect('login')
-    travels = (Travel.objects.filter(member=member).order_by('-t_id'))
-    return render(request,'sherpaapp/travel_list.html',{'member':member,'travels':travels})
 
+    travels = (
+        Travel.objects
+        .filter(member=member)
+        .order_by('-t_id')
+    )
+
+    # 여행 선택 팝업에서 요청한 경우
+    if request.GET.get('select') == '1':
+
+        travel_data = []
+
+        for travel in travels:
+
+            travel_data.append({
+                'id': travel.t_id,
+                'title': travel.t_title,
+                'place': travel.t_place,
+                'start': travel.t_start.strftime('%Y.%m.%d') if travel.t_start else '',
+                'end': travel.t_end.strftime('%Y.%m.%d') if travel.t_end else '',
+            })
+
+        return JsonResponse({
+            'success': True,
+            'travels': travel_data
+        })
+
+    # 기존 내 여행 페이지
+    return render(
+        request,
+        'sherpaapp/travel_list.html',
+        {
+            'member': member,
+            'travels': travels
+        }
+    )
 # 여행 상세
 def travel_detail(request, travel_id):
     travel = get_object_or_404(Travel, t_id=travel_id)
