@@ -197,8 +197,9 @@ def travel_create(request):
                 }
             )
 
-        # 종료일은 시작일보다 뒤여야 함
-        if end <= start:
+        # 종료일은 시작일과 같거나 이후여야 함
+        # 시작일 == 종료일이면 당일 여행으로 허용
+        if end < start:
             categories = Category.objects.all().order_by('c_id')
             return render(
                 request,
@@ -206,7 +207,7 @@ def travel_create(request):
                 {
                     'member': member,
                     'categories': categories,
-                    'error': '여행 종료일은 시작일 이후로 선택해주세요.',
+                    'error': '여행 종료일은 시작일과 같거나 이후로 선택해주세요.',
                 }
             )
 
