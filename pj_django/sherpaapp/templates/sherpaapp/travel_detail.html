@@ -2137,7 +2137,49 @@ function closePlaceSearch() {
 /* =========================================================
    장소 검색
 ========================================================= */
+function moveToPlace(place) {
 
+    if (!map) {
+        alert("지도가 아직 준비되지 않았습니다.");
+        return;
+    }
+
+    const lat =
+        Number(place.y || place.lat);
+
+    const lon =
+        Number(place.x || place.lon);
+
+    if (
+        Number.isNaN(lat)
+        || Number.isNaN(lon)
+    ) {
+        alert("이 장소의 위치 정보를 찾을 수 없습니다.");
+        return;
+    }
+
+    const position =
+        new kakao.maps.LatLng(
+            lat,
+            lon
+        );
+
+    // 해당 장소로 이동
+    map.setCenter(position);
+
+    // 지도 확대
+    map.setLevel(3);
+
+    // 해당 장소 마커
+    const marker =
+        new kakao.maps.Marker({
+            position: position,
+            map: map
+        });
+
+    // 기존 마커들을 저장하고 있다면 나중에 제거할 수 있도록 저장
+    overlays.push(marker);
+}
 function searchPlaces() {
 
     const input =
@@ -2214,6 +2256,14 @@ function searchPlaces() {
                         document.createElement(
                             "div"
                         );
+                    row.style.cursor = "pointer";
+
+                    row.addEventListener(
+                        "click",
+                        function () {
+                            moveToPlace(place);
+                        }
+                    );    
 
                     row.className =
                         "place-search-result";

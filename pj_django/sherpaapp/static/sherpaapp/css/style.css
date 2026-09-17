@@ -3298,3 +3298,26 @@ footer {
     border-color: #2d6cdf;
     background-color: #f5f8ff;
 }
+
+/* ==================================
+   장소 검색 결과 카드 - 마우스 효과
+================================== */
+
+.place-result-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.place-result-card:hover {
+    background-color: #f8fbff;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+.place-result-card .place-photo img {
+    transition: transform 0.25s ease;
+}
+
+.place-result-card:hover .place-photo img {
+    transform: scale(1.05);
+}
