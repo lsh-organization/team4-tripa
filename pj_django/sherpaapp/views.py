@@ -15,6 +15,7 @@ from .models import SchedulePlace
 from .services.schedule_service import generate_schedule
 from .services.route_service import get_kakao_route
 from .models import TravelCategory
+from .models import TravelDayPlan
 
 # ==============================================
 # 카카오 이미지 검색 공통 함수
@@ -152,6 +153,20 @@ def travel_create(request):
         place = request.POST.get('t_place')
         start_str = request.POST.get('t_start')
         end_str = request.POST.get('t_end')
+        start_place = request.POST.get('start_place')
+        start_addr = request.POST.get('start_addr')
+        start_lat = request.POST.get('start_lat') or None
+        start_lon = request.POST.get('start_lon') or None
+        start_time = request.POST.get('start_time') or None
+        plan_dates = request.POST.getlist('plan_date[]')
+
+        stay_names = request.POST.getlist('stay_name[]')
+        stay_addrs = request.POST.getlist('stay_addr[]')
+        stay_lats = request.POST.getlist('stay_lat[]')
+        stay_lons = request.POST.getlist('stay_lon[]')
+
+        arrival_times = request.POST.getlist('stay_arrival_time[]')
+        departure_times = request.POST.getlist('day_departure_time[]')
 
         # 날짜 문자열 -> date 객체
         try:
@@ -259,6 +274,11 @@ def travel_create(request):
             t_day=start,
             t_way=traffic,
             t_budget=100000,
+            start_place=start_place,
+            start_addr=start_addr,
+            start_lat=start_lat,
+            start_lon=start_lon,
+            start_time=start_time,
         )
 
         # ======================================
@@ -277,6 +297,69 @@ def travel_create(request):
             '자동 일정 생성 카테고리:',
             [category.c_name for category in selected_categories]
         )
+
+        # ==============================================
+        # 날짜별 숙소 / 출발시간 저장
+        # ==============================================
+
+        for index, plan_date_str in enumerate(plan_dates):
+
+            if not plan_date_str:
+                continue
+
+            plan_date = datetime.strptime(
+                plan_date_str,
+                '%Y-%m-%d'
+            ).date()
+
+            stay_name = (
+                stay_names[index].strip()
+                if index < len(stay_names)
+                else ''
+            )
+
+            stay_addr = (
+                stay_addrs[index].strip()
+                if index < len(stay_addrs)
+                else ''
+            )
+
+            stay_lat = (
+                stay_lats[index].strip()
+                if index < len(stay_lats)
+                else ''
+            )
+
+            stay_lon = (
+                stay_lons[index].strip()
+                if index < len(stay_lons)
+                else ''
+            )
+
+            arrival_time = (
+                arrival_times[index].strip()
+                if index < len(arrival_times)
+                else ''
+            )
+
+            departure_time = (
+                departure_times[index].strip()
+                if index < len(departure_times)
+                else ''
+            )
+
+            TravelDayPlan.objects.create(
+                travel=travel,
+                plan_date=plan_date,
+
+                accommodation_name=stay_name or None,
+                accommodation_addr=stay_addr or None,
+                accommodation_lat=stay_lat or None,
+                accommodation_lon=stay_lon or None,
+
+                arrival_time=arrival_time or None,
+                departure_time=departure_time or None,
+            )        
 
         # ======================================
         # 자동 일정 생성
