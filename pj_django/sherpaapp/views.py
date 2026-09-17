@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, time
+from datetime import datetime, timedelta, time, date
 import requests
 from django.conf import settings
 from django.db.models import Prefetch
@@ -165,7 +165,33 @@ def travel_create(request):
                 {
                     'member': member,
                     'categories': categories,
-                    'error_message': '여행 날짜를 올바르게 입력해주세요.',
+                    'error': '여행 날짜를 올바르게 입력해주세요.',
+                }
+            )
+
+        # 시작일은 오늘보다 과거일 수 없음
+        if start < date.today():
+            categories = Category.objects.all().order_by('c_id')
+            return render(
+                request,
+                'sherpaapp/travel_create.html',
+                {
+                    'member': member,
+                    'categories': categories,
+                    'error': '여행 시작일은 오늘 이후로 선택해주세요.',
+                }
+            )
+
+        # 종료일은 시작일보다 뒤여야 함
+        if end <= start:
+            categories = Category.objects.all().order_by('c_id')
+            return render(
+                request,
+                'sherpaapp/travel_create.html',
+                {
+                    'member': member,
+                    'categories': categories,
+                    'error': '여행 종료일은 시작일 이후로 선택해주세요.',
                 }
             )
 
@@ -217,7 +243,7 @@ def travel_create(request):
                 {
                     'member': member,
                     'categories': categories,
-                    'error_message': '여행 컨셉을 1개 이상 선택해주세요.',
+                    'error': '여행 컨셉을 1개 이상 선택해주세요.',
                 }
             )
 
