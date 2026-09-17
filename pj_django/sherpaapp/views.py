@@ -301,6 +301,7 @@ def travel_create(request):
             'categories': categories,
         }
     )
+
 # 여행 목록
 def travel_list(request):
     login_user = request.session.get('login_ok_user')
