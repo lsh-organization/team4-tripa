@@ -154,6 +154,12 @@ urlpatterns = [
     # ==========================================
 
     path(
+        'schedule_place_search/',
+        views.schedule_place_search,
+        name='schedule_place_search'
+    ),
+
+    path(
         'schedule_place_add/',
         views.schedule_place_add,
         name='schedule_place_add'

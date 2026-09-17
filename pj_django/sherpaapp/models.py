@@ -119,6 +119,13 @@ class Travel(models.Model):
         blank=True
     )
 
+    start_addr = models.CharField(
+        max_length=255,
+        db_column='START_ADDR',
+        null=True,
+        blank=True
+    )
+
     start_lat = models.DecimalField(
         max_digits=10,
         decimal_places=7,
@@ -131,6 +138,12 @@ class Travel(models.Model):
         max_digits=10,
         decimal_places=7,
         db_column='START_LON',
+        null=True,
+        blank=True
+    )
+
+    start_time = models.TimeField(
+        db_column='START_TIME',
         null=True,
         blank=True
     )
@@ -172,6 +185,86 @@ class Travel(models.Model):
 
     def __str__(self):
         return self.t_title or ''
+
+
+# ==============================================
+# 여행 날짜별 계획
+# ==============================================
+
+class TravelDayPlan(models.Model):
+
+    tdp_id = models.AutoField(
+        primary_key=True,
+        db_column='TDP_ID'
+    )
+
+    travel = models.ForeignKey(
+        Travel,
+        on_delete=models.CASCADE,
+        db_column='T_ID',
+        related_name='day_plans'
+    )
+
+    plan_date = models.DateField(
+        db_column='PLAN_DATE'
+    )
+
+    accommodation_name = models.CharField(
+        max_length=200,
+        db_column='ACCOMMODATION_NAME',
+        null=True,
+        blank=True
+    )
+
+    accommodation_addr = models.CharField(
+        max_length=255,
+        db_column='ACCOMMODATION_ADDR',
+        null=True,
+        blank=True
+    )
+
+    accommodation_lat = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        db_column='ACCOMMODATION_LAT',
+        null=True,
+        blank=True
+    )
+
+    accommodation_lon = models.DecimalField(
+        max_digits=10,
+        decimal_places=7,
+        db_column='ACCOMMODATION_LON',
+        null=True,
+        blank=True
+    )
+
+    arrival_time = models.TimeField(
+        db_column='ARRIVAL_TIME',
+        null=True,
+        blank=True
+    )
+
+    departure_time = models.TimeField(
+        db_column='DEPARTURE_TIME',
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        db_table = 'travel_day_plan'
+        managed = False
+        ordering = ['plan_date']
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=['travel', 'plan_date'],
+                name='unique_travel_day_plan'
+            )
+        ]
+
+    def __str__(self):
+        return f'{self.travel} - {self.plan_date}'
 
 
 # ==============================================

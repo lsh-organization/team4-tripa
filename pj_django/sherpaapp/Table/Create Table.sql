@@ -8,6 +8,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS pay;
 DROP TABLE IF EXISTS schedule_places;
 DROP TABLE IF EXISTS travel_category;
+DROP TABLE IF EXISTS travel_day_plan;
 DROP TABLE IF EXISTS schedule;
 DROP TABLE IF EXISTS place;
 DROP TABLE IF EXISTS categories;
@@ -65,8 +66,10 @@ CREATE TABLE travel (
     T_BUDGET INT NOT NULL DEFAULT 100000,
 
     START_PLACE VARCHAR(200),
+    START_ADDR VARCHAR(255),
     START_LAT DECIMAL(10,7),
     START_LON DECIMAL(10,7),
+    START_TIME TIME,
 
     ACCOMMODATION VARCHAR(200),
     ACCOMMODATION_LAT DECIMAL(10,7),
@@ -86,6 +89,51 @@ CREATE TABLE travel (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
 
+-- =========================================================
+-- TRAVEL_DAY_PLAN
+--
+-- 여행 날짜별 숙소 / 출발시간 / 숙소 도착시간
+--
+-- PLAN_DATE          : 여행 날짜
+-- ACCOMMODATION_*    : 해당 날짜 일정 종료 숙소
+-- ARRIVAL_TIME       : 해당 날짜 숙소 도착 목표 시간
+-- DEPARTURE_TIME     : 해당 날짜 일정 출발 시간
+--
+-- DAY 1 출발시간은 TRAVEL.START_TIME 사용
+-- DAY 2 이후는 DEPARTURE_TIME 사용
+-- 마지막 날은 숙소 정보가 NULL일 수 있음
+-- =========================================================
+
+CREATE TABLE travel_day_plan (
+
+    TDP_ID INT NOT NULL AUTO_INCREMENT,
+    T_ID INT NOT NULL,
+
+    PLAN_DATE DATE NOT NULL,
+
+    ACCOMMODATION_NAME VARCHAR(200),
+    ACCOMMODATION_ADDR VARCHAR(255),
+
+    ACCOMMODATION_LAT DECIMAL(10,7),
+    ACCOMMODATION_LON DECIMAL(10,7),
+
+    ARRIVAL_TIME TIME,
+    DEPARTURE_TIME TIME,
+
+    CONSTRAINT TRAVEL_DAY_PLAN_PK
+        PRIMARY KEY (TDP_ID),
+
+    CONSTRAINT TRAVEL_DAY_PLAN_TRAVEL_FK
+        FOREIGN KEY (T_ID)
+        REFERENCES travel(T_ID)
+        ON DELETE CASCADE,
+
+    CONSTRAINT UQ_TRAVEL_DAY_PLAN
+        UNIQUE (T_ID, PLAN_DATE)
+
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 
 -- =========================================================
 -- PLACE
