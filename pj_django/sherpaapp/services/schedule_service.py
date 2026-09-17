@@ -5,6 +5,7 @@ from ..models import (
     Place,
     Schedule,
     SchedulePlace,
+    TravelDayPlan,
 )
 
 from .place_service import search_places
@@ -41,17 +42,11 @@ MAX_ACTIVITY_PER_DAY = 3
 
 
 # 첫날 시작
-FIRST_DAY_START = time(
-    10,
-    0
-)
+FIRST_DAY_START = time(9, 0)
 
 
 # 2일차 이후 시작
-NORMAL_DAY_START = time(
-    9,
-    30
-)
+NORMAL_DAY_START = time(9, 0)
 
 
 # 하루 종료 기준
@@ -1484,90 +1479,390 @@ def add_checkin(
     )
 
 
+
+# =========================================================
+# 날짜별 숙소 / 시작점 일반화
+# =========================================================
+
+DEFAULT_ACCOMMODATION_ARRIVAL = time(20, 0)
+
+
+def build_accommodation_candidate(
+    name,
+    address=None,
+    lat=None,
+    lon=None,
+):
+    """TravelDayPlan/Travel 숙소 정보를 일정 후보 형식으로 변환한다."""
+
+    name = (name or '').strip()
+
+    if not name:
+        return None
+
+    lat = to_float(lat)
+    lon = to_float(lon)
+
+    if lat is None or lon is None:
+        return None
+
+    return {
+        'name': name,
+        'address': (address or name).strip(),
+        'x': lon,
+        'y': lat,
+        'selected_category': '숙박',
+        'category': '숙박',
+    }
+
+
+def get_legacy_accommodation_candidate(travel):
+    """기존 Travel 숙소 컬럼을 임시 fallback으로 유지한다."""
+
+    return build_accommodation_candidate(
+        getattr(travel, 'accommodation', None),
+        getattr(travel, 'accommodation', None),
+        getattr(travel, 'accommodation_lat', None),
+        getattr(travel, 'accommodation_lon', None),
+    )
+
+
+def get_travel_day_plans(travel):
+    """날짜를 key로 하는 TravelDayPlan dict를 반환한다."""
+
+    return {
+        plan.plan_date: plan
+        for plan in (
+            TravelDayPlan.objects
+            .filter(travel=travel)
+            .order_by('plan_date', 'tdp_id')
+        )
+    }
+
+
+def resolve_effective_accommodations(
+    travel,
+    travel_dates,
+    day_plan_map,
+):
+    """
+    숙소가 비어 있는 날은 이전 숙소를 그대로 사용한다.
+
+    DAY 1 숙소 = DAY 1 일정 종료 지점
+    DAY 2 시작점 = DAY 1 숙소
+    """
+
+    effective = {}
+
+    current_accommodation = (
+        get_legacy_accommodation_candidate(travel)
+    )
+
+    for travel_date in travel_dates:
+
+        plan = day_plan_map.get(
+            travel_date
+        )
+
+        if plan:
+            candidate = build_accommodation_candidate(
+                plan.accommodation_name,
+                plan.accommodation_addr,
+                plan.accommodation_lat,
+                plan.accommodation_lon,
+            )
+
+            if candidate:
+                current_accommodation = candidate
+
+        effective[travel_date] = (
+            current_accommodation.copy()
+            if current_accommodation
+            else None
+        )
+
+    return effective
+
+
+def get_day_start_time(
+    travel,
+    travel_date,
+    day_index,
+    day_plan_map,
+):
+    """사용자 입력 시간이 없으면 09:00을 사용한다."""
+
+    if day_index == 0:
+        return (
+            normalize_time(
+                getattr(
+                    travel,
+                    'start_time',
+                    None,
+                )
+            )
+            or FIRST_DAY_START
+        )
+
+    plan = day_plan_map.get(
+        travel_date
+    )
+
+    return (
+        normalize_time(
+            getattr(
+                plan,
+                'departure_time',
+                None,
+            )
+            if plan
+            else None
+        )
+        or NORMAL_DAY_START
+    )
+
+
+def get_day_accommodation_arrival_time(
+    travel_date,
+    day_plan_map,
+):
+    """숙소 도착 시간이 없으면 20:00을 사용한다."""
+
+    plan = day_plan_map.get(
+        travel_date
+    )
+
+    return (
+        normalize_time(
+            getattr(
+                plan,
+                'arrival_time',
+                None,
+            )
+            if plan
+            else None
+        )
+        or DEFAULT_ACCOMMODATION_ARRIVAL
+    )
+
+
+def get_first_day_start_candidate(travel):
+    """지도 경로 계산에서도 재사용하기 쉬운 출발지 후보 정보."""
+
+    name = (
+        getattr(
+            travel,
+            'start_place',
+            None,
+        )
+        or '출발지'
+    )
+
+    lat = to_float(
+        getattr(
+            travel,
+            'start_lat',
+            None,
+        )
+    )
+
+    lon = to_float(
+        getattr(
+            travel,
+            'start_lon',
+            None,
+        )
+    )
+
+    if lat is None or lon is None:
+        return None
+
+    return {
+        'name': name,
+        'address': (
+            getattr(
+                travel,
+                'start_addr',
+                None,
+            )
+            or name
+        ),
+        'x': lon,
+        'y': lat,
+        'selected_category': '출발지',
+        'category': '출발지',
+    }
+
+
+def add_meal_before_deadline(
+    travel,
+    schedule,
+    meal_candidates,
+    used_places,
+    current_datetime,
+    current_point,
+    visit_order,
+    transport,
+    target_datetime,
+    fixed_datetime=None,
+    fixed_point=None,
+):
+    """
+    숙소 도착 시간이 정해져 있으면
+    식사 후 숙소까지 갈 수 있는 음식점만 선택한다.
+    """
+
+    possible = []
+
+    for candidate in meal_candidates:
+
+        key = get_candidate_key(
+            candidate
+        )
+
+        if key in used_places:
+            continue
+
+        if (
+            fixed_datetime is not None
+            and fixed_point is not None
+        ):
+
+            if not can_visit_before_fixed_time(
+                candidate,
+                current_datetime,
+                current_point,
+                fixed_datetime,
+                fixed_point,
+                transport,
+            ):
+                continue
+
+        possible.append(
+            candidate
+        )
+
+    candidate = find_nearest_candidate(
+        possible,
+        used_places,
+        current_point,
+    )
+
+    if candidate is None:
+        return (
+            current_datetime,
+            current_point,
+            visit_order,
+        )
+
+    used_places.add(
+        get_candidate_key(
+            candidate
+        )
+    )
+
+    return save_schedule_place(
+        travel,
+        schedule,
+        candidate,
+        visit_order,
+        current_datetime,
+        current_point,
+        transport,
+        forced_arrival=target_datetime,
+        stay_time_override=90,
+    )
+
+
+def add_accommodation_arrival(
+    travel,
+    schedule,
+    accommodation,
+    current_datetime,
+    current_point,
+    visit_order,
+    transport,
+    arrival_datetime,
+):
+    """
+    숙소는 '숙박 체류'가 아니라 '숙소 도착 이벤트'로 저장한다.
+    다음 날의 시작점은 TravelDayPlan에서 별도로 계산한다.
+    """
+
+    if accommodation is None:
+        return (
+            current_datetime,
+            current_point,
+            visit_order,
+        )
+
+    return save_schedule_place(
+        travel,
+        schedule,
+        accommodation,
+        visit_order,
+        current_datetime,
+        current_point,
+        transport,
+        forced_arrival=arrival_datetime,
+        stay_time_override=0,
+    )
+
+
+
 # =========================================================
 # 메인 자동 일정 생성
 # =========================================================
 
 def generate_schedule(
     travel,
-    reset_existing=True
+    reset_existing=True,
 ):
+    """
+    날짜별 시작점/숙소를 반영해 일정을 생성한다.
+
+    DAY 1:
+        Travel.start_* -> 관광/식사 -> DAY 1 숙소
+
+    DAY 2 이후:
+        전날 숙소 -> 관광/식사 -> 해당 DAY 숙소
+
+    TravelDayPlan의 숙소가 비어 있으면 이전 숙소를 그대로 사용한다.
+    출발시간 미입력: 09:00
+    숙소 도착시간 미입력: 20:00
+    """
 
     print()
-    print(
-        '================================='
-    )
-
-    print(
-        '자동 일정 생성 시작'
-    )
-
-    print(
-        '여행:',
-        travel.t_title
-    )
-
-    print(
-        '지역:',
-        travel.t_place
-    )
-
+    print('=================================')
+    print('날짜별 자동 일정 생성 시작')
+    print('여행:', travel.t_title)
+    print('지역:', travel.t_place)
 
     # =====================================================
-    # 1. 여행 날짜
+    # 1. 날짜 / DAY Schedule
     # =====================================================
 
-    travel_dates = (
-        create_travel_dates(
-            travel
-        )
+    travel_dates = create_travel_dates(
+        travel
     )
-
-
-    print(
-        '여행 날짜:',
-        travel_dates
-    )
-
-
-    # =====================================================
-    # 2. DAY Schedule 생성
-    # =====================================================
 
     schedules = []
-
 
     for travel_date in travel_dates:
 
         schedule, created = (
             Schedule.objects
             .get_or_create(
-
                 travel=travel,
-
-                s_day=travel_date
+                s_day=travel_date,
             )
         )
-
 
         schedules.append(
             schedule
         )
 
-
-        print(
-            'Schedule:',
-            schedule.s_id,
-            schedule.s_day,
-            'created:',
-            created
-        )
-
-
-        # 다시 생성할 때
-        # 기존 장소 일정 초기화
         if reset_existing:
-
             (
                 SchedulePlace.objects
                 .filter(
@@ -1576,9 +1871,16 @@ def generate_schedule(
                 .delete()
             )
 
+        print(
+            'Schedule:',
+            schedule.s_id,
+            schedule.s_day,
+            'created:',
+            created,
+        )
 
     # =====================================================
-    # 3. 선택 컨셉
+    # 2. 컨셉 / 장소 후보
     # =====================================================
 
     categories = list(
@@ -1587,1083 +1889,379 @@ def generate_schedule(
         )
     )
 
-
-    print(
-        '카테고리:',
-        [
-            category.c_name
-            for category
-            in categories
-        ]
-    )
-
-
     if not categories:
-
-        print(
-            '선택된 카테고리가 없습니다.'
-        )
-
+        print('선택된 카테고리가 없습니다.')
         return schedules
-
-
-    # =====================================================
-    # 4. 장소 후보
-    # =====================================================
 
     (
         activity_candidates,
-        meal_candidates
+        meal_candidates,
     ) = build_place_candidates(
-
         travel,
-        categories
+        categories,
     )
 
+    # =====================================================
+    # 3. TravelDayPlan 해석
+    # =====================================================
 
-    print(
-        '관광 후보:',
-        len(
-            activity_candidates
+    day_plan_map = get_travel_day_plans(
+        travel
+    )
+
+    effective_accommodations = (
+        resolve_effective_accommodations(
+            travel,
+            travel_dates,
+            day_plan_map,
         )
     )
 
-    print(
-        '음식 후보:',
-        len(
-            meal_candidates
-        )
-    )
-
-
-    # =====================================================
-    # 5. 숙소 / 체크인
-    # =====================================================
-
-    accommodation = (
-        get_accommodation_candidate(
+    first_start_candidate = (
+        get_first_day_start_candidate(
             travel
         )
     )
 
-
-    accommodation_point = None
-
-
-    if accommodation:
-
-        accommodation_point = (
-            get_candidate_coordinate(
-                accommodation
-            )
-        )
-
-
-    checkin_time = (
-        normalize_time(
-
-            getattr(
-                travel,
-                'checkin_time',
-                None
-            )
-        )
-    )
-
-
-    print(
-        '숙소:',
-        accommodation.get(
-            'name'
-        )
-        if accommodation
-        else None
-    )
-
-    print(
-        '체크인:',
-        checkin_time
-    )
-
-
-    # =====================================================
-    # 6. 전체 여행 중복 장소 방지
-    # =====================================================
-
     used_places = set()
 
-
     # =====================================================
-    # 7. DAY별 일정 생성
+    # 4. DAY별 일정
     # =====================================================
 
     for day_index, schedule in enumerate(
         schedules
     ):
 
-        print()
-        print(
-            '---------------------------------'
+        travel_date = schedule.s_day
+
+        start_time = get_day_start_time(
+            travel,
+            travel_date,
+            day_index,
+            day_plan_map,
         )
 
-        print(
-            f'DAY {day_index + 1}',
-            schedule.s_day
+        current_datetime = datetime.combine(
+            travel_date,
+            start_time,
         )
 
-
-        visit_order = 1
-
-        activity_count = 0
-
-
-        # ==============================================
-        # DAY 시작 위치
-        # ==============================================
+        # ---------------------------------------------
+        # DAY 시작점
+        # ---------------------------------------------
 
         if day_index == 0:
 
             current_point = (
-                get_start_point(
+                get_candidate_coordinate(
+                    first_start_candidate
+                )
+                if first_start_candidate
+                else get_start_point(
                     travel
                 )
             )
 
-            start_time = (
-                FIRST_DAY_START
-            )
-
         else:
 
-            # 2일차부터 숙소 출발
+            previous_date = (
+                travel_dates[
+                    day_index - 1
+                ]
+            )
+
+            previous_accommodation = (
+                effective_accommodations.get(
+                    previous_date
+                )
+            )
+
             current_point = (
-                accommodation_point
+                get_candidate_coordinate(
+                    previous_accommodation
+                )
+                if previous_accommodation
+                else None
             )
 
-            start_time = (
-                NORMAL_DAY_START
-            )
+        # ---------------------------------------------
+        # 해당 DAY 종료 숙소
+        #
+        # 마지막 날은 기본적으로 숙박 일정이 없다.
+        # ---------------------------------------------
 
-
-        current_datetime = (
-            datetime.combine(
-
-                schedule.s_day,
-
-                start_time
-            )
+        is_last_day = (
+            day_index
+            ==
+            len(schedules) - 1
         )
 
+        accommodation = None
+        accommodation_point = None
+        accommodation_datetime = None
 
-        lunch_datetime = (
-            datetime.combine(
+        if not is_last_day:
 
-                schedule.s_day,
-
-                LUNCH_TIME
+            accommodation = (
+                effective_accommodations.get(
+                    travel_date
+                )
             )
-        )
 
+            if accommodation:
 
-        dinner_datetime = (
-            datetime.combine(
+                accommodation_point = (
+                    get_candidate_coordinate(
+                        accommodation
+                    )
+                )
 
-                schedule.s_day,
-
-                DINNER_TIME
-            )
-        )
-
+                accommodation_datetime = (
+                    datetime.combine(
+                        travel_date,
+                        get_day_accommodation_arrival_time(
+                            travel_date,
+                            day_plan_map,
+                        ),
+                    )
+                )
 
         day_end_datetime = (
-            datetime.combine(
-
-                schedule.s_day,
-
-                DAY_END
+            accommodation_datetime
+            or datetime.combine(
+                travel_date,
+                DAY_END,
             )
         )
 
+        lunch_datetime = datetime.combine(
+            travel_date,
+            LUNCH_TIME,
+        )
+
+        dinner_datetime = datetime.combine(
+            travel_date,
+            DINNER_TIME,
+        )
+
+        visit_order = 1
+        activity_count = 0
+
+        print()
+        print(
+            f'DAY {day_index + 1}',
+            travel_date,
+            '출발:',
+            start_time,
+            '숙소:',
+            accommodation.get('name')
+            if accommodation
+            else None,
+            '숙소도착:',
+            accommodation_datetime.time()
+            if accommodation_datetime
+            else None,
+        )
 
         # =================================================
-        # 첫날 + 체크인 존재
+        # 오전 관광
+        # =================================================
+
+        morning_limit = min(
+            lunch_datetime,
+            day_end_datetime,
+        )
+
+        (
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+        ) = fill_activities(
+            travel,
+            schedule,
+            activity_candidates,
+            used_places,
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+            morning_limit,
+            travel.t_way,
+            MAX_ACTIVITY_PER_DAY,
+            reach_point=(
+                accommodation_point
+                if morning_limit == day_end_datetime
+                else None
+            ),
+        )
+
+        # =================================================
+        # 점심
         # =================================================
 
         if (
-            day_index == 0
-            and
-            accommodation
-            and
-            checkin_time
+            lunch_datetime
+            <
+            day_end_datetime
+            and current_datetime.time()
+            <
+            time(15, 0)
         ):
 
-            checkin_datetime = (
-                datetime.combine(
-
-                    schedule.s_day,
-
-                    checkin_time
-                )
-            )
-
-
-            # =================================================
-            # CASE 1
-            # 체크인이 점심 이전
-            # =================================================
-
-            if (
-                checkin_time
-                <=
-                LUNCH_TIME
-            ):
-
-                # 체크인 전 관광
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    checkin_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY,
-
-                    reach_point=
-                        accommodation_point
-                )
-
-
-                # 체크인
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_checkin(
-
-                    travel,
-                    schedule,
-                    accommodation,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    checkin_datetime
-                )
-
-
-                # 점심
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    lunch_datetime
-                )
-
-
-                # 오후 관광
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    dinner_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 저녁
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    dinner_datetime
-                )
-
-
-            # =================================================
-            # CASE 2
-            # 체크인 <= 18:00
-            #
-            # 관광 -> 점심 -> 관광 -> 체크인
-            # -> 관광 가능하면 관광 -> 저녁
-            # =================================================
-
-            elif (
-                checkin_time
-                <=
-                time(
-                    18,
-                    0
-                )
-            ):
-
-                # 오전
-                morning_limit = (
-                    datetime.combine(
-
-                        schedule.s_day,
-
-                        time(
-                            12,
-                            0
-                        )
-                    )
-                )
-
-
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    morning_limit,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 점심
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    lunch_datetime
-                )
-
-
-                # 체크인 전 관광
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    checkin_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY,
-
-                    reach_point=
-                        accommodation_point
-                )
-
-
-                # 체크인
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_checkin(
-
-                    travel,
-                    schedule,
-                    accommodation,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    checkin_datetime
-                )
-
-
-                # 체크인이 일찍 끝났으면
-                # 저녁 전에 관광 가능
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    dinner_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 저녁
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    dinner_datetime
-                )
-
-
-                # 저녁 후 일정
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    day_end_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-            # =================================================
-            # CASE 3
-            # 체크인 18:00 ~ 20:00
-            #
-            # 점심 -> 관광 -> 체크인 -> 저녁
-            # =================================================
-
-            elif (
-                checkin_time
-                <=
-                time(
-                    20,
-                    0
-                )
-            ):
-
-                morning_limit = (
-                    datetime.combine(
-
-                        schedule.s_day,
-
-                        time(
-                            12,
-                            0
-                        )
-                    )
-                )
-
-
-                # 오전
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    morning_limit,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 점심
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    lunch_datetime
-                )
-
-
-                # 체크인 전 관광
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    checkin_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY,
-
-                    reach_point=
-                        accommodation_point
-                )
-
-
-                # 체크인
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_checkin(
-
-                    travel,
-                    schedule,
-                    accommodation,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    checkin_datetime
-                )
-
-
-                # 체크인 후 저녁
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    dinner_datetime
-                )
-
-
-                # 저녁 이후
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    day_end_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-            # =================================================
-            # CASE 4
-            # 체크인 > 20:00
-            #
-            # 관광 -> 저녁 -> 관광 가능 -> 체크인
-            # =================================================
-
-            else:
-
-                morning_limit = (
-                    datetime.combine(
-
-                        schedule.s_day,
-
-                        time(
-                            12,
-                            0
-                        )
-                    )
-                )
-
-
-                # 오전
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    morning_limit,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 점심
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    lunch_datetime
-                )
-
-
-                # 저녁 전 관광
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    dinner_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY
-                )
-
-
-                # 저녁
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_meal(
-
-                    travel,
-                    schedule,
-                    meal_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    dinner_datetime
-                )
-
-
-                # 저녁 후
-                # 체크인 시간에 늦지 않는 관광지만
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order,
-                    activity_count
-                ) = fill_activities(
-
-                    travel,
-                    schedule,
-                    activity_candidates,
-                    used_places,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-                    activity_count,
-
-                    checkin_datetime,
-
-                    travel.t_way,
-
-                    MAX_ACTIVITY_PER_DAY,
-
-                    reach_point=
-                        accommodation_point
-                )
-
-
-                # 마지막 체크인
-                (
-                    current_datetime,
-                    current_point,
-                    visit_order
-                ) = add_checkin(
-
-                    travel,
-                    schedule,
-                    accommodation,
-
-                    current_datetime,
-                    current_point,
-
-                    visit_order,
-
-                    travel.t_way,
-
-                    checkin_datetime
-                )
-
-
-        # =================================================
-        # 체크인이 없는 날
-        # DAY2 ~ DAY N 포함
-        # =================================================
-
-        else:
-
-            morning_limit = (
-                datetime.combine(
-
-                    schedule.s_day,
-
-                    time(
-                        12,
-                        0
-                    )
-                )
-            )
-
-
-            # 오전 관광
             (
                 current_datetime,
                 current_point,
                 visit_order,
-                activity_count
-            ) = fill_activities(
-
-                travel,
-                schedule,
-                activity_candidates,
-                used_places,
-
-                current_datetime,
-                current_point,
-
-                visit_order,
-                activity_count,
-
-                morning_limit,
-
-                travel.t_way,
-
-                MAX_ACTIVITY_PER_DAY
-            )
-
-
-            # 점심
-            (
-                current_datetime,
-                current_point,
-                visit_order
-            ) = add_meal(
-
+            ) = add_meal_before_deadline(
                 travel,
                 schedule,
                 meal_candidates,
                 used_places,
-
                 current_datetime,
                 current_point,
-
                 visit_order,
-
                 travel.t_way,
-
-                lunch_datetime
+                lunch_datetime,
+                fixed_datetime=(
+                    accommodation_datetime
+                    if accommodation
+                    else None
+                ),
+                fixed_point=(
+                    accommodation_point
+                    if accommodation
+                    else None
+                ),
             )
 
+        # =================================================
+        # 오후 관광
+        # =================================================
 
-            # 오후 관광
+        afternoon_limit = min(
+            dinner_datetime,
+            day_end_datetime,
+        )
+
+        (
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+        ) = fill_activities(
+            travel,
+            schedule,
+            activity_candidates,
+            used_places,
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+            afternoon_limit,
+            travel.t_way,
+            MAX_ACTIVITY_PER_DAY,
+            reach_point=(
+                accommodation_point
+                if afternoon_limit == day_end_datetime
+                else None
+            ),
+        )
+
+        # =================================================
+        # 저녁
+        # =================================================
+
+        if (
+            dinner_datetime
+            <
+            day_end_datetime
+            and current_datetime.time()
+            <
+            time(21, 0)
+        ):
+
             (
                 current_datetime,
                 current_point,
                 visit_order,
-                activity_count
-            ) = fill_activities(
-
+            ) = add_meal_before_deadline(
                 travel,
                 schedule,
-                activity_candidates,
+                meal_candidates,
                 used_places,
-
                 current_datetime,
                 current_point,
-
                 visit_order,
-                activity_count,
-
+                travel.t_way,
                 dinner_datetime,
-
-                travel.t_way,
-
-                MAX_ACTIVITY_PER_DAY
+                fixed_datetime=(
+                    accommodation_datetime
+                    if accommodation
+                    else None
+                ),
+                fixed_point=(
+                    accommodation_point
+                    if accommodation
+                    else None
+                ),
             )
 
+        # =================================================
+        # 저녁 이후 / 숙소 전 남는 시간
+        # =================================================
 
-            # 저녁
+        (
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+        ) = fill_activities(
+            travel,
+            schedule,
+            activity_candidates,
+            used_places,
+            current_datetime,
+            current_point,
+            visit_order,
+            activity_count,
+            day_end_datetime,
+            travel.t_way,
+            MAX_ACTIVITY_PER_DAY,
+            reach_point=(
+                accommodation_point
+                if accommodation
+                else None
+            ),
+        )
+
+        # =================================================
+        # 해당 DAY 숙소 도착
+        # =================================================
+
+        if (
+            accommodation
+            and accommodation_datetime
+        ):
+
             (
                 current_datetime,
                 current_point,
-                visit_order
-            ) = add_meal(
-
+                visit_order,
+            ) = add_accommodation_arrival(
                 travel,
                 schedule,
-                meal_candidates,
-                used_places,
-
+                accommodation,
                 current_datetime,
                 current_point,
-
                 visit_order,
-
                 travel.t_way,
-
-                dinner_datetime
+                accommodation_datetime,
             )
-
-
-            # 저녁 후 관광
-            (
-                current_datetime,
-                current_point,
-                visit_order,
-                activity_count
-            ) = fill_activities(
-
-                travel,
-                schedule,
-                activity_candidates,
-                used_places,
-
-                current_datetime,
-                current_point,
-
-                visit_order,
-                activity_count,
-
-                day_end_datetime,
-
-                travel.t_way,
-
-                MAX_ACTIVITY_PER_DAY
-            )
-
 
     print()
-    print(
-        '자동 일정 생성 완료'
-    )
-
-    print(
-        '================================='
-    )
-
+    print('날짜별 자동 일정 생성 완료')
+    print('=================================')
 
     return schedules
