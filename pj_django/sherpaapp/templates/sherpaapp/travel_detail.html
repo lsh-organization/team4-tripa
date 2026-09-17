@@ -14,9 +14,6 @@
     <link rel="stylesheet"
           href="{% static 'sherpaapp/css/style.css' %}">
 
-    <!-- =====================================================
-         travel_detail 전용 보정 CSS
-    ====================================================== -->
     <style>
 
         /* =========================================
@@ -299,6 +296,338 @@
             }
         }
 
+
+        /* =========================================
+           참고 이미지형 DAY 일정 UI
+        ========================================= */
+        .timeline-item {
+            grid-template-columns: 132px minmax(0, 1fr);
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .timeline-time-cell {
+            position: relative;
+            padding-top: 0;
+        }
+
+        .time-picker-trigger {
+            width: 128px;
+            min-height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 0 12px;
+            border: 2px solid #2563eb;
+            border-radius: 10px;
+            background: #ffffff;
+            color: #111827;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .time-picker-trigger:hover,
+        .time-picker-trigger:focus {
+            background: #eff6ff;
+            outline: none;
+        }
+
+        .time-picker-trigger .picker-clock {
+            font-size: 15px;
+            color: #111827;
+        }
+
+        .schedule-card {
+            min-height: 166px;
+            padding: 16px 88px 16px 16px;
+            gap: 16px;
+            border: 0;
+            border-radius: 12px;
+            background: #f6f7fb;
+        }
+
+        .schedule-image {
+            flex: 0 0 122px;
+            width: 122px;
+            height: 160px;
+            border-radius: 10px;
+            background: #e9eef5;
+        }
+
+        .schedule-info {
+            padding-top: 4px;
+        }
+
+        .schedule-info h3 {
+            margin-bottom: 8px;
+            font-size: 17px;
+        }
+
+        .schedule-info p {
+            margin: 5px 0;
+            color: #64748b;
+        }
+
+        .schedule-category {
+            margin: 2px 0 8px;
+        }
+
+        .schedule-meta-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            min-height: 30px;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .stay-picker-trigger {
+            border: 1px solid #dbe3ef;
+            border-radius: 8px;
+            background: #ffffff;
+            padding: 5px 9px;
+            color: #334155;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .stay-picker-trigger:hover,
+        .stay-picker-trigger:focus {
+            border-color: #2563eb;
+            background: #eff6ff;
+            outline: none;
+        }
+
+        /* 클릭 시 열리는 시간/체류시간 선택창 */
+        .schedule-picker-popover {
+            position: absolute;
+            z-index: 20000;
+            width: 248px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            background: #ffffff;
+            box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+        }
+
+        .schedule-picker-columns {
+            display: grid;
+            grid-template-columns: 72px 1fr 1fr;
+            gap: 6px;
+        }
+
+        .schedule-picker-columns.duration {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .schedule-picker-list {
+            width: 100%;
+            min-height: 150px;
+            border: 0;
+            border-radius: 5px;
+            outline: none;
+            background: #ffffff;
+            color: #111827;
+            font-size: 14px;
+            scrollbar-width: thin;
+        }
+
+        .schedule-picker-list option {
+            padding: 7px 8px;
+            text-align: center;
+        }
+
+        .schedule-picker-list option:checked {
+            background: #2563eb linear-gradient(0deg, #2563eb 0%, #2563eb 100%);
+            color: #ffffff;
+        }
+
+        .schedule-picker-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 7px;
+            margin-top: 10px;
+        }
+
+        .schedule-picker-actions button {
+            border: 0;
+            border-radius: 7px;
+            padding: 7px 11px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .schedule-picker-cancel {
+            background: #eef2f7;
+            color: #475569;
+        }
+
+        .schedule-picker-save {
+            background: #2563eb;
+            color: #ffffff;
+        }
+
+        /* 하단 고정 검색창은 제거하고 +추가 모달만 사용 */
+        .timeline-place-search {
+            display: none !important;
+        }
+
+        /* 장소 추가 모달 */
+        .place-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 15000;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .place-modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.46);
+        }
+
+        .place-modal-content {
+            position: relative;
+            z-index: 1;
+            width: min(760px, calc(100vw - 40px));
+            max-height: min(760px, calc(100vh - 60px));
+            overflow: auto;
+            padding: 22px;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+        }
+
+        .place-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .place-modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+        }
+
+        .place-modal-header button {
+            width: 36px;
+            height: 36px;
+            border: 0;
+            border-radius: 50%;
+            background: #f1f5f9;
+            font-size: 22px;
+            cursor: pointer;
+        }
+
+        .place-search-box {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .place-search-box input {
+            min-width: 0;
+            padding: 11px 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            outline: none;
+        }
+
+        .place-search-box input:focus {
+            border-color: #2563eb;
+        }
+
+        .place-search-box button,
+        .place-select-btn {
+            border: 0;
+            border-radius: 9px;
+            background: #2563eb;
+            color: #ffffff;
+            padding: 10px 15px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .place-search-result {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .place-result-image {
+            width: 92px;
+            height: 82px;
+            overflow: hidden;
+            border-radius: 9px;
+            background: #eef2f7;
+        }
+
+        .place-result-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .place-result-info h3 {
+            margin: 0 0 5px;
+            font-size: 15px;
+        }
+
+        .place-result-info p {
+            margin: 3px 0;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .place-search-empty {
+            padding: 28px 12px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .timeline-item {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .time-picker-trigger {
+                width: 150px;
+            }
+
+            .schedule-card {
+                padding-right: 70px;
+            }
+
+            .schedule-image {
+                width: 100%;
+                height: 190px;
+                flex-basis: auto;
+            }
+
+            .place-search-result {
+                grid-template-columns: 72px minmax(0, 1fr);
+            }
+
+            .place-select-btn {
+                grid-column: 1 / -1;
+            }
+        }
+
     </style>
 
 </head>
@@ -321,10 +650,6 @@
 
 <div class="detail-container">
 
-
-    <!-- =====================================================
-         SIDEBAR
-    ====================================================== -->
 
     <aside class="sidebar">
 
@@ -421,19 +746,7 @@
 
     </aside>
 
-
-
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
-
     <main class="detail-content">
-
-
-
-        <!-- =================================================
-             여행 정보
-        ================================================== -->
 
         <section class="travel-header">
 
@@ -475,16 +788,8 @@
         </section>
 
 
-
-        <!-- =================================================
-             지도 + DAY
-        ================================================== -->
-
         <div class="dashboard">
 
-
-
-            <!-- 지도 -->
 
             <section class="section-box map-box">
 
@@ -637,7 +942,7 @@
                     class="add-schedule-btn"
                     onclick="openPlaceSearch()">
 
-                    + 추가
+                    🔍 장소 추가
 
                 </button>
 
@@ -659,190 +964,79 @@
 
         </section>
 
-
-
-        <!-- =================================================
-             장소 검색창
-        ================================================== -->
-
-        <div class="timeline-place-search">
-
-
-            <input
-                type="text"
-                id="place-search"
-                placeholder="장소를 검색하세요">
-
-
-            <button
-                type="button"
-                onclick="openPlaceSearch()">
-
-                🔍
-
-            </button>
-
-
-        </div>
-
-
-
         <!-- =================================================
              비용
-             + 추가 버튼은 여기서 제거
         ================================================== -->
-
-        <section class="pay-box"
-                 id="payBox">
-
-
+        <section class="pay-box" id="payBox">
             <div class="section-title">
                 💰 DAY 1 여행 비용
             </div>
 
-
             <div class="pay-item">
-
-
-                <span>
-                    등록된 비용이 없습니다.
-                </span>
-
-
-                <strong>
-                    0원
-                </strong>
-
-
+                <span>등록된 비용이 없습니다.</span>
+                <strong>0원</strong>
             </div>
-
 
             <div class="pay-item total-pay">
-
-
-                <span>
-                    DAY 1 총 비용
-                </span>
-
-
-                <strong>
-                    0원
-                </strong>
-
-
+                <span>DAY 1 총 비용</span>
+                <strong>0원</strong>
             </div>
-
-
         </section>
-
 
     </main>
 
-
 </div>
-
 
 
 <!-- =========================================================
-     장소 추가 MODAL
-========================================================== -->
+     장소 검색 팝업
+========================================================= -->
+{% csrf_token %}
 
-<div id="placeModal"
-     class="place-modal">
-
+<div id="placeSearchModal"
+     class="place-modal"
+     style="display:none;">
 
     <div class="place-modal-overlay"
-         onclick="closePlaceModal()">
+         onclick="closePlaceSearch()">
     </div>
-
 
     <div class="place-modal-content">
 
-
         <div class="place-modal-header">
+            <h2>📍 장소 추가</h2>
 
-
-            <h2>
-                장소 추가
-            </h2>
-
-
-            <button
-                type="button"
-                onclick="closePlaceModal()">
-
+            <button type="button"
+                    onclick="closePlaceSearch()">
                 ×
-
             </button>
-
-
         </div>
 
+        <div class="place-search-box">
+            <input type="text"
+                   id="placeSearchInput"
+                   placeholder="장소를 검색하세요">
 
-
-        <div class="place-search-area">
-
-
-            <input
-                type="text"
-                id="placeSearchInput"
-                placeholder="장소를 검색하세요">
-
-
-            <button
-                type="button"
-                onclick="searchPlace()">
-
+            <button type="button"
+                    onclick="searchPlaces()">
                 검색
-
             </button>
-
-
         </div>
 
-
-
-        <div class="visit-time-area">
-
-
-            <label>
-                방문 시간
-            </label>
-
-
-            <input
-                type="time"
-                id="visitTime">
-
-
+        <div id="placeSearchResults">
+            <p class="place-search-empty">
+                장소를 검색해주세요.
+            </p>
         </div>
-
-
-
-        <div class="place-search-result">
-
-
-            <div id="placeResultList">
-            </div>
-
-
-            <div id="placeMap">
-            </div>
-
-
-        </div>
-
 
     </div>
 
-
 </div>
-
 
 
 <!-- =========================================================
      카카오 지도 SDK
-========================================================== -->
+========================================================= -->
 <script
     type="text/javascript"
     src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
@@ -850,7 +1044,6 @@
 
 
 <script>
-
 /* =========================================================
    전역 상태
 ========================================================= */
@@ -858,6 +1051,9 @@
 let map = null;
 let overlays = [];
 let routePolyline = null;
+
+let selectedTravelId = null;
+let selectedDate = null;
 
 
 /* =========================================================
@@ -930,8 +1126,6 @@ function initMap() {
         mapOption
     );
 
-    console.log("카카오 지도 생성 완료");
-
     setTimeout(function () {
         map.relayout();
     }, 100);
@@ -991,11 +1185,6 @@ function drawSchedule(scheduleId) {
         })
 
         .then(function (data) {
-
-            console.log(
-                "지도 API 데이터:",
-                data
-            );
 
             clearMap();
 
@@ -1070,14 +1259,8 @@ function drawSchedule(scheduleId) {
                         });
 
                     overlay.setMap(map);
-
-                    overlays.push(
-                        overlay
-                    );
-
-                    bounds.extend(
-                        position
-                    );
+                    overlays.push(overlay);
+                    bounds.extend(position);
                 }
             );
 
@@ -1108,16 +1291,10 @@ function drawSchedule(scheduleId) {
                             lon
                         );
 
-                    path.push(
-                        position
-                    );
-
-                    bounds.extend(
-                        position
-                    );
+                    path.push(position);
+                    bounds.extend(position);
                 }
             );
-
 
             if (path.length >= 2) {
 
@@ -1132,22 +1309,16 @@ function drawSchedule(scheduleId) {
                     });
             }
 
-
             if (
                 places.length > 0
                 || path.length > 0
             ) {
-
                 map.relayout();
-
-                map.setBounds(
-                    bounds
-                );
+                map.setBounds(bounds);
             }
         })
 
         .catch(function (error) {
-
             console.error(
                 "일정 지도 표시 실패:",
                 error
@@ -1220,26 +1391,22 @@ function loadDay(day) {
                 return;
             }
 
-            console.log(
-                "DAY 데이터:",
-                data
-            );
-
             currentScheduleId =
                 data.schedule_id;
 
             renderSchedule(data);
-
             renderPayment(data);
 
-            document
-                .getElementById(
+            const currentDayTitle =
+                document.getElementById(
                     "currentDayTitle"
-                )
-                .innerText =
-                `📅 DAY ${data.day} 일정`;
+                );
 
-            // DAY 조회가 끝난 뒤 해당 스케줄 지도를 그림
+            if (currentDayTitle) {
+                currentDayTitle.innerText =
+                    `📅 DAY ${data.day} 일정 ${data.s_day || ""}`;
+            }
+
             drawSchedule(
                 data.schedule_id
             );
@@ -1263,6 +1430,48 @@ function loadDay(day) {
    DAY 일정 출력
 ========================================================= */
 
+function formatVisitTime(value) {
+    if (!value) {
+        return "시간 설정";
+    }
+
+    const parts = value.split(":");
+    let hour = Number(parts[0]);
+    const minute = String(parts[1] || "00").padStart(2, "0");
+
+    if (Number.isNaN(hour)) {
+        return value;
+    }
+
+    const period = hour < 12 ? "오전" : "오후";
+    const hour12 = hour % 12 || 12;
+
+    return `${period} ${String(hour12).padStart(2, "0")}:${minute}`;
+}
+
+
+function formatStayTime(minutes) {
+    const total = Number(minutes || 0);
+
+    if (!total) {
+        return "시간 설정";
+    }
+
+    const hour = Math.floor(total / 60);
+    const minute = total % 60;
+
+    if (hour > 0 && minute > 0) {
+        return `${hour}시간 ${minute}분`;
+    }
+
+    if (hour > 0) {
+        return `${hour}시간`;
+    }
+
+    return `${minute}분`;
+}
+
+
 function renderSchedule(data) {
 
     const container =
@@ -1270,19 +1479,24 @@ function renderSchedule(data) {
             "timelineContainer"
         );
 
+    if (!container) {
+        console.error(
+            "timelineContainer 요소를 찾을 수 없습니다."
+        );
+        return;
+    }
+
     container.innerHTML = "";
 
     if (
         !data.places
         || data.places.length === 0
     ) {
-
         container.innerHTML = `
             <div class="empty-schedule">
                 등록된 일정이 없습니다.
             </div>
         `;
-
         return;
     }
 
@@ -1295,19 +1509,17 @@ function renderSchedule(data) {
                 sp.place_image
                 && sp.place_image.trim() !== ""
             ) {
-
                 imageHtml = `
                     <div class="schedule-image">
                         <img
                             src="${sp.place_image}"
-                            alt="${sp.place_name}"
+                            alt="${sp.place_name || ""}"
                             loading="lazy"
                             onerror="
                                 this.style.display='none';
                                 this.nextElementSibling.style.display='flex';
                             "
                         >
-
                         <div
                             class="no-place-image"
                             style="display:none;">
@@ -1315,9 +1527,7 @@ function renderSchedule(data) {
                         </div>
                     </div>
                 `;
-
             } else {
-
                 imageHtml = `
                     <div class="schedule-image">
                         <div class="no-place-image">
@@ -1337,23 +1547,31 @@ function renderSchedule(data) {
                     ? sp.place_kind
                     : "기타";
 
+            const visitOrder =
+                sp.visit_order ?? "";
+
+            const stayTime =
+                Number(sp.stay_time || 0);
+
             const html = `
                 <div class="timeline-item">
 
-                    <div
-                        class="time"
-                        onclick="editTime(this, ${sp.sp_id})">
-                        ${sp.arrive_time || ""}
+                    <div class="timeline-time-cell">
+                        <button
+                            type="button"
+                            class="time-picker-trigger"
+                            onclick="openVisitTimePicker(this, ${sp.sp_id}, '${sp.arrive_time || ""}')">
+                            <span>${formatVisitTime(sp.arrive_time)}</span>
+                            <span class="picker-clock">◷</span>
+                        </button>
                     </div>
 
                     <div class="schedule-card">
-
                         ${imageHtml}
 
                         <div class="schedule-info">
-
                             <h3>
-                                📍 ${sp.visit_order}. ${sp.place_name}
+                                ${visitOrder}. ${sp.place_name || "장소명 없음"}
                             </h3>
 
                             <p class="schedule-address">
@@ -1366,16 +1584,19 @@ function renderSchedule(data) {
                                 </span>
                             </div>
 
-                            <p>
-                                체류시간 :
-                                ${sp.stay_time}분
-                            </p>
+                            <div class="schedule-meta-row">
+                                <span>⏱ 체류 시간 :</span>
+                                <button
+                                    type="button"
+                                    class="stay-picker-trigger"
+                                    onclick="openStayTimePicker(this, ${sp.sp_id}, ${stayTime})">
+                                    ${formatStayTime(stayTime)}
+                                </button>
+                            </div>
 
                             <p>
-                                출발시간 :
-                                ${sp.start_time || ""}
+                                출발 시간 : ${sp.start_time || "-"}
                             </p>
-
                         </div>
 
                         <button
@@ -1384,9 +1605,7 @@ function renderSchedule(data) {
                             onclick="deleteSchedulePlace(${sp.sp_id})">
                             삭제
                         </button>
-
                     </div>
-
                 </div>
             `;
 
@@ -1491,6 +1710,10 @@ function renderPayment(data) {
             "payBox"
         );
 
+    if (!payBox) {
+        return;
+    }
+
     let html = `
         <div class="section-title">
             💰 DAY ${data.day} 여행 비용
@@ -1558,15 +1781,37 @@ function renderPayment(data) {
 
 
 /* =========================================================
-   장소 추가 Modal 열기
+   장소 검색 팝업 열기 / 닫기
 ========================================================= */
 
 function openPlaceSearch() {
 
+    selectedTravelId =
+        travelId;
+
+    const activeDate =
+        document.querySelector(
+            ".day.active .day-date"
+        );
+
+    selectedDate =
+        activeDate
+            ? activeDate.textContent
+                .trim()
+                .replace(/\./g, "-")
+            : "";
+
     const modal =
         document.getElementById(
-            "placeModal"
+            "placeSearchModal"
         );
+
+    if (!modal) {
+        console.error(
+            "placeSearchModal 요소를 찾을 수 없습니다."
+        );
+        return;
+    }
 
     modal.style.display =
         "flex";
@@ -1577,6 +1822,7 @@ function openPlaceSearch() {
         );
 
     if (input) {
+        input.value = "";
 
         setTimeout(
             function () {
@@ -1585,123 +1831,33 @@ function openPlaceSearch() {
             100
         );
     }
+
+    const results =
+        document.getElementById(
+            "placeSearchResults"
+        );
+
+    if (results) {
+        results.innerHTML = `
+            <p class="place-search-empty">
+                장소를 검색해주세요.
+            </p>
+        `;
+    }
 }
 
 
-/* =========================================================
-   장소 추가 Modal 닫기
-========================================================= */
-
-function closePlaceModal() {
+function closePlaceSearch() {
 
     const modal =
         document.getElementById(
-            "placeModal"
+            "placeSearchModal"
         );
 
-    modal.style.display =
-        "none";
-}
-
-
-/* =========================================================
-   일정에 장소 추가
-========================================================= */
-
-function addSchedule(placeId) {
-
-    const visitTime =
-        document.getElementById(
-            "visitTime"
-        ).value;
-
-    if (!visitTime) {
-
-        alert(
-            "방문 시간을 먼저 입력해주세요."
-        );
-
-        return;
+    if (modal) {
+        modal.style.display =
+            "none";
     }
-
-    if (!currentScheduleId) {
-
-        alert(
-            "현재 DAY 정보를 찾을 수 없습니다."
-        );
-
-        return;
-    }
-
-    const body =
-        new URLSearchParams();
-
-    body.append(
-        "schedule_id",
-        currentScheduleId
-    );
-
-    body.append(
-        "place_id",
-        placeId
-    );
-
-    body.append(
-        "arrive_time",
-        visitTime
-    );
-
-    fetch(
-        "/schedule_place_add/",
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/x-www-form-urlencoded;charset=UTF-8",
-
-                "X-CSRFToken":
-                    getCookie("csrftoken")
-            },
-
-            body:
-                body.toString()
-        }
-    )
-
-        .then(function (response) {
-            return response.json();
-        })
-
-        .then(function (data) {
-
-            if (data.success) {
-
-                closePlaceModal();
-
-                loadDay(
-                    currentDay
-                );
-
-            } else {
-
-                alert(
-                    data.message
-                );
-            }
-        })
-
-        .catch(function (error) {
-
-            console.error(
-                "일정 추가 오류:",
-                error
-            );
-
-            alert(
-                "일정 추가 중 오류가 발생했습니다."
-            );
-        });
 }
 
 
@@ -1709,106 +1865,325 @@ function addSchedule(placeId) {
    장소 검색
 ========================================================= */
 
-function searchPlace() {
+function searchPlaces() {
 
-    const visitTime =
+    const input =
         document.getElementById(
-            "visitTime"
-        ).value;
+            "placeSearchInput"
+        );
 
-    if (!visitTime) {
+    const results =
+        document.getElementById(
+            "placeSearchResults"
+        );
+
+    if (!input || !results) {
+        return;
+    }
+
+    const query =
+        input.value.trim();
+
+    if (!query) {
 
         alert(
-            "방문 시간을 먼저 입력해주세요."
+            "검색할 장소를 입력해주세요."
         );
 
         return;
     }
 
-    const keyword =
-        document
-            .getElementById(
-                "placeSearchInput"
-            )
-            .value
-            .trim();
+    results.innerHTML = `
+        <p class="place-search-empty">
+            🔎 검색 중...
+        </p>
+    `;
 
-    if (!keyword) {
+    fetch(
+        `/schedule_place_search?query=${encodeURIComponent(query)}`
+    )
 
-        alert(
-            "장소를 검색해주세요."
-        );
+        .then(function (response) {
 
-        return;
-    }
+            if (!response.ok) {
+                throw new Error(
+                    "장소 검색 요청에 실패했습니다."
+                );
+            }
 
-    /*
-        기존 카카오 장소 검색 코드가 있다면
-        이 부분에 연결하면 됩니다.
-    */
+            return response.json();
+        })
+
+        .then(function (data) {
+
+            results.innerHTML = "";
+
+            const places =
+                Array.isArray(data.places)
+                    ? data.places
+                    : [];
+
+            if (places.length === 0) {
+
+                results.innerHTML = `
+                    <p class="place-search-empty">
+                        검색 결과가 없습니다.
+                    </p>
+                `;
+
+                return;
+            }
+
+            places.forEach(
+                function (place) {
+
+                    const row =
+                        document.createElement(
+                            "div"
+                        );
+
+                    row.className =
+                        "place-search-result";
+
+                    const imageArea =
+                        document.createElement(
+                            "div"
+                        );
+
+                    imageArea.className =
+                        "place-result-image";
+
+                    if (place.image) {
+
+                        const img =
+                            document.createElement(
+                                "img"
+                            );
+
+                        img.src =
+                            place.image;
+
+                        img.alt =
+                            place.name || "";
+
+                        imageArea.appendChild(
+                            img
+                        );
+
+                    } else {
+
+                        const noImage =
+                            document.createElement(
+                                "div"
+                            );
+
+                        noImage.className =
+                            "no-place-image";
+
+                        noImage.textContent =
+                            "📍";
+
+                        imageArea.appendChild(
+                            noImage
+                        );
+                    }
+
+                    const info =
+                        document.createElement(
+                            "div"
+                        );
+
+                    info.className =
+                        "place-result-info";
+
+                    const title =
+                        document.createElement(
+                            "h3"
+                        );
+
+                    title.textContent =
+                        place.name || "";
+
+                    const address =
+                        document.createElement(
+                            "p"
+                        );
+
+                    address.textContent =
+                        place.address || "";
+
+                    const category =
+                        document.createElement(
+                            "p"
+                        );
+
+                    category.textContent =
+                        `🏷️ ${place.category || ""}`;
+
+                    info.appendChild(title);
+                    info.appendChild(address);
+                    info.appendChild(category);
+
+                    const button =
+                        document.createElement(
+                            "button"
+                        );
+
+                    button.type =
+                        "button";
+
+                    button.className =
+                        "place-select-btn";
+
+                    button.textContent =
+                        "선택";
+
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            selectPlace(place);
+                        }
+                    );
+
+                    row.appendChild(
+                        imageArea
+                    );
+
+                    row.appendChild(
+                        info
+                    );
+
+                    row.appendChild(
+                        button
+                    );
+
+                    results.appendChild(
+                        row
+                    );
+                }
+            );
+        })
+
+        .catch(function (error) {
+
+            console.error(
+                "장소 검색 오류:",
+                error
+            );
+
+            results.innerHTML = `
+                <p class="place-search-empty">
+                    검색 중 오류가 발생했습니다.
+                </p>
+            `;
+        });
 }
 
 
 /* =========================================================
-   시간 수정
+   장소 선택
 ========================================================= */
 
-function editTime(element, spId) {
+function selectPlace(place) {
 
-    const oldTime =
-        element.innerText.trim();
+    if (!selectedTravelId) {
 
-    const newTime =
-        prompt(
-            "방문 시간을 입력해주세요. 예: 10:30",
-            oldTime
+        alert(
+            "여행 정보를 찾을 수 없습니다."
         );
 
-    if (
-        !newTime
-        || newTime === oldTime
-    ) {
         return;
     }
 
-    const body =
-        new URLSearchParams();
+    if (!selectedDate) {
 
-    body.append(
-        "sp_id",
-        spId
+        alert(
+            "선택한 DAY의 날짜를 찾을 수 없습니다."
+        );
+
+        return;
+    }
+
+    const formData =
+        new FormData();
+
+    formData.append(
+        "travel_id",
+        selectedTravelId
     );
 
-    body.append(
-        "arrive_time",
-        newTime
+    formData.append(
+        "s_day",
+        selectedDate
+    );
+
+    if (currentScheduleId) {
+        formData.append(
+            "schedule_id",
+            currentScheduleId
+        );
+    }
+
+    formData.append(
+        "place_name",
+        place.name || ""
+    );
+
+    formData.append(
+        "place_addr",
+        place.address || ""
+    );
+
+    formData.append(
+        "place_kind",
+        place.category || ""
+    );
+
+    formData.append(
+        "place_lat",
+        place.y || place.lat || ""
+    );
+
+    formData.append(
+        "place_lon",
+        place.x || place.lon || ""
+    );
+
+    formData.append(
+        "place_image",
+        place.image || ""
     );
 
     fetch(
-        "/schedule_place_time_update/",
+        "{% url 'schedule_place_add' %}",
         {
             method: "POST",
 
             headers: {
-                "Content-Type":
-                    "application/x-www-form-urlencoded;charset=UTF-8",
-
                 "X-CSRFToken":
                     getCookie("csrftoken")
             },
 
-            body:
-                body.toString()
+            body: formData
         }
     )
 
         .then(function (response) {
+
+            if (!response.ok) {
+                throw new Error(
+                    "장소 추가에 실패했습니다."
+                );
+            }
+
             return response.json();
         })
 
         .then(function (data) {
 
             if (data.success) {
+
+                closePlaceSearch();
 
                 loadDay(
                     currentDay
@@ -1818,6 +2193,7 @@ function editTime(element, spId) {
 
                 alert(
                     data.message
+                    || "장소 추가에 실패했습니다."
                 );
             }
         })
@@ -1825,14 +2201,370 @@ function editTime(element, spId) {
         .catch(function (error) {
 
             console.error(
-                "방문시간 수정 오류:",
+                "장소 추가 오류:",
                 error
             );
 
             alert(
-                "방문시간 변경 중 오류가 발생했습니다."
+                "장소 추가 중 오류가 발생했습니다."
             );
         });
+}
+
+
+/* =========================================================
+   방문 시간 / 체류 시간 선택기
+========================================================= */
+
+let activeSchedulePicker = null;
+
+
+function closeSchedulePicker() {
+    if (activeSchedulePicker) {
+        activeSchedulePicker.remove();
+        activeSchedulePicker = null;
+    }
+}
+
+
+function positionSchedulePicker(popover, trigger) {
+    document.body.appendChild(popover);
+
+    const rect = trigger.getBoundingClientRect();
+    const popoverRect = popover.getBoundingClientRect();
+
+    let left = rect.left + window.scrollX;
+    let top = rect.bottom + window.scrollY + 6;
+
+    const maxLeft =
+        window.scrollX
+        + window.innerWidth
+        - popoverRect.width
+        - 16;
+
+    if (left > maxLeft) {
+        left = Math.max(16 + window.scrollX, maxLeft);
+    }
+
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+
+    activeSchedulePicker = popover;
+}
+
+
+function makeOption(value, label, selected) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    option.selected = selected;
+    return option;
+}
+
+
+function openVisitTimePicker(trigger, spId, currentValue) {
+    closeSchedulePicker();
+
+    let hour24 = 10;
+    let minute = 0;
+
+    if (currentValue) {
+        const parts = currentValue.split(":");
+        hour24 = Number(parts[0]);
+        minute = Number(parts[1]);
+    }
+
+    if (Number.isNaN(hour24)) {
+        hour24 = 10;
+    }
+
+    if (Number.isNaN(minute)) {
+        minute = 0;
+    }
+
+    const currentPeriod = hour24 < 12 ? "AM" : "PM";
+    const currentHour12 = hour24 % 12 || 12;
+
+    const popover = document.createElement("div");
+    popover.className = "schedule-picker-popover";
+    popover.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    const columns = document.createElement("div");
+    columns.className = "schedule-picker-columns";
+
+    const periodSelect = document.createElement("select");
+    periodSelect.className = "schedule-picker-list";
+    periodSelect.size = 2;
+    periodSelect.appendChild(
+        makeOption("AM", "오전", currentPeriod === "AM")
+    );
+    periodSelect.appendChild(
+        makeOption("PM", "오후", currentPeriod === "PM")
+    );
+
+    const hourSelect = document.createElement("select");
+    hourSelect.className = "schedule-picker-list";
+    hourSelect.size = 6;
+
+    for (let hour = 1; hour <= 12; hour++) {
+        hourSelect.appendChild(
+            makeOption(
+                String(hour),
+                String(hour).padStart(2, "0"),
+                hour === currentHour12
+            )
+        );
+    }
+
+    const minuteSelect = document.createElement("select");
+    minuteSelect.className = "schedule-picker-list";
+    minuteSelect.size = 6;
+
+    for (let value = 0; value <= 59; value++) {
+        minuteSelect.appendChild(
+            makeOption(
+                String(value),
+                String(value).padStart(2, "0"),
+                value === minute
+            )
+        );
+    }
+
+    columns.appendChild(periodSelect);
+    columns.appendChild(hourSelect);
+    columns.appendChild(minuteSelect);
+    popover.appendChild(columns);
+
+    const actions = document.createElement("div");
+    actions.className = "schedule-picker-actions";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "schedule-picker-cancel";
+    cancelButton.textContent = "취소";
+    cancelButton.onclick = closeSchedulePicker;
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "schedule-picker-save";
+    saveButton.textContent = "적용";
+    saveButton.onclick = function () {
+        let hour = Number(hourSelect.value);
+
+        if (periodSelect.value === "AM") {
+            if (hour === 12) {
+                hour = 0;
+            }
+        } else if (hour !== 12) {
+            hour += 12;
+        }
+
+        const value =
+            `${String(hour).padStart(2, "0")}:` +
+            `${String(Number(minuteSelect.value)).padStart(2, "0")}`;
+
+        closeSchedulePicker();
+
+        updateSchedulePlace(
+            spId,
+            {
+                arrive_time: value
+            }
+        );
+    };
+
+    actions.appendChild(cancelButton);
+    actions.appendChild(saveButton);
+    popover.appendChild(actions);
+
+    positionSchedulePicker(popover, trigger);
+
+    hourSelect.focus();
+}
+
+
+function openStayTimePicker(trigger, spId, currentMinutes) {
+    closeSchedulePicker();
+
+    const total = Number(currentMinutes || 60);
+    const currentHour = Math.floor(total / 60);
+    const currentMinute = total % 60;
+
+    const popover = document.createElement("div");
+    popover.className = "schedule-picker-popover";
+    popover.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    const columns = document.createElement("div");
+    columns.className = "schedule-picker-columns duration";
+
+    const hourSelect = document.createElement("select");
+    hourSelect.className = "schedule-picker-list";
+    hourSelect.size = 6;
+
+    for (let hour = 0; hour <= 12; hour++) {
+        hourSelect.appendChild(
+            makeOption(
+                String(hour),
+                `${hour}시간`,
+                hour === currentHour
+            )
+        );
+    }
+
+    const minuteSelect = document.createElement("select");
+    minuteSelect.className = "schedule-picker-list";
+    minuteSelect.size = 6;
+
+    for (let value = 0; value <= 59; value++) {
+        minuteSelect.appendChild(
+            makeOption(
+                String(value),
+                `${String(value).padStart(2, "0")}분`,
+                value === currentMinute
+            )
+        );
+    }
+
+    columns.appendChild(hourSelect);
+    columns.appendChild(minuteSelect);
+    popover.appendChild(columns);
+
+    const actions = document.createElement("div");
+    actions.className = "schedule-picker-actions";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "schedule-picker-cancel";
+    cancelButton.textContent = "취소";
+    cancelButton.onclick = closeSchedulePicker;
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "schedule-picker-save";
+    saveButton.textContent = "적용";
+    saveButton.onclick = function () {
+        const stayTime =
+            Number(hourSelect.value) * 60
+            + Number(minuteSelect.value);
+
+        if (stayTime <= 0) {
+            alert("체류시간은 1분 이상으로 설정해주세요.");
+            return;
+        }
+
+        closeSchedulePicker();
+
+        updateSchedulePlace(
+            spId,
+            {
+                stay_time: stayTime
+            }
+        );
+    };
+
+    actions.appendChild(cancelButton);
+    actions.appendChild(saveButton);
+    popover.appendChild(actions);
+
+    positionSchedulePicker(popover, trigger);
+
+    hourSelect.focus();
+}
+
+
+function updateSchedulePlace(spId, values) {
+    const body = new URLSearchParams();
+    body.append("sp_id", spId);
+
+    Object.keys(values).forEach(function (key) {
+        body.append(key, values[key]);
+    });
+
+    fetch(
+        "/schedule_place_time_update/",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+            },
+            body: body.toString()
+        }
+    )
+        .then(function (response) {
+            return response.json().then(function (data) {
+                if (!response.ok) {
+                    throw new Error(
+                        data.message || "일정 수정 요청에 실패했습니다."
+                    );
+                }
+                return data;
+            });
+        })
+        .then(function (data) {
+            if (!data.success) {
+                throw new Error(
+                    data.message || "일정 수정에 실패했습니다."
+                );
+            }
+
+            loadDay(currentDay);
+        })
+        .catch(function (error) {
+            console.error("일정 수정 오류:", error);
+            alert(error.message || "일정 수정 중 오류가 발생했습니다.");
+        });
+}
+
+
+document.addEventListener("click", function (event) {
+    if (
+        activeSchedulePicker
+        && !activeSchedulePicker.contains(event.target)
+        && !event.target.closest(".time-picker-trigger")
+        && !event.target.closest(".stay-picker-trigger")
+    ) {
+        closeSchedulePicker();
+    }
+});
+
+
+document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+        closeSchedulePicker();
+    }
+});
+
+
+/* =========================================================
+   Enter 키로 장소 검색
+========================================================= */
+
+const placeSearchInput =
+    document.getElementById(
+        "placeSearchInput"
+    );
+
+if (placeSearchInput) {
+
+    placeSearchInput.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (event.key === "Enter") {
+
+                event.preventDefault();
+
+                searchPlaces();
+            }
+        }
+    );
 }
 
 
@@ -1861,7 +2593,6 @@ document.addEventListener(
 );
 
 </script>
-
 
 </body>
 
