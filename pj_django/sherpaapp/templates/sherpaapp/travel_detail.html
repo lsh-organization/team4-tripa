@@ -1408,6 +1408,127 @@ function drawSchedule(scheduleId) {
             const bounds =
                 new kakao.maps.LatLngBounds();
 
+            const startPoint =
+                data.start_point
+                    ? data.start_point
+                    : null;
+
+
+            /* =========================================================
+               DAY 시작점 S 마커
+            ========================================================= */
+
+            if (
+                startPoint
+                && startPoint.lat !== null
+                && startPoint.lon !== null
+            ) {
+
+                const startLat =
+                    Number(startPoint.lat);
+
+                const startLon =
+                    Number(startPoint.lon);
+
+                if (
+                    !Number.isNaN(startLat)
+                    && !Number.isNaN(startLon)
+                ) {
+
+                    const startPosition =
+                        new kakao.maps.LatLng(
+                            startLat,
+                            startLon
+                        );
+
+                    const startMarkerElement =
+                        document.createElement(
+                            "div"
+                        );
+
+                    startMarkerElement.className =
+                        "schedule-map-marker schedule-start-marker";
+
+                    startMarkerElement.textContent =
+                        "S";
+
+                    startMarkerElement.title =
+                        `${
+                            startPoint.name || "출발지"
+                        }${
+                            startPoint.departure_time
+                                ? " · " + startPoint.departure_time
+                                : ""
+                        }`;
+
+                    startMarkerElement.style.cssText = `
+                        width: 40px;
+                        height: 40px;
+                        background: #0f172a;
+                        color: #ffffff;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 800;
+                        font-size: 15px;
+                        border: 3px solid #ffffff;
+                        box-shadow: 0 2px 9px rgba(0,0,0,0.30);
+                        cursor: pointer;
+                        box-sizing: border-box;
+                    `;
+
+                    startMarkerElement.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            if (
+                                kakao.maps.event
+                                && typeof kakao.maps.event.preventMap === "function"
+                            ) {
+                                kakao.maps.event.preventMap();
+                            }
+
+                            map.setLevel(3);
+                            map.setCenter(
+                                startPosition
+                            );
+                        }
+                    );
+
+                    const startOverlay =
+                        new kakao.maps.CustomOverlay({
+
+                            position:
+                                startPosition,
+
+                            content:
+                                startMarkerElement,
+
+                            yAnchor:
+                                0.5,
+
+                            clickable:
+                                true
+                        });
+
+                    startOverlay.setMap(
+                        map
+                    );
+
+                    overlays.push(
+                        startOverlay
+                    );
+
+                    bounds.extend(
+                        startPosition
+                    );
+                }
+            }
+
 
             /* 번호 마커 */
 
@@ -1650,12 +1771,19 @@ function drawSchedule(scheduleId) {
                             strokeWeight:
                                 7,
 
-                            // 각 구간은 "도착지 마커"와 같은 색을 사용한다.
-                            // 예: 1→2 경로 = 2번 마커 색상
-                            //     5→6 경로 = 6번 마커 색상
+                            // 각 구간은 도착지 마커와 같은 색을 사용한다.
+                            // S→1 = 1번 색상
+                            // 1→2 = 2번 색상
+                            // 5→6 = 6번 색상
                             strokeColor:
                                 getScheduleColor(
-                                    index + 1
+                                    Math.max(
+                                        Number(
+                                            route.to_order
+                                            || (index + 1)
+                                        ) - 1,
+                                        0
+                                    )
                                 ),
 
                             strokeOpacity:
@@ -1673,7 +1801,8 @@ function drawSchedule(scheduleId) {
             );
 
             if (
-                places.length > 0
+                startPoint
+                || places.length > 0
                 || routes.length > 0
             ) {
                 map.relayout();
@@ -1924,6 +2053,42 @@ function renderSchedule(data) {
             const stayTime =
                 Number(sp.stay_time || 0);
 
+            const isAccommodation =
+                category === "숙박";
+
+            const scheduleMetaHtml =
+                isAccommodation
+                    ? `
+                        <div class="schedule-meta-row">
+                            <span>🏨 숙소 도착 일정</span>
+                        </div>
+                        <p>
+                            다음 날 일정의 출발 기준점
+                        </p>
+                    `
+                    : `
+                        <div class="schedule-meta-row">
+                            <span>⏱ 체류 시간 :</span>
+                            <button
+                                type="button"
+                                class="stay-picker-trigger"
+                                onclick="
+                                    event.stopPropagation();
+                                    openStayTimePicker(
+                                        this,
+                                        ${sp.sp_id},
+                                        ${stayTime}
+                                    );
+                                ">
+                                ${formatStayTime(stayTime)}
+                            </button>
+                        </div>
+
+                        <p>
+                            출발 시간 : ${sp.start_time || "-"}
+                        </p>
+                    `;
+
             const html = `
                 <div class="timeline-item">
 
@@ -1958,26 +2123,7 @@ function renderSchedule(data) {
                                 </span>
                             </div>
 
-                            <div class="schedule-meta-row">
-                                <span>⏱ 체류 시간 :</span>
-                                <button
-                                    type="button"
-                                    class="stay-picker-trigger"
-                                    onclick="
-                                        event.stopPropagation();
-                                        openStayTimePicker(
-                                            this,
-                                            ${sp.sp_id}, 
-                                            ${stayTime}
-                                        );
-                                    ">
-                                    ${formatStayTime(stayTime)}
-                                </button>
-                            </div>
-
-                            <p>
-                                출발 시간 : ${sp.start_time || "-"}
-                            </p>
+                            ${scheduleMetaHtml}
                         </div>
 
                         <button

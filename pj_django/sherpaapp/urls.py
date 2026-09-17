@@ -177,15 +177,9 @@ urlpatterns = [
         name='schedule_place_time_update'
     ),
 
-    path(
-            'schedule_place_search/',
-            views.schedule_place_search,
-            name='schedule_place_search'
-        ),
 
     # ==========================================
     # 경로 계산
-    # 팀원 기능 유지
     # ==========================================
 
     path(
@@ -199,35 +193,30 @@ urlpatterns = [
     # 비용 관리
     # ==========================================
 
-    # 비용관리 기본
     path(
         'budget/',
         views.budget,
         name='budget'
     ),
 
-    # 특정 여행 비용관리
     path(
         'budget/<int:travel_id>/',
         views.budget,
         name='budget_travel'
     ),
 
-    # 총 예산 수정
     path(
         'budget/<int:travel_id>/update-total/',
         views.budget_update_total,
         name='budget_update_total'
     ),
 
-    # 비용 추가
     path(
         'budget/<int:travel_id>/add/',
         views.budget_add,
         name='budget_add'
     ),
 
-    # 비용 삭제
     path(
         'budget/<int:travel_id>/delete/<int:pay_id>/',
         views.budget_delete,
