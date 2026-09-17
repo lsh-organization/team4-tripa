@@ -20,17 +20,23 @@
 
 <body>
 
+
 <div class="detail-container">
 
 
-    <!-- SIDEBAR -->
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
 
     <aside class="sidebar">
 
+
         <div class="logo">
+
             <a href="{% url 'index' %}">
                 🏔️ TRIPA
             </a>
+
         </div>
 
 
@@ -41,57 +47,82 @@
 
         <ul class="menu">
 
+
             <li>
+
                 <a href="{% url 'travel_list' %}">
                     ✈️ 내 여행
                 </a>
+
             </li>
 
+
             <li>
+
                 <a href="{% url 'travel_create' %}">
                     ➕ 여행 만들기
                 </a>
+
             </li>
 
+
             <li>
+
                 <a href="{% url 'place_search' %}">
                     📍 장소 검색
                 </a>
+
             </li>
 
+
             <li>
+
                 <a href="{% url 'travel_detail' travel_id=travel.t_id %}">
                     📅 일정 관리
                 </a>
+
             </li>
 
+
             <li>
+
                 <a href="{% url 'budget' %}">
                     💰 비용 관리
                 </a>
+
             </li>
+
 
         </ul>
 
 
         {% if member %}
 
-            <a href="{% url 'mypage' %}" class="user-profile">
+            <a href="{% url 'mypage' %}"
+               class="user-profile">
+
                 👤 {{ member.nickname }}
+
             </a>
 
         {% else %}
 
-            <a href="{% url 'login' %}" class="user-profile">
+            <a href="{% url 'login' %}"
+               class="user-profile">
+
                 👤 로그인
+
             </a>
 
         {% endif %}
 
+
     </aside>
 
 
-    <!-- MAIN -->
+    <!-- =========================
+         MAIN
+    ========================= -->
 
     <main class="detail-content">
 
@@ -120,7 +151,24 @@
                     {% csrf_token %}
 
 
-                    <!-- 여행 제목 -->
+                    <!-- =========================
+                         에러 메시지
+                    ========================= -->
+
+                    {% if error %}
+
+                        <div class="error-message">
+
+                            {{ error }}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <!-- =========================
+                         여행 제목
+                    ========================= -->
 
                     <div class="form-group">
 
@@ -132,12 +180,15 @@
                             type="text"
                             name="t_title"
                             value="{{ travel.t_title }}"
-                            placeholder="예) 서울 3박 4일 여행">
+                            placeholder="예) 서울 3박 4일 여행"
+                            required>
 
                     </div>
 
 
-                    <!-- 여행 지역 -->
+                    <!-- =========================
+                         여행 지역
+                    ========================= -->
 
                     <div class="form-group">
 
@@ -149,14 +200,20 @@
                             type="text"
                             name="t_place"
                             value="{{ travel.t_place }}"
-                            placeholder="예) 서울">
+                            placeholder="예) 서울"
+                            required>
 
                     </div>
 
 
-                    <!-- 시작일 -->
+                    <!-- =========================
+                         여행 기간
+                    ========================= -->
 
                     <div class="date-group">
+
+
+                        <!-- 여행 시작일 -->
 
                         <div class="form-group">
 
@@ -166,13 +223,15 @@
 
                             <input
                                 type="date"
+                                id="t_start"
                                 name="t_start"
-                                value="{{ travel.t_start|date:'Y-m-d' }}">
+                                value="{{ travel.t_start|date:'Y-m-d' }}"
+                                required>
 
                         </div>
 
 
-                        <!-- 종료일 -->
+                        <!-- 여행 종료일 -->
 
                         <div class="form-group">
 
@@ -182,17 +241,23 @@
 
                             <input
                                 type="date"
+                                id="t_end"
                                 name="t_end"
-                                value="{{ travel.t_end|date:'Y-m-d' }}">
+                                value="{{ travel.t_end|date:'Y-m-d' }}"
+                                required>
 
                         </div>
+
 
                     </div>
 
 
-                    <!-- 버튼 -->
+                    <!-- =========================
+                         버튼
+                    ========================= -->
 
                     <div class="button-group">
+
 
                         <a
                             href="{% url 'travel_detail' travel_id=travel.t_id %}"
@@ -211,6 +276,7 @@
 
                         </button>
 
+
                     </div>
 
 
@@ -225,7 +291,188 @@
 
     </main>
 
+
 </div>
 
+
+<!-- =========================
+     날짜 설정 JavaScript
+========================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const startInput =
+        document.getElementById("t_start");
+
+    const endInput =
+        document.getElementById("t_end");
+
+
+    // =========================================
+    // 오늘 날짜 YYYY-MM-DD 만들기
+    // =========================================
+
+    const today = new Date();
+
+
+    const todayYear =
+        today.getFullYear();
+
+
+    const todayMonth =
+        String(
+            today.getMonth() + 1
+        ).padStart(2, "0");
+
+
+    const todayDate =
+        String(
+            today.getDate()
+        ).padStart(2, "0");
+
+
+    const todayString =
+        `${todayYear}-${todayMonth}-${todayDate}`;
+
+
+    // =========================================
+    // 여행 시작일
+    // 오늘 이전 날짜 선택 불가
+    // =========================================
+
+    startInput.min = todayString;
+
+
+    // =========================================
+    // 종료일 설정 함수
+    // =========================================
+
+    function updateEndDate() {
+
+
+        const startValue =
+            startInput.value;
+
+
+        // =====================================
+        // 시작일이 없는 경우
+        // =====================================
+
+        if (!startValue) {
+
+            endInput.disabled = true;
+
+            endInput.value = "";
+
+            endInput.removeAttribute("min");
+
+            return;
+
+        }
+
+
+        // =====================================
+        // 시작일이 있으면 종료일 활성화
+        // =====================================
+
+        endInput.disabled = false;
+
+
+        // =====================================
+        // YYYY-MM-DD 분리
+        // =====================================
+
+        const [
+            year,
+            month,
+            day
+        ] = startValue
+            .split("-")
+            .map(Number);
+
+
+        // =====================================
+        // 시작일 다음 날 계산
+        // =====================================
+
+        const nextDay = new Date(
+            year,
+            month - 1,
+            day + 1
+        );
+
+
+        const nextYear =
+            nextDay.getFullYear();
+
+
+        const nextMonth =
+            String(
+                nextDay.getMonth() + 1
+            ).padStart(2, "0");
+
+
+        const nextDate =
+            String(
+                nextDay.getDate()
+            ).padStart(2, "0");
+
+
+        const minEndDate =
+            `${nextYear}-${nextMonth}-${nextDate}`;
+
+
+        // =====================================
+        // 종료일 최소 날짜 설정
+        // =====================================
+
+        endInput.min =
+            minEndDate;
+
+
+        // =====================================
+        // 기존 종료일이
+        // 변경한 시작일보다 빠르면 초기화
+        // =====================================
+
+        if (
+            endInput.value &&
+            endInput.value < minEndDate
+        ) {
+
+            endInput.value = "";
+
+        }
+
+    }
+
+
+    // =========================================
+    // 시작일 변경
+    // =========================================
+
+    startInput.addEventListener(
+        "change",
+        updateEndDate
+    );
+
+
+    // =========================================
+    // 페이지 처음 열었을 때 실행
+    //
+    // 수정 화면에는 기존 시작일/종료일이 있으므로
+    // 종료일 최소값도 자동으로 설정됨
+    // =========================================
+
+    updateEndDate();
+
+});
+
+</script>
+
+
 </body>
+
 </html>

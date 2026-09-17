@@ -1080,7 +1080,20 @@
 
 let map = null;
 let overlays = [];
-let routePolyline = null;
+let routePolylines = [];
+let placeMarkerMap = new Map();
+
+const ROUTE_COLORS = [
+    "#2F6DE0",
+    "#E85D75",
+    "#16A085",
+    "#F39C12",
+    "#8E44AD",
+    "#00A8CC",
+    "#E67E22",
+    "#27AE60"
+];
+
 
 let selectedTravelId = null;
 let selectedDate = null;
@@ -1174,10 +1187,45 @@ function clearMap() {
 
     overlays = [];
 
-    if (routePolyline) {
-        routePolyline.setMap(null);
-        routePolyline = null;
+    // 여러 개의 경로선 제거
+    routePolylines.forEach(function (polyline) {
+        polyline.setMap(null);
+    });
+
+    routePolylines = [];
+
+    // 장소 마커 정보 초기화
+    placeMarkerMap.clear();
+}
+
+/* =========================================================
+   특정 장소 지도 확대
+========================================================= */
+
+function focusSchedulePlace(placeId) {
+
+    if (!map) {
+        return;
     }
+
+    const target =
+        placeMarkerMap.get(
+            String(placeId)
+        );
+
+    if (!target) {
+        console.log(
+            "지도에서 장소를 찾지 못했습니다:",
+            placeId
+        );
+        return;
+    }
+
+    // 확대 레벨을 먼저 적용한 뒤 정확히 해당 장소를 중앙에 배치한다.
+    // CustomOverlay 클릭 후 지도 자체의 클릭 이벤트 때문에 중심이 흔들리는
+    // 현상을 방지하기 위해 panTo 대신 setCenter를 사용한다.
+    map.setLevel(3);
+    map.setCenter(target.position);
 }
 
 
@@ -1256,92 +1304,257 @@ function drawSchedule(scheduleId) {
                             lon
                         );
 
-                    const markerContent = `
-                        <div
-                            class="schedule-map-marker"
-                            title="${place.name || ""}"
-                            style="
-                                width:38px;
-                                height:38px;
-                                background:#2f6ee5;
-                                color:#ffffff;
-                                border-radius:50%;
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                font-weight:700;
-                                font-size:15px;
-                                border:3px solid #ffffff;
-                                box-shadow:0 2px 8px rgba(0,0,0,0.25);
-                                cursor:pointer;
-                                box-sizing:border-box;
-                            "
-                        >
-                            ${place.order}
-                        </div>
+                    /* =========================================
+                    번호 마커 DOM 생성
+                    ========================================= */
+
+                    const markerElement =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    markerElement.className =
+                        "schedule-map-marker";
+
+
+                    markerElement.textContent =
+                        place.order;
+
+
+                    markerElement.title =
+                        place.name || "";
+
+
+                    // 마커 N은 N → N+1 경로와 같은 색을 사용한다.
+                    // 마지막 마커는 마지막으로 들어오는 경로와 같은 색을 사용한다.
+                    const orderIndex =
+                        Math.max(
+                            Number(place.order || 1) - 1,
+                            0
+                        );
+
+                    const lastRouteIndex =
+                        Math.max(
+                            places.length - 2,
+                            0
+                        );
+
+                    const markerColorIndex =
+                        Math.min(
+                            orderIndex,
+                            lastRouteIndex
+                        ) % ROUTE_COLORS.length;
+
+                    const markerColor =
+                        ROUTE_COLORS[markerColorIndex];
+
+
+                    markerElement.style.cssText = `
+                        width: 38px;
+                        height: 38px;
+                        background: ${markerColor};
+                        color: #ffffff;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: 700;
+                        font-size: 15px;
+                        border: 3px solid #ffffff;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+                        cursor: pointer;
+                        box-sizing: border-box;
                     `;
+
+
+                    /* =========================================
+                    지도 마커 클릭
+                    → 해당 장소 확대
+                    ========================================= */
+
+                    markerElement.addEventListener(
+                        "click",
+                        function (event) {
+
+                            // CustomOverlay 클릭이 지도 자체 클릭으로 전달되지 않게 막는다.
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            if (
+                                kakao.maps.event
+                                && typeof kakao.maps.event.preventMap === "function"
+                            ) {
+                                kakao.maps.event.preventMap();
+                            }
+
+                            focusSchedulePlace(
+                                place.id
+                            );
+                        }
+                    );
+
+
+                    /* =========================================
+                    CustomOverlay 생성
+                    ========================================= */
 
                     const overlay =
                         new kakao.maps.CustomOverlay({
-                            position: position,
-                            content: markerContent,
-                            yAnchor: 0.5
+
+                            position:
+                                position,
+
+                            content:
+                                markerElement,
+
+                            yAnchor:
+                                0.5,
+
+                            // 마커를 클릭했을 때 지도 클릭/드래그 이벤트와 충돌하지 않게 함
+                            clickable:
+                                true
                         });
 
-                    overlay.setMap(map);
-                    overlays.push(overlay);
-                    bounds.extend(position);
+
+                    overlay.setMap(
+                        map
+                    );
+
+
+                    overlays.push(
+                        overlay
+                    );
+
+
+                    /* =========================================
+                    장소 ID와 지도 위치 저장
+                    ========================================= */
+
+                    placeMarkerMap.set(
+
+                        String(place.id),
+
+                        {
+                            position:
+                                position,
+
+                            overlay:
+                                overlay
+                        }
+                    );
+
+
+                    bounds.extend(
+                        position
+                    );
                 }
             );
 
 
-            /* 실제 이동 경로선 */
+            /* =========================================================
+            구간별 실제 이동 경로선
+            1 → 2, 2 → 3, 3 → 4 각각 다른 색
+            ========================================================= */
 
-            const path = [];
+            const routes =
+                Array.isArray(data.routes)
+                    ? data.routes
+                    : [];
 
-            routePoints.forEach(
-                function (point) {
 
-                    const lat =
-                        Number(point.lat);
-
-                    const lon =
-                        Number(point.lon);
+            routes.forEach(
+                function (route, index) {
 
                     if (
-                        Number.isNaN(lat)
-                        || Number.isNaN(lon)
+                        !route.success
+                        || !Array.isArray(route.points)
+                        || route.points.length < 2
                     ) {
                         return;
                     }
 
-                    const position =
-                        new kakao.maps.LatLng(
-                            lat,
-                            lon
-                        );
 
-                    path.push(position);
-                    bounds.extend(position);
+                    const path = [];
+
+
+                    route.points.forEach(
+                        function (point) {
+
+                            const lat =
+                                Number(point.lat);
+
+                            const lon =
+                                Number(point.lon);
+
+
+                            if (
+                                Number.isNaN(lat)
+                                || Number.isNaN(lon)
+                            ) {
+                                return;
+                            }
+
+
+                            const position =
+                                new kakao.maps.LatLng(
+                                    lat,
+                                    lon
+                                );
+
+
+                            path.push(
+                                position
+                            );
+
+                            bounds.extend(
+                                position
+                            );
+                        }
+                    );
+
+
+                    if (path.length < 2) {
+                        return;
+                    }
+
+
+                    const polyline =
+                        new kakao.maps.Polyline({
+
+                            map:
+                                map,
+
+                            path:
+                                path,
+
+                            strokeWeight:
+                                6,
+
+                            strokeColor:
+                                ROUTE_COLORS[
+                                    index
+                                    %
+                                    ROUTE_COLORS.length
+                                ],
+
+                            strokeOpacity:
+                                0.9,
+
+                            strokeStyle:
+                                "solid"
+                        });
+
+
+                    routePolylines.push(
+                        polyline
+                    );
                 }
             );
 
-            if (path.length >= 2) {
-
-                routePolyline =
-                    new kakao.maps.Polyline({
-                        map: map,
-                        path: path,
-                        strokeWeight: 5,
-                        strokeColor: "#2f6ee5",
-                        strokeOpacity: 0.9,
-                        strokeStyle: "solid"
-                    });
-            }
-
             if (
                 places.length > 0
-                || path.length > 0
+                || routes.length > 0
             ) {
                 map.relayout();
                 map.setBounds(bounds);
@@ -1603,7 +1816,10 @@ function renderSchedule(data) {
                         </button>
                     </div>
 
-                    <div class="schedule-card">
+                    <div 
+                        class="schedule-card"
+                        onclick="focusSchedulePlace(${sp.place_id})"
+                    >
                         ${imageHtml}
 
                         <div class="schedule-info">
@@ -1626,7 +1842,14 @@ function renderSchedule(data) {
                                 <button
                                     type="button"
                                     class="stay-picker-trigger"
-                                    onclick="openStayTimePicker(this, ${sp.sp_id}, ${stayTime})">
+                                    onclick="
+                                        event.stopPropagation();
+                                        openStayTimePicker(
+                                            this,
+                                            ${sp.sp_id}, 
+                                            ${stayTime}
+                                        );
+                                    ">
                                     ${formatStayTime(stayTime)}
                                 </button>
                             </div>
@@ -1639,7 +1862,10 @@ function renderSchedule(data) {
                         <button
                             type="button"
                             class="schedule-delete"
-                            onclick="deleteSchedulePlace(${sp.sp_id})">
+                            onclick="
+                                event.stopPropagation();
+                                deleteSchedulePlace(${sp.sp_id});
+                            ">
                             삭제
                         </button>
                     </div>
