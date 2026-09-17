@@ -18,11 +18,7 @@
 
     <script
     type="text/javascript"
-<<<<<<< HEAD
-    src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
-=======
     src="//dapi.kakao.com/v2/maps/sdk.js?appkey={{KAKAO_MAP_API_KEY}}">
->>>>>>> 891429e3f544b0a291afda612d071ac7811b1d64
     </script>
 
 </head>
@@ -166,19 +162,18 @@
             
             {% for place in places %}
 
-            <div class="place-result-card">
+            <div class="place-result-card"
+                style="cursor: pointer;"
+                onclick="focusPlace({{ place.y }}, {{ place.x }}, '{{ place.name|escapejs }}', '{{ place.address|escapejs }}', '{{ place.category|escapejs }}', '{{ place.phone|default:''|escapejs }}', '{{ place.image|default:''|escapejs }}', '{{ place.place_url|default:''|escapejs }}')">
 
                 <!-- 장소 사진 -->
-
                 <div class="place-photo">
+
                     {% if place.image %}
 
                         <img
-
                             src="{{ place.image }}"
-
                             alt="{{ place.name }}"
-
                         >
 
                     {% else %}
@@ -189,36 +184,34 @@
 
                 </div>
 
+
                 <!-- 장소 정보 -->
-
                 <div class="place-result-info">
-
 
                     <h3>
                         {{ place.name }}
                     </h3>
 
-
                     <p>
                         {{ place.address }}
                     </p>
-
 
                     <span>
                         {{ place.category }}
                     </span>
 
-
                     <br>
 
-
-                    <button class="btn btn-primary">
+                    <!-- 일정에 추가 버튼 -->
+                        <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="event.stopPropagation();"
+                    >
                         일정에 추가
                     </button>
 
-
                 </div>
-
 
             </div>
 
@@ -366,18 +359,64 @@
                         placeData
                     );
 
-                    // 클릭한 장소 중심으로 이동
+                    // 클릭한 장소 확대
+                    map.setLevel(3);
 
-                    map.panTo(
-                        position
-                    );
+                    // 클릭한 장소를 지도 중앙으로 이동
+                    map.setCenter(position);
                 }
             );
 
         })();
 
         {% endfor %}
-        
+        // ==================================
+        // 검색 결과 카드 클릭
+        // 해당 장소로 지도 이동 + 확대
+        // ==================================
+
+        function focusPlace(
+            lat,
+            lng,
+            name,
+            address,
+            category,
+            phone,
+            image,
+            place_url
+        ) {
+
+            console.log("장소 클릭:", name);
+            console.log("좌표:", lat, lng);
+
+            // 클릭한 장소 좌표
+            const position =
+                new kakao.maps.LatLng(
+                    Number(lat),
+                    Number(lng)
+                );
+
+            // 먼저 확대
+            map.setLevel(3);
+
+            // 지도 중심을 해당 장소로 이동
+            map.setCenter(position);
+
+            // 장소 정보
+            const placeData = {
+
+                name: name,
+                address: address,
+                category: category,
+                phone: phone,
+                image: image,
+                place_url: place_url
+
+            };
+
+            // 장소 정보 카드 표시
+            showPlaceDetail(placeData);
+        }
         // =========================
         // 장소 정보 표시 함수
         // =========================
