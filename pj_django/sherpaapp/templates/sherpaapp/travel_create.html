@@ -965,7 +965,10 @@ function rebuildDayPlanRows() {
                 <input type="hidden" name="stay_arrival_time[]" id="stay_arrival_time_${index}" value="">
 
                 <div class="day-plan-empty-note full-width">
-                    마지막 날은 숙박 정보 없이 전날 숙소에서 출발하는 시간만 설정합니다.
+                    ${isFirstDay
+                        ? "당일 여행은 숙소 정보 없이 첫날 출발 시간으로 일정을 진행합니다."
+                        : "마지막 날은 숙박 정보 없이 전날 숙소에서 출발하는 시간만 설정합니다."
+                    }
                 </div>
             `;
         }
@@ -1157,10 +1160,9 @@ function updateEndDate() {
     endInput.disabled = false;
 
     const startDate = parseLocalDate(startValue);
-    const nextDay = new Date(startDate);
-    nextDay.setDate(nextDay.getDate() + 1);
 
-    const minEndDate = formatDateValue(nextDay);
+    // 당일 여행도 가능하도록 종료일의 최소값을 시작일과 동일하게 설정
+    const minEndDate = formatDateValue(startDate);
     endInput.min = minEndDate;
 
     if (endInput.value && endInput.value < minEndDate) {
@@ -1260,8 +1262,22 @@ form.addEventListener("keydown", function (event) {
             return;
         }
 
-        const firstStay = document.getElementById("stay_name_0");
-        if (firstStay && !firstStay.value) {
+        const startDate =
+            document.getElementById("t_start").value;
+
+        const endDate =
+            document.getElementById("t_end").value;
+
+        const firstStay =
+            document.getElementById("stay_name_0");
+
+        // 당일 여행은 숙소가 필요하지 않음.
+        // 1박 이상 여행일 때만 첫날 숙소를 필수로 검사한다.
+        if (
+            startDate !== endDate
+            && firstStay
+            && !firstStay.value
+        ) {
             event.preventDefault();
             alert("1일차 숙소를 검색해서 선택해주세요.");
         }
@@ -1272,3 +1288,5 @@ form.addEventListener("keydown", function (event) {
 </script>
 </body>
 </html>
+travel_create.html
+HTML
