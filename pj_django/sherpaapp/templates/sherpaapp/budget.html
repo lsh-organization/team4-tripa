@@ -874,6 +874,9 @@
 <div
     id="budgetModal"
     class="budget-modal"
+    data-travel-id="{{ travel.t_id }}"
+    data-start-date="{{ travel.t_start|date:'Y-m-d' }}"
+    data-end-date="{{ travel.t_end|date:'Y-m-d' }}"
 >
 
 
@@ -925,6 +928,49 @@
 
 
             {% csrf_token %}
+
+
+
+            <!-- =========================
+                 일정 장소 선택
+            ========================= -->
+
+            <div class="form-group">
+
+                <label for="schedulePlaceSelect">
+                    일정 장소 선택
+                </label>
+
+                <select
+                    id="schedulePlaceSelect"
+                    name="schedule_place_select"
+                    onchange="applySchedulePlaceSelection(this)"
+                >
+                    <option value="">
+                        직접 입력
+                    </option>
+                </select>
+
+                <input
+                    type="hidden"
+                    id="expensePlaceId"
+                    name="expense_place_id"
+                    value=""
+                >
+
+                <p
+                    style="
+                        margin: 7px 0 0 0;
+                        color: #777;
+                        font-size: 12px;
+                        line-height: 1.5;
+                    "
+                >
+                    일정 장소를 선택하면 비용 항목, 장소, 날짜가 자동으로 입력됩니다.
+                    직접 입력을 선택하면 모든 항목을 직접 입력할 수 있습니다.
+                </p>
+
+            </div>
 
 
 
@@ -1204,6 +1250,8 @@
             "show"
         );
 
+        loadBudgetSchedulePlaces();
+
     }
 
 
@@ -1232,6 +1280,321 @@
             "show"
         );
 
+    }
+
+
+
+
+    // ==========================================
+    // 비용 추가 - 일정 장소 선택
+    // ==========================================
+
+    let budgetSchedulePlacesLoaded = false;
+
+    function getBudgetModalTravelInfo() {
+        const modal = document.getElementById("budgetModal");
+
+        if (!modal) {
+            return null;
+        }
+
+        return {
+            travelId: modal.dataset.travelId || "",
+            startDate: modal.dataset.startDate || "",
+            endDate: modal.dataset.endDate || ""
+        };
+    }
+
+    function getTravelDayCount(startDate, endDate) {
+        if (!startDate || !endDate) {
+            return 0;
+        }
+
+        const start = new Date(startDate + "T00:00:00");
+        const end = new Date(endDate + "T00:00:00");
+
+        if (
+            Number.isNaN(start.getTime())
+            || Number.isNaN(end.getTime())
+            || end < start
+        ) {
+            return 0;
+        }
+
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        return Math.floor(
+            (end.getTime() - start.getTime()) / oneDay
+        ) + 1;
+    }
+
+    function mapPlaceKindToExpenseCategory(placeKind) {
+        const kind = String(placeKind || "");
+
+        if (
+            kind.includes("음식")
+            || kind.includes("식당")
+            || kind.includes("카페")
+            || kind.includes("베이커리")
+        ) {
+            return "식비";
+        }
+
+        if (
+            kind.includes("쇼핑")
+            || kind.includes("마트")
+            || kind.includes("백화점")
+        ) {
+            return "쇼핑";
+        }
+
+        if (
+            kind.includes("숙박")
+            || kind.includes("호텔")
+            || kind.includes("펜션")
+            || kind.includes("게스트하우스")
+        ) {
+            return "숙박";
+        }
+
+        if (
+            kind.includes("교통")
+            || kind.includes("터미널")
+            || kind.includes("정류장")
+        ) {
+            return "교통";
+        }
+
+        if (
+            kind.includes("관광")
+            || kind.includes("문화")
+            || kind.includes("역사")
+            || kind.includes("랜드마크")
+            || kind.includes("공원")
+            || kind.includes("자연")
+            || kind.includes("바다")
+            || kind.includes("테마")
+        ) {
+            return "관광지";
+        }
+
+        return "기타";
+    }
+
+    function resetAutoFilledExpenseFields() {
+        const placeId = document.getElementById("expensePlaceId");
+        const category = document.getElementById("expenseCategory");
+        const place = document.getElementById("expensePlace");
+        const date = document.getElementById("expenseDate");
+
+        if (placeId) {
+            placeId.value = "";
+        }
+
+        if (category) {
+            category.value = "";
+        }
+
+        if (place) {
+            place.value = "";
+        }
+
+        if (date) {
+            date.value = "";
+        }
+    }
+
+    function applySchedulePlaceSelection(select) {
+        if (!select) {
+            return;
+        }
+
+        const option = select.options[select.selectedIndex];
+
+        if (!option || !option.value) {
+            resetAutoFilledExpenseFields();
+            return;
+        }
+
+        const placeId = document.getElementById("expensePlaceId");
+        const category = document.getElementById("expenseCategory");
+        const place = document.getElementById("expensePlace");
+        const date = document.getElementById("expenseDate");
+
+        if (placeId) {
+            placeId.value = option.dataset.placeId || "";
+        }
+
+        if (category) {
+            category.value = mapPlaceKindToExpenseCategory(
+                option.dataset.placeKind
+            );
+        }
+
+        if (place) {
+            place.value = option.dataset.placeName || "";
+        }
+
+        if (date) {
+            date.value = option.dataset.scheduleDate || "";
+        }
+    }
+
+    function addSchedulePlaceOption(
+        select,
+        place,
+        scheduleDate,
+        dayNumber
+    ) {
+        const option = document.createElement("option");
+
+        const placeId =
+            place.place_id
+            ?? place.id
+            ?? "";
+
+        const placeName =
+            place.place_name
+            ?? place.name
+            ?? "";
+
+        const placeKind =
+            place.place_kind
+            ?? place.kind
+            ?? "";
+
+        option.value =
+            `${dayNumber}-${placeId}-${scheduleDate}`;
+
+        option.dataset.placeId = String(placeId);
+        option.dataset.placeName = placeName;
+        option.dataset.placeKind = placeKind;
+        option.dataset.scheduleDate = scheduleDate;
+
+        option.textContent =
+            `${scheduleDate.replaceAll("-", ".")} · ${placeName}`;
+
+        select.appendChild(option);
+    }
+
+    async function loadBudgetSchedulePlaces() {
+        const select = document.getElementById("schedulePlaceSelect");
+
+        if (!select || budgetSchedulePlacesLoaded) {
+            return;
+        }
+
+        const info = getBudgetModalTravelInfo();
+
+        if (!info || !info.travelId) {
+            return;
+        }
+
+        const dayCount = getTravelDayCount(
+            info.startDate,
+            info.endDate
+        );
+
+        select.innerHTML = `
+            <option value="">
+                직접 입력
+            </option>
+        `;
+
+        if (dayCount <= 0) {
+            return;
+        }
+
+        const loadingOption = document.createElement("option");
+        loadingOption.disabled = true;
+        loadingOption.textContent = "일정 장소 불러오는 중...";
+        select.appendChild(loadingOption);
+
+        const requests = [];
+
+        for (let day = 1; day <= dayCount; day++) {
+            requests.push(
+                fetch(
+                    `/travel_detail_day/${info.travelId}/${day}/`
+                )
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error(`DAY ${day} 조회 실패`);
+                    }
+
+                    return response.json();
+                })
+                .then(function(data) {
+                    return {
+                        dayNumber: day,
+                        data: data
+                    };
+                })
+            );
+        }
+
+        const results = await Promise.allSettled(requests);
+
+        if (loadingOption.parentNode === select) {
+            select.removeChild(loadingOption);
+        }
+
+        const addedKeys = new Set();
+        let addedCount = 0;
+
+        results.forEach(function(result) {
+            if (result.status !== "fulfilled") {
+                return;
+            }
+
+            const dayNumber = result.value.dayNumber;
+            const data = result.value.data;
+
+            if (
+                !data
+                || !data.success
+                || !Array.isArray(data.places)
+            ) {
+                return;
+            }
+
+            const scheduleDate =
+                String(data.s_day || "").replaceAll(".", "-");
+
+            data.places.forEach(function(place) {
+                const placeId =
+                    place.place_id
+                    ?? place.id
+                    ?? "";
+
+                const key =
+                    `${scheduleDate}-${placeId}`;
+
+                if (addedKeys.has(key)) {
+                    return;
+                }
+
+                addedKeys.add(key);
+
+                addSchedulePlaceOption(
+                    select,
+                    place,
+                    scheduleDate,
+                    dayNumber
+                );
+
+                addedCount += 1;
+            });
+        });
+
+        if (addedCount === 0) {
+            const emptyOption = document.createElement("option");
+            emptyOption.disabled = true;
+            emptyOption.textContent = "일정에 등록된 장소가 없습니다.";
+            select.appendChild(emptyOption);
+        }
+
+        budgetSchedulePlacesLoaded = true;
     }
 
 
