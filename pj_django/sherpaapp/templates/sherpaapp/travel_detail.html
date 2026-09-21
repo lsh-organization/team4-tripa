@@ -90,21 +90,6 @@
 
             border: 1px solid #e5e7eb;
             border-radius: 12px;
-
-            cursor: pointer;
-
-            transition:
-                transform 0.2s ease,
-                box-shadow 0.2s ease,
-                border-color 0.2s ease,
-                background-color 0.2s ease;
-        }
-
-        .schedule-card:hover {
-            border-color: #cbd8ef;
-            background: #ffffff;
-            box-shadow: 0 4px 14px rgba(45, 108, 223, 0.10);
-            transform: translateY(-2px);
         }
 
 
@@ -363,6 +348,48 @@
             border: 0;
             border-radius: 12px;
             background: #f6f7fb;
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                background-color 0.2s ease;
+        }
+
+        /* 일정 카드 마우스 오버 강조 */
+        @media (hover: hover) and (pointer: fine) {
+            .schedule-card:hover {
+                box-shadow: 0 8px 22px rgba(45, 108, 223, 0.16);
+                transform: translateY(-2px);
+            }
+
+            .start-point-card:hover {
+                background: #e8f1ff;
+                box-shadow: 0 8px 24px rgba(37, 99, 235, 0.22);
+            }
+
+            .return-point-card:hover {
+                background: #eafbf0;
+                box-shadow: 0 8px 24px rgba(22, 163, 74, 0.20);
+            }
+        }
+
+        /* 지도 마커를 클릭하거나 카드를 선택했을 때 유지되는 강조 */
+        .schedule-card.timeline-selected {
+            outline: 3px solid #2563eb;
+            outline-offset: 2px;
+            box-shadow: 0 10px 26px rgba(37, 99, 235, 0.22);
+            transform: translateY(-2px);
+        }
+
+        .start-point-card.timeline-selected {
+            outline-color: #2563eb;
+            background: #e8f1ff;
+        }
+
+        .return-point-card.timeline-selected {
+            outline-color: #16a34a;
+            background: #eafbf0;
         }
 
         .schedule-image {
@@ -643,6 +670,267 @@
             }
         }
 
+
+
+        /* =========================================
+           DAY 시작점(출발지/전날 숙소) 카드
+        ========================================= */
+        .start-point-card {
+            min-height: 120px;
+            padding-right: 18px;
+            border: 1px solid #bfdbfe;
+            background: #eff6ff;
+            cursor: pointer;
+        }
+
+        .start-point-card .schedule-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 115px;
+            background: #dbeafe;
+        }
+
+        .start-point-card .no-place-image {
+            background: transparent;
+            color: #2563eb;
+            font-size: 40px;
+        }
+
+        .start-point-label {
+            display: inline-block;
+            margin: 2px 0 8px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .start-time-display {
+            min-width: 65px;
+            padding-top: 8px;
+            color: #1d4ed8;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* 마지막 DAY 출발지 복귀 카드 */
+        .return-point-card {
+            min-height: 120px;
+            padding-right: 18px;
+            border: 1px solid #bbf7d0;
+            background: #f0fdf4;
+            cursor: pointer;
+        }
+
+        .return-point-card .schedule-image {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 115px;
+            background: #dcfce7;
+        }
+
+        .return-point-card .no-place-image {
+            background: transparent;
+            color: #15803d;
+            font-size: 40px;
+        }
+
+        .return-point-label {
+            display: inline-block;
+            margin: 2px 0 8px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: #dcfce7;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .return-time-display {
+            min-width: 65px;
+            padding-top: 8px;
+            color: #15803d;
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        /* =========================================
+           장소와 장소 사이 교통수단 / 이동시간
+        ========================================= */
+        .transport-segment {
+            display: grid;
+            grid-template-columns: 65px minmax(0, 1fr);
+            gap: 20px;
+            align-items: center;
+            margin: -12px 0 18px;
+        }
+
+        .transport-segment-content {
+            grid-column: 2;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 34px;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .transport-segment-content::before,
+        .transport-segment-content::after {
+            content: "";
+            height: 0;
+            border-top: 2px dashed #cbd5e1;
+        }
+
+        .transport-segment-content::before {
+            width: 26px;
+            flex: 0 0 26px;
+        }
+
+        .transport-segment-content::after {
+            flex: 1 1 auto;
+        }
+
+        .transport-chip {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 3px;
+            padding: 7px 11px;
+            border: 1px solid #dbe3ee;
+            border-radius: 12px;
+            background: #ffffff;
+            color: #475569;
+            white-space: normal;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .transport-chip-main {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .transport-detail-text {
+            display: block;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+            line-height: 1.45;
+            white-space: normal;
+        }
+
+        .route-detail-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 7px;
+            margin-top: 5px;
+        }
+
+        .route-detail-btn {
+            min-height: 30px;
+            padding: 5px 10px;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .route-detail-btn:hover:not(:disabled) {
+            background: #dbeafe;
+        }
+
+        .route-detail-btn:disabled {
+            cursor: default;
+            opacity: .62;
+        }
+
+        .route-detail-status {
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .route-detail-status.error {
+            color: #b45309;
+        }
+
+        .transit-steps {
+            display: grid;
+            gap: 6px;
+            margin-top: 4px;
+            width: min(720px, 100%);
+        }
+
+        .transit-step {
+            display: grid;
+            grid-template-columns: 28px minmax(0, 1fr);
+            gap: 8px;
+            align-items: start;
+            padding: 7px 9px;
+            border-radius: 9px;
+            background: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.45;
+        }
+
+        .transit-step-icon {
+            font-size: 17px;
+            line-height: 1.3;
+            text-align: center;
+        }
+
+        .transit-step strong {
+            color: #0f172a;
+        }
+
+        .transit-step-meta {
+            display: block;
+            margin-top: 2px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .estimated-transport .transport-chip {
+            border-style: dashed;
+            background: #f8fafc;
+        }
+
+        @media (max-width: 768px) {
+            .transport-segment {
+                grid-template-columns: 1fr;
+                gap: 0;
+                margin: -10px 0 16px;
+            }
+
+            .transport-segment-content {
+                grid-column: 1;
+                padding-left: 4px;
+            }
+
+            .start-time-display {
+                text-align: left;
+            }
+        }
+
     </style>
 
 </head>
@@ -655,9 +943,20 @@
 
     const travelId = {{ travel.t_id }};
 
+    // ODsay Web API Key
+    // ODsay 애플리케이션에서 Web 플랫폼에 현재 도메인을 등록해 사용한다.
+    // Web Key는 프론트엔드 직접 호출용이다.
+    const ODSAY_WEB_API_KEY =
+        "{{ ODSAY_WEB_API_KEY|default:''|escapejs }}";
+
     let currentDay = 1;
 
     let currentScheduleId = null;
+
+    // 상세 경로 버튼을 눌렀을 때 DAY/API를 다시 호출하지 않고
+    // 현재 화면의 데이터를 그대로 재사용한다.
+    let currentDayData = null;
+    let currentRouteData = null;
 
 </script>
 
@@ -792,11 +1091,8 @@
                 </div>
 
 
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    onclick="openTravelSelectModal()">
-                    여행 선택
+                <button class="btn btn-primary">
+                    저장
                 </button>
 
 
@@ -1092,7 +1388,8 @@
 ========================================================= -->
 <script
     type="text/javascript"
-    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}">
+    defer
+    src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}&autoload=false">
 </script>
 
 
@@ -1105,6 +1402,7 @@ let map = null;
 let overlays = [];
 let routePolylines = [];
 let placeMarkerMap = new Map();
+let selectedTimelineKey = null;
 
 /* =========================================================
    장소/경로 색상 자동 생성
@@ -1334,36 +1632,2167 @@ function clearMap() {
    특정 장소 지도 확대
 ========================================================= */
 
-function focusSchedulePlace(placeId) {
+function clearTimelineSelection() {
+
+    document
+        .querySelectorAll(".schedule-card.timeline-selected")
+        .forEach(function (card) {
+            card.classList.remove("timeline-selected");
+        });
+}
+
+
+function highlightTimelineCard(targetKey, scrollIntoView = false) {
+
+    selectedTimelineKey = String(targetKey);
+    clearTimelineSelection();
+
+    const card = document.querySelector(
+        `.schedule-card[data-map-key="${CSS.escape(String(targetKey))}"]`
+    );
+
+    if (!card) {
+        return;
+    }
+
+    card.classList.add("timeline-selected");
+
+    if (scrollIntoView) {
+        card.scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
+    }
+}
+
+
+function focusTimelineTarget(targetKey, scrollCard = false) {
 
     if (!map) {
         return;
     }
 
-    const target =
-        placeMarkerMap.get(
-            String(placeId)
-        );
+    const key = String(targetKey);
+    const target = placeMarkerMap.get(key);
 
     if (!target) {
         console.log(
             "지도에서 장소를 찾지 못했습니다:",
-            placeId
+            key
         );
         return;
     }
 
-    // 확대 레벨을 먼저 적용한 뒤 정확히 해당 장소를 중앙에 배치한다.
-    // CustomOverlay 클릭 후 지도 자체의 클릭 이벤트 때문에 중심이 흔들리는
-    // 현상을 방지하기 위해 panTo 대신 setCenter를 사용한다.
     map.setLevel(3);
     map.setCenter(target.position);
+
+    highlightTimelineCard(
+        key,
+        scrollCard
+    );
+}
+
+
+/* 기존 호출과의 호환 */
+function focusSchedulePlace(placeId) {
+    focusTimelineTarget(
+        String(placeId),
+        false
+    );
+}
+
+
+/* =========================================================
+   무료 대중교통 길찾기 - ODsay Basic Web API
+
+   - 브라우저에서 직접 호출한다.
+   - ODsay Web Key에 현재 서비스 도메인을 등록해야 한다.
+   - Basic 무료 플랜 호출 수를 아끼기 위해 같은 구간은 메모리 캐시한다.
+   - ODsay 대중교통 길찾기는 시간표 기반 실시간 검색이 아니므로
+     "몇 시 버스"를 실제 운행시간으로 단정하지 않는다.
+========================================================= */
+
+const odsTransitRouteCache = new Map();
+const odsLaneGeometryCache = new Map();
+const odsWalkRouteCache = new Map();
+const odsTrainGeometryCache = new Map();
+
+// 상세 지도 경로 사용 여부.
+// true이면 ODsay searchPubTransPathT 결과의 mapObj로 loadLane을 추가 호출한다.
+// 무료 Basic 호출량이 늘어날 수 있으므로 같은 구간은 위 캐시를 재사용한다.
+const ODSAY_DETAILED_MAP_GEOMETRY = false;
+
+// ODsay 대중교통 길찾기는 700m 이내에서 -98 오류를 반환하므로
+// 해당 구간은 대중교통 API 대신 ODsay 도보 길찾기로 전환한다.
+const ODSAY_SHORT_WALK_METERS = 700;
+
+function normalizeTimelineTransport(value) {
+    return String(value || "")
+        .split(",")[0]
+        .trim()
+        .toLowerCase()
+        .replace("public transport", "public_transport")
+        .replace("대중교통", "public_transport");
+}
+
+function odsTrafficMeta(trafficType, trafficSubType) {
+    const type = Number(trafficType);
+
+    if (type === 1) {
+        return {mode: "subway", vehicleLabel: "지하철"};
+    }
+    if (type === 2) {
+        return {mode: "bus", vehicleLabel: "버스"};
+    }
+    if (type === 3) {
+        return {mode: "walk", vehicleLabel: "도보"};
+    }
+    if (type === 4) {
+        const trainMap = {
+            1: "KTX",
+            2: "새마을",
+            3: "무궁화",
+            4: "누리로",
+            6: "ITX",
+            7: "ITX-청춘",
+            8: "SRT"
+        };
+        return {
+            mode: "train",
+            vehicleLabel: trainMap[Number(trafficSubType)] || "열차"
+        };
+    }
+    if (type === 5) {
+        return {mode: "bus", vehicleLabel: "고속버스"};
+    }
+    if (type === 6) {
+        return {mode: "bus", vehicleLabel: "시외버스"};
+    }
+    if (type === 7) {
+        return {mode: "air", vehicleLabel: "항공"};
+    }
+
+    return {mode: "transit", vehicleLabel: "대중교통"};
+}
+
+function odsFirstNonEmpty() {
+    for (let i = 0; i < arguments.length; i += 1) {
+        const value = arguments[i];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+        }
+    }
+    return "";
+}
+
+function odsLaneName(section, meta) {
+    const lanes = Array.isArray(section.lane) ? section.lane : [];
+
+    if (meta.mode === "subway") {
+        const names = lanes
+            .map(function (lane) { return lane.name || lane.subwayName || ""; })
+            .filter(Boolean);
+        return names.join(" / ");
+    }
+
+    if (meta.mode === "bus") {
+        const busNumbers = lanes
+            .map(function (lane) { return lane.busNo || lane.name || ""; })
+            .filter(Boolean);
+
+        return odsFirstNonEmpty(
+            busNumbers.join(" / "),
+            section.busNo,
+            section.routeName,
+            section.laneName
+        );
+    }
+
+    if (meta.mode === "train") {
+        return odsFirstNonEmpty(
+            section.trainName,
+            section.laneName,
+            meta.vehicleLabel
+        );
+    }
+
+    if (meta.mode === "air") {
+        return odsFirstNonEmpty(
+            section.airlineName,
+            section.laneName,
+            "항공"
+        );
+    }
+
+    return "";
+}
+
+function odsPushPoint(points, lonValue, latValue) {
+    const lon = Number(lonValue);
+    const lat = Number(latValue);
+
+    if (Number.isNaN(lat) || Number.isNaN(lon)) {
+        return;
+    }
+
+    const point = {lat: lat, lon: lon};
+    const last = points.length > 0 ? points[points.length - 1] : null;
+
+    if (
+        last
+        && Number(last.lat) === lat
+        && Number(last.lon) === lon
+    ) {
+        return;
+    }
+
+    points.push(point);
+}
+
+
+function odsDistanceMeters(a, b) {
+    if (!a || !b) {
+        return Infinity;
+    }
+
+    const lat1 = Number(a.lat);
+    const lon1 = Number(a.lon);
+    const lat2 = Number(b.lat);
+    const lon2 = Number(b.lon);
+
+    if (
+        Number.isNaN(lat1)
+        || Number.isNaN(lon1)
+        || Number.isNaN(lat2)
+        || Number.isNaN(lon2)
+    ) {
+        return Infinity;
+    }
+
+    const toRad = function (degree) {
+        return degree * Math.PI / 180;
+    };
+
+    const earthRadius = 6371000;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+
+    const value =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2)
+        + Math.cos(toRad(lat1))
+        * Math.cos(toRad(lat2))
+        * Math.sin(dLon / 2)
+        * Math.sin(dLon / 2);
+
+    return earthRadius * 2 * Math.atan2(
+        Math.sqrt(value),
+        Math.sqrt(1 - value)
+    );
+}
+
+
+function odsFlattenGeometrySegments(segments) {
+    const points = [];
+
+    (Array.isArray(segments) ? segments : [])
+        .forEach(function (segment) {
+            (Array.isArray(segment.points) ? segment.points : [])
+                .forEach(function (point) {
+                    odsPushPoint(
+                        points,
+                        point.lon,
+                        point.lat
+                    );
+                });
+        });
+
+    return points;
+}
+
+
+function odsNormalizeMapObject(mapObj) {
+    const value = String(mapObj || "").trim();
+
+    if (!value) {
+        return "";
+    }
+
+    if (value.startsWith("0:0@")) {
+        return value;
+    }
+
+    return `0:0@${value}`;
+}
+
+
+function odsExtractLaneGeometry(data) {
+    const result = data && data.result ? data.result : {};
+    const lanes = Array.isArray(result.lane)
+        ? result.lane
+        : [];
+
+    const segments = [];
+
+    lanes.forEach(function (lane) {
+        const laneClass = Number(lane.class);
+        const mode =
+            laneClass === 2
+                ? "subway"
+                : "bus";
+
+        const sections = Array.isArray(lane.section)
+            ? lane.section
+            : [];
+
+        sections.forEach(function (section) {
+            const graphPositions =
+                Array.isArray(section.graphPos)
+                    ? section.graphPos
+                    : [];
+
+            const points = [];
+
+            graphPositions.forEach(function (position) {
+                odsPushPoint(
+                    points,
+                    position.x,
+                    position.y
+                );
+            });
+
+            if (points.length >= 2) {
+                segments.push({
+                    mode: mode,
+                    estimated: false,
+                    source: "odsay_loadLane",
+                    lane_class: laneClass,
+                    lane_type: Number(lane.type || 0),
+                    points: points
+                });
+            }
+        });
+    });
+
+    return segments;
+}
+
+
+async function odsFetchLaneGeometry(mapObj) {
+    const normalizedMapObject =
+        odsNormalizeMapObject(mapObj);
+
+    if (!normalizedMapObject) {
+        return [];
+    }
+
+    if (odsLaneGeometryCache.has(normalizedMapObject)) {
+        return odsLaneGeometryCache.get(
+            normalizedMapObject
+        );
+    }
+
+    const params = new URLSearchParams({
+        mapObject: normalizedMapObject,
+        output: "json",
+        apiKey: ODSAY_WEB_API_KEY
+    });
+
+    const promise = fetch(
+        `https://api.odsay.com/v1/api/loadLane?${params.toString()}`,
+        {
+            method: "GET",
+            mode: "cors"
+        }
+    )
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error(
+                    `ODsay loadLane HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(function (data) {
+            if (data && data.error) {
+                throw new Error(
+                    odsErrorMessage(data)
+                );
+            }
+
+            return odsExtractLaneGeometry(data);
+        });
+
+    odsLaneGeometryCache.set(
+        normalizedMapObject,
+        promise
+    );
+
+    try {
+        return await promise;
+    } catch (error) {
+        odsLaneGeometryCache.delete(
+            normalizedMapObject
+        );
+        throw error;
+    }
+}
+
+
+
+function odsBuildShortWalkFallback(
+    baseRoute,
+    distanceMeters
+) {
+    const basePoints =
+        Array.isArray(baseRoute.points)
+            ? baseRoute.points
+            : [];
+
+    const points = basePoints
+        .map(function (point) {
+            return {
+                lat: Number(point.lat),
+                lon: Number(point.lon)
+            };
+        })
+        .filter(function (point) {
+            return (
+                !Number.isNaN(point.lat)
+                && !Number.isNaN(point.lon)
+            );
+        });
+
+    // 평균 도보속도 약 4km/h로 단순 예상.
+    // API 호출을 아끼기 위한 로컬 fallback이므로 실제 도보 길찾기는 아니다.
+    const minutes = Math.max(
+        Math.ceil(
+            Number(distanceMeters || 0)
+            / 1000
+            / 4
+            * 60
+        ),
+        1
+    );
+
+    const transitStep = {
+        mode: "walk",
+        vehicle_type: "walk",
+        vehicle_label: "도보",
+        line_name: "",
+        display_name: "도보",
+        boarding_stop: "",
+        alighting_stop: "",
+        departure_time: null,
+        arrival_time: null,
+        duration_minutes: minutes,
+        waiting_minutes: 0,
+        direction: ""
+    };
+
+    return Object.assign({}, baseRoute, {
+        success: true,
+        estimated: true,
+        geometry_estimated: true,
+        geometry_source: "local_short_walk_fallback",
+        api_source: "local_short_walk_fallback",
+        short_distance_walk: true,
+        message:
+            "700m 이내 구간은 ODsay 호출 없이 도보 예상으로 처리했습니다.",
+        points: points,
+        geometry_segments: [
+            {
+                mode: "walk",
+                estimated: true,
+                source: "local_short_walk_fallback",
+                points: points
+            }
+        ],
+        distance: Math.round(
+            Number(distanceMeters || 0)
+        ),
+        duration: minutes * 60,
+        transfer_count: 0,
+        transport: "walk",
+        transport_label: "도보",
+        departure_time:
+            baseRoute.departure_time || null,
+        departure_time_source: "schedule",
+        arrival_time: null,
+        transit_type: "도보",
+        line_name: null,
+        boarding_stop: null,
+        alighting_stop: null,
+        transit_steps: [transitStep],
+        transit_detail_available: true,
+        timetable_exact: false,
+        detail_status: "not_needed"
+    });
+}
+
+
+function odsBuildWalkRouteFromData(baseRoute, data) {
+    const result = data && data.result ? data.result : {};
+    const paths = Array.isArray(result.path)
+        ? result.path
+        : [];
+
+    const path = paths[0] || {};
+
+    if (
+        path.hasPathResult === false
+        || !path.recommend
+    ) {
+        throw new Error(
+            "ODsay 도보 경로를 찾지 못했습니다."
+        );
+    }
+
+    const recommend = path.recommend || {};
+    const summary = recommend.summary || {};
+    const routeLinks = Array.isArray(recommend.routes)
+        ? recommend.routes
+        : [];
+
+    const points = [];
+
+    routeLinks.forEach(function (link) {
+        const coordinates =
+            Array.isArray(link.coordinate)
+                ? link.coordinate
+                : [];
+
+        coordinates.forEach(function (coordinate) {
+            odsPushPoint(
+                points,
+                coordinate.x,
+                coordinate.y
+            );
+        });
+    });
+
+    const basePoints = Array.isArray(baseRoute.points)
+        ? baseRoute.points
+        : [];
+
+    if (points.length < 2) {
+        basePoints.forEach(function (point) {
+            odsPushPoint(
+                points,
+                point.lon,
+                point.lat
+            );
+        });
+    }
+
+    const durationSeconds =
+        Math.max(
+            Number(summary.duration || 0),
+            60
+        );
+
+    const distanceMeters =
+        Math.max(
+            Number(summary.distance || 0),
+            0
+        );
+
+    const transitStep = {
+        mode: "walk",
+        vehicle_type: "walk",
+        vehicle_label: "도보",
+        line_name: "",
+        display_name: "도보",
+        boarding_stop: "",
+        alighting_stop: "",
+        departure_time: null,
+        arrival_time: null,
+        duration_minutes: Math.max(
+            Math.ceil(durationSeconds / 60),
+            1
+        ),
+        waiting_minutes: 0,
+        direction: ""
+    };
+
+    return Object.assign({}, baseRoute, {
+        success: true,
+        estimated: false,
+        geometry_estimated: false,
+        geometry_source: "odsay_walk_path_v2",
+        api_source: "odsay_walk_path_v2",
+        short_distance_walk: true,
+        message: "700m 이내 구간은 도보 경로로 자동 전환했습니다.",
+        points: points,
+        geometry_segments: [
+            {
+                mode: "walk",
+                estimated: false,
+                source: "odsay_walk_path_v2",
+                points: points
+            }
+        ],
+        distance: distanceMeters,
+        duration: durationSeconds,
+        transfer_count: 0,
+        transport: "walk",
+        transport_label: "도보",
+        departure_time: baseRoute.departure_time || null,
+        departure_time_source: "schedule",
+        arrival_time: null,
+        transit_type: "도보",
+        line_name: null,
+        boarding_stop: null,
+        alighting_stop: null,
+        transit_steps: [transitStep],
+        transit_detail_available: true,
+        timetable_exact: false
+    });
+}
+
+
+async function odsFetchWalkRoute(baseRoute) {
+    const points = Array.isArray(baseRoute.points)
+        ? baseRoute.points
+        : [];
+
+    if (points.length < 2) {
+        throw new Error(
+            "도보 경로 좌표가 없습니다."
+        );
+    }
+
+    const start = points[0];
+    const end = points[points.length - 1];
+
+    const cacheKey = [
+        Number(start.lon).toFixed(6),
+        Number(start.lat).toFixed(6),
+        Number(end.lon).toFixed(6),
+        Number(end.lat).toFixed(6)
+    ].join(":");
+
+    if (odsWalkRouteCache.has(cacheKey)) {
+        return odsWalkRouteCache.get(
+            cacheKey
+        );
+    }
+
+    const params = new URLSearchParams({
+        opt: "reco",
+        loc: [
+            String(start.lon),
+            String(start.lat),
+            String(end.lon),
+            String(end.lat)
+        ].join(","),
+        output: "json",
+        apiKey: ODSAY_WEB_API_KEY
+    });
+
+    const promise = fetch(
+        `https://api.odsay.com/v1/api/searchWalkPathV2?${params.toString()}`,
+        {
+            method: "GET",
+            mode: "cors"
+        }
+    )
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error(
+                    `ODsay 도보 API HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(function (data) {
+            if (data && data.error) {
+                throw new Error(
+                    odsErrorMessage(data)
+                );
+            }
+
+            return odsBuildWalkRouteFromData(
+                baseRoute,
+                data
+            );
+        });
+
+    odsWalkRouteCache.set(
+        cacheKey,
+        promise
+    );
+
+    try {
+        return await promise;
+    } catch (error) {
+        odsWalkRouteCache.delete(
+            cacheKey
+        );
+        throw error;
+    }
+}
+
+
+function odsExtractTrainVertices(data) {
+    const result = data && data.result ? data.result : {};
+    const paths = Array.isArray(result.path)
+        ? result.path
+        : [];
+
+    const selected = paths[0] || {};
+    const subPaths = Array.isArray(selected.subPath)
+        ? selected.subPath
+        : [];
+
+    const segments = [];
+
+    subPaths.forEach(function (subPath) {
+        const vertices = Array.isArray(subPath.vertices)
+            ? subPath.vertices
+            : [];
+
+        const points = [];
+
+        vertices.forEach(function (vertex) {
+            odsPushPoint(
+                points,
+                vertex.x,
+                vertex.y
+            );
+        });
+
+        if (points.length >= 2) {
+            segments.push({
+                mode: "train",
+                estimated: false,
+                source: "odsay_searchTrainPath",
+                points: points
+            });
+        }
+    });
+
+    return segments;
+}
+
+
+async function odsFetchTrainGeometry(startID, endID) {
+    const sid = String(startID || "").trim();
+    const eid = String(endID || "").trim();
+
+    if (!sid || !eid) {
+        return [];
+    }
+
+    const cacheKey = `${sid}:${eid}`;
+
+    if (odsTrainGeometryCache.has(cacheKey)) {
+        return odsTrainGeometryCache.get(
+            cacheKey
+        );
+    }
+
+    const params = new URLSearchParams({
+        SID: sid,
+        EID: eid,
+        output: "json",
+        apiKey: ODSAY_WEB_API_KEY
+    });
+
+    const promise = fetch(
+        `https://api.odsay.com/v1/api/searchTrainPath?${params.toString()}`,
+        {
+            method: "GET",
+            mode: "cors"
+        }
+    )
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error(
+                    `ODsay 열차 경로 API HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(function (data) {
+            if (data && data.error) {
+                throw new Error(
+                    odsErrorMessage(data)
+                );
+            }
+
+            return odsExtractTrainVertices(data);
+        });
+
+    odsTrainGeometryCache.set(
+        cacheKey,
+        promise
+    );
+
+    try {
+        return await promise;
+    } catch (error) {
+        odsTrainGeometryCache.delete(
+            cacheKey
+        );
+        throw error;
+    }
+}
+
+
+function odsBuildConnectorSegment(fromPoint, toPoint) {
+    if (!fromPoint || !toPoint) {
+        return null;
+    }
+
+    const distance = odsDistanceMeters(
+        fromPoint,
+        toPoint
+    );
+
+    if (!Number.isFinite(distance) || distance < 20) {
+        return null;
+    }
+
+    return {
+        mode: "walk",
+        estimated: true,
+        source: "connector",
+        points: [
+            {
+                lat: Number(fromPoint.lat),
+                lon: Number(fromPoint.lon)
+            },
+            {
+                lat: Number(toPoint.lat),
+                lon: Number(toPoint.lon)
+            }
+        ]
+    };
+}
+
+
+function odsAssembleDetailedGeometry(
+    baseRoute,
+    exactSegments,
+    fallbackSegments
+) {
+    const basePoints = Array.isArray(baseRoute.points)
+        ? baseRoute.points
+        : [];
+
+    const start = basePoints[0] || null;
+    const end = basePoints.length > 0
+        ? basePoints[basePoints.length - 1]
+        : null;
+
+    const exact = Array.isArray(exactSegments)
+        ? exactSegments.filter(
+            function (segment) {
+                return (
+                    Array.isArray(segment.points)
+                    && segment.points.length >= 2
+                );
+            }
+        )
+        : [];
+
+    const fallback = Array.isArray(fallbackSegments)
+        ? fallbackSegments
+        : [];
+
+    if (exact.length === 0) {
+        return fallback;
+    }
+
+    const result = [];
+
+    const firstExactPoint =
+        exact[0].points[0];
+
+    const startConnector =
+        odsBuildConnectorSegment(
+            start,
+            firstExactPoint
+        );
+
+    if (startConnector) {
+        result.push(startConnector);
+    }
+
+    exact.forEach(function (segment, index) {
+        if (index > 0) {
+            const previous =
+                exact[index - 1];
+
+            const previousEnd =
+                previous.points[
+                    previous.points.length - 1
+                ];
+
+            const currentStart =
+                segment.points[0];
+
+            const connector =
+                odsBuildConnectorSegment(
+                    previousEnd,
+                    currentStart
+                );
+
+            if (connector) {
+                result.push(connector);
+            }
+        }
+
+        result.push(segment);
+    });
+
+    const lastExact =
+        exact[exact.length - 1];
+
+    const lastExactPoint =
+        lastExact.points[
+            lastExact.points.length - 1
+        ];
+
+    const endConnector =
+        odsBuildConnectorSegment(
+            lastExactPoint,
+            end
+        );
+
+    if (endConnector) {
+        result.push(endConnector);
+    }
+
+    return result;
+}
+
+
+function odsErrorMessage(data) {
+    if (!data || !data.error) {
+        return "ODsay 대중교통 경로를 찾지 못했습니다.";
+    }
+
+    const error = Array.isArray(data.error)
+        ? data.error[0]
+        : data.error;
+
+    if (!error) {
+        return "ODsay 대중교통 API 오류";
+    }
+
+    return odsFirstNonEmpty(
+        error.message,
+        error.msg,
+        error.code,
+        "ODsay 대중교통 API 오류"
+    );
+}
+
+function odsBuildTransitRoute(baseRoute, data) {
+    const result = data && data.result ? data.result : {};
+    const paths = Array.isArray(result.path) ? result.path : [];
+
+    if (paths.length === 0) {
+        throw new Error(odsErrorMessage(data));
+    }
+
+    // ODsay 추천 순서의 첫 번째 경로를 사용한다.
+    const selected = paths[0] || {};
+    const info = selected.info || {};
+    const sections = Array.isArray(selected.subPath)
+        ? selected.subPath
+        : [];
+
+    const basePoints = Array.isArray(baseRoute.points)
+        ? baseRoute.points
+        : [];
+
+    const firstBasePoint = basePoints[0] || null;
+    const lastBasePoint = basePoints.length > 0
+        ? basePoints[basePoints.length - 1]
+        : null;
+
+    const transitSteps = [];
+    const majorSteps = [];
+    const fallbackSegments = [];
+    const trainRequests = [];
+
+    sections.forEach(function (section) {
+        const meta = odsTrafficMeta(
+            section.trafficType,
+            section.trafficSubType
+                ?? section.trainType
+        );
+
+        const lineName = odsLaneName(section, meta);
+        const displayName = lineName && lineName !== meta.vehicleLabel
+            ? `${meta.vehicleLabel} ${lineName}`
+            : meta.vehicleLabel;
+
+        const durationMinutes = Math.max(
+            Number(
+                section.sectionTime
+                ?? section.duration
+                ?? 0
+            ) || 0,
+            0
+        );
+
+        const waitingMinutes = Math.max(
+            Number(section.waitingTime || 0) || 0,
+            0
+        );
+
+        const passStations =
+            section.passStopList
+            && Array.isArray(section.passStopList.stations)
+                ? section.passStopList.stations
+                : [];
+
+        const sectionPoints = [];
+
+        odsPushPoint(
+            sectionPoints,
+            section.startX,
+            section.startY
+        );
+
+        passStations.forEach(function (station) {
+            odsPushPoint(
+                sectionPoints,
+                station.x,
+                station.y
+            );
+        });
+
+        odsPushPoint(
+            sectionPoints,
+            section.endX,
+            section.endY
+        );
+
+        if (sectionPoints.length >= 2) {
+            fallbackSegments.push({
+                mode: meta.mode,
+                estimated: true,
+                source: "odsay_pass_stop_fallback",
+                points: sectionPoints
+            });
+        }
+
+        const step = {
+            mode: meta.mode,
+            vehicle_type: String(section.trafficType || ""),
+            vehicle_label: meta.vehicleLabel,
+            line_name: lineName,
+            display_name: displayName,
+            boarding_stop: odsFirstNonEmpty(
+                section.startName,
+                section.startNameKor
+            ),
+            alighting_stop: odsFirstNonEmpty(
+                section.endName,
+                section.endNameKor
+            ),
+
+            // searchPubTransPathT 자체는 실제 시간표 기반 출발시각을
+            // 보장하지 않으므로 여기서는 일정상 시각과 구분한다.
+            departure_time: null,
+            arrival_time: null,
+
+            duration_minutes: durationMinutes,
+            waiting_minutes: waitingMinutes,
+            direction: odsFirstNonEmpty(
+                section.way,
+                section.wayName
+            ),
+            pass_stops: passStations
+                .map(function (station) {
+                    return odsFirstNonEmpty(
+                        station.stationName,
+                        station.stationNameKor
+                    );
+                })
+                .filter(Boolean)
+        };
+
+        transitSteps.push(step);
+
+        if (meta.mode !== "walk") {
+            majorSteps.push(step);
+        }
+
+        if (
+            Number(section.trafficType) === 4
+            && section.startID
+            && section.endID
+        ) {
+            trainRequests.push({
+                startID: section.startID,
+                endID: section.endID
+            });
+        }
+    });
+
+    // subPath에 좌표가 없거나 매우 단순한 응답일 때 최소 fallback.
+    if (fallbackSegments.length === 0) {
+        const fallbackPoints = [];
+
+        if (firstBasePoint) {
+            odsPushPoint(
+                fallbackPoints,
+                firstBasePoint.lon,
+                firstBasePoint.lat
+            );
+        }
+
+        sections.forEach(function (section) {
+            odsPushPoint(
+                fallbackPoints,
+                section.startX,
+                section.startY
+            );
+            odsPushPoint(
+                fallbackPoints,
+                section.endX,
+                section.endY
+            );
+        });
+
+        if (lastBasePoint) {
+            odsPushPoint(
+                fallbackPoints,
+                lastBasePoint.lon,
+                lastBasePoint.lat
+            );
+        }
+
+        if (fallbackPoints.length >= 2) {
+            fallbackSegments.push({
+                mode: "transit",
+                estimated: true,
+                source: "odsay_endpoint_fallback",
+                points: fallbackPoints
+            });
+        }
+    }
+
+    const summedMinutes = transitSteps.reduce(
+        function (sum, step) {
+            return sum + Number(step.duration_minutes || 0);
+        },
+        0
+    );
+
+    const totalMinutes = Math.max(
+        Number(info.totalTime || 0) || summedMinutes,
+        0
+    );
+
+    const transportNames = majorSteps
+        .map(function (step) {
+            return step.display_name;
+        })
+        .filter(Boolean);
+
+    const firstMajor =
+        majorSteps.length > 0
+            ? majorSteps[0]
+            : null;
+
+    const lastMajor =
+        majorSteps.length > 0
+            ? majorSteps[majorSteps.length - 1]
+            : null;
+
+    const fallbackPoints =
+        odsFlattenGeometrySegments(
+            fallbackSegments
+        );
+
+    return Object.assign({}, baseRoute, {
+        success: true,
+        estimated: false,
+
+        // loadLane / searchTrainPath 상세 좌표를 아직 적용하기 전에는
+        // passStopList 또는 승하차 지점 기반의 보조 경로다.
+        geometry_estimated: true,
+        geometry_source: "odsay_pass_stop_fallback",
+        geometry_segments: fallbackSegments,
+        map_object: odsFirstNonEmpty(
+            info.mapObj,
+            info.mapOBJ
+        ),
+        train_geometry_requests: trainRequests,
+
+        api_source: "odsay_basic_web",
+        message: "",
+        points: fallbackPoints,
+        distance: Number(
+            info.totalDistance
+            ?? info.trafficDistance
+            ?? 0
+        ) || 0,
+        duration: totalMinutes * 60,
+        transfer_count: Math.max(
+            majorSteps.length - 1,
+            0
+        ),
+        transport: "public_transport",
+        transport_label: transportNames.length > 0
+            ? transportNames.join(" → ")
+            : "대중교통",
+
+        departure_time:
+            baseRoute.departure_time || null,
+        departure_time_source: "schedule",
+        arrival_time: null,
+
+        transit_type: firstMajor
+            ? firstMajor.vehicle_label
+            : "대중교통",
+        line_name: firstMajor
+            ? firstMajor.line_name
+            : null,
+        boarding_stop: firstMajor
+            ? firstMajor.boarding_stop
+            : null,
+        alighting_stop: lastMajor
+            ? lastMajor.alighting_stop
+            : null,
+        transit_steps: transitSteps,
+        transit_detail_available:
+            transitSteps.length > 0,
+        timetable_exact: false
+    });
+}
+
+async function odsFetchTransitRoute(baseRoute) {
+    if (!ODSAY_WEB_API_KEY) {
+        throw new Error(
+            "ODSAY_WEB_API_KEY가 설정되지 않았습니다."
+        );
+    }
+
+    const points = Array.isArray(baseRoute.points)
+        ? baseRoute.points
+        : [];
+
+    if (points.length < 2) {
+        throw new Error(
+            "대중교통 경로 좌표가 없습니다."
+        );
+    }
+
+    const start = points[0];
+    const end = points[points.length - 1];
+
+    const directDistance =
+        odsDistanceMeters(
+            start,
+            end
+        );
+
+    // ODsay 대중교통 API는 700m 이내에서 -98을 반환한다.
+    // 가까운 구간은 실제 도보 길찾기 API로 자동 전환한다.
+    if (
+        Number.isFinite(directDistance)
+        && directDistance <= ODSAY_SHORT_WALK_METERS
+    ) {
+        return odsBuildShortWalkFallback(
+            baseRoute,
+            directDistance
+        );
+    }
+
+    const cacheKey = [
+        Number(start.lon).toFixed(6),
+        Number(start.lat).toFixed(6),
+        Number(end.lon).toFixed(6),
+        Number(end.lat).toFixed(6)
+    ].join(":");
+
+    if (odsTransitRouteCache.has(cacheKey)) {
+        return odsTransitRouteCache.get(
+            cacheKey
+        );
+    }
+
+    const params = new URLSearchParams({
+        SX: String(start.lon),
+        SY: String(start.lat),
+        EX: String(end.lon),
+        EY: String(end.lat),
+        OPT: "0",
+        SearchPathType: "0",
+        output: "json",
+        apiKey: ODSAY_WEB_API_KEY
+    });
+
+    const requestPromise = fetch(
+        `https://api.odsay.com/v1/api/searchPubTransPathT?${params.toString()}`,
+        {
+            method: "GET",
+            mode: "cors"
+        }
+    )
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error(
+                    `ODsay API HTTP ${response.status}`
+                );
+            }
+
+            return response.json();
+        })
+        .then(async function (data) {
+            if (data && data.error) {
+                throw new Error(
+                    odsErrorMessage(data)
+                );
+            }
+
+            let route =
+                odsBuildTransitRoute(
+                    baseRoute,
+                    data
+                );
+
+            // 기본 화면에서는 노선/환승 정보까지만 조회한다.
+            // loadLane/searchTrainPath 상세 geometry는
+            // 사용자가 [상세 경로 보기]를 눌렀을 때만 호출한다.
+            if (!ODSAY_DETAILED_MAP_GEOMETRY) {
+                route.detail_status = "ready";
+                return route;
+            }
+
+            const exactSegments = [];
+
+            // 도시내 버스/지하철은 mapObj -> loadLane으로
+            // 실제 노선 그래픽 좌표(graphPos)를 가져온다.
+            if (route.map_object) {
+                try {
+                    const laneSegments =
+                        await odsFetchLaneGeometry(
+                            route.map_object
+                        );
+
+                    laneSegments.forEach(function (segment) {
+                        exactSegments.push(segment);
+                    });
+                } catch (error) {
+                    console.warn(
+                        "ODsay loadLane 상세 경로 조회 실패:",
+                        error
+                    );
+                }
+            }
+
+            // 도시간 열차 구간은 searchTrainPath의 vertices로
+            // 실제 열차 운행 경로를 보강한다.
+            const trainRequests =
+                Array.isArray(route.train_geometry_requests)
+                    ? route.train_geometry_requests
+                    : [];
+
+            for (const requestInfo of trainRequests) {
+                try {
+                    const trainSegments =
+                        await odsFetchTrainGeometry(
+                            requestInfo.startID,
+                            requestInfo.endID
+                        );
+
+                    trainSegments.forEach(function (segment) {
+                        exactSegments.push(segment);
+                    });
+                } catch (error) {
+                    console.warn(
+                        "ODsay 열차 상세 경로 조회 실패:",
+                        error
+                    );
+                }
+            }
+
+            if (exactSegments.length > 0) {
+                const geometrySegments =
+                    odsAssembleDetailedGeometry(
+                        baseRoute,
+                        exactSegments,
+                        route.geometry_segments
+                    );
+
+                route = Object.assign(
+                    {},
+                    route,
+                    {
+                        geometry_estimated: false,
+                        geometry_source:
+                            "odsay_detailed_geometry",
+                        geometry_segments:
+                            geometrySegments,
+                        points:
+                            odsFlattenGeometrySegments(
+                                geometrySegments
+                            )
+                    }
+                );
+            }
+
+            return route;
+        });
+
+    odsTransitRouteCache.set(
+        cacheKey,
+        requestPromise
+    );
+
+    try {
+        return await requestPromise;
+    } catch (error) {
+        odsTransitRouteCache.delete(
+            cacheKey
+        );
+        throw error;
+    }
+}
+
+
+function odsIsQuotaError(error) {
+    const message = String(
+        error && error.message
+            ? error.message
+            : error || ""
+    ).toLowerCase();
+
+    return (
+        message.includes("quota")
+        || message.includes("limit")
+        || message.includes("exceed")
+        || message.includes("daily")
+        || message.includes("일일")
+        || message.includes("사용량")
+        || message.includes("호출")
+        || message.includes("횟수")
+        || message.includes("제한")
+    );
+}
+
+
+async function odsFetchDetailedGeometry(route) {
+    if (!route) {
+        throw new Error(
+            "상세 경로 대상이 없습니다."
+        );
+    }
+
+    if (route.short_distance_walk) {
+        return route;
+    }
+
+    if (
+        route.geometry_detail_loaded
+        && Array.isArray(route.geometry_segments)
+        && route.geometry_segments.length > 0
+    ) {
+        return route;
+    }
+
+    const exactSegments = [];
+
+    // 도시내 버스/지하철 상세 geometry
+    if (route.map_object) {
+        try {
+            const laneSegments =
+                await odsFetchLaneGeometry(
+                    route.map_object
+                );
+
+            laneSegments.forEach(
+                function (segment) {
+                    exactSegments.push(segment);
+                }
+            );
+        } catch (error) {
+            // 열차 geometry가 따로 있을 수 있으므로
+            // 여기서 바로 전체 실패로 끝내지는 않는다.
+            console.warn(
+                "ODsay loadLane 상세 경로 조회 실패:",
+                error
+            );
+
+            if (odsIsQuotaError(error)) {
+                throw error;
+            }
+        }
+    }
+
+    // 도시간 열차 상세 geometry
+    const trainRequests =
+        Array.isArray(
+            route.train_geometry_requests
+        )
+            ? route.train_geometry_requests
+            : [];
+
+    for (const requestInfo of trainRequests) {
+        try {
+            const trainSegments =
+                await odsFetchTrainGeometry(
+                    requestInfo.startID,
+                    requestInfo.endID
+                );
+
+            trainSegments.forEach(
+                function (segment) {
+                    exactSegments.push(segment);
+                }
+            );
+        } catch (error) {
+            console.warn(
+                "ODsay 열차 상세 경로 조회 실패:",
+                error
+            );
+
+            if (odsIsQuotaError(error)) {
+                throw error;
+            }
+        }
+    }
+
+    if (exactSegments.length === 0) {
+        throw new Error(
+            "이 이동구간에서 ODsay 상세 경로 좌표를 제공하지 않았습니다."
+        );
+    }
+
+    const geometrySegments =
+        odsAssembleDetailedGeometry(
+            route,
+            exactSegments,
+            route.geometry_segments
+        );
+
+    return Object.assign(
+        {},
+        route,
+        {
+            geometry_estimated: false,
+            geometry_source:
+                "odsay_detailed_geometry",
+            geometry_segments:
+                geometrySegments,
+            points:
+                odsFlattenGeometrySegments(
+                    geometrySegments
+                ),
+            geometry_detail_loaded: true,
+            detail_status: "loaded",
+            detail_error: ""
+        }
+    );
+}
+
+
+function redrawRoutePolylines(
+    routeData,
+    focusRouteIndex = null
+) {
+    if (!map || !routeData) {
+        return;
+    }
+
+    routePolylines.forEach(
+        function (polyline) {
+            polyline.setMap(null);
+        }
+    );
+
+    routePolylines = [];
+
+    const routes =
+        Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    const focusBounds =
+        new kakao.maps.LatLngBounds();
+
+    let hasFocusPoint = false;
+
+    routes.forEach(
+        function (route, index) {
+
+            if (!route || !route.success) {
+                return;
+            }
+
+            const routeColor =
+                route.to_marker === "R"
+                    ? "#16a34a"
+                    : getScheduleColor(
+                        Math.max(
+                            Number(
+                                route.to_order || 1
+                            ) - 1,
+                            0
+                        )
+                    );
+
+            const segments =
+                Array.isArray(
+                    route.geometry_segments
+                )
+                && route.geometry_segments.length > 0
+                    ? route.geometry_segments
+                    : [
+                        {
+                            mode:
+                                route.transport
+                                || "transit",
+                            estimated:
+                                Boolean(
+                                    route.estimated
+                                    || route.geometry_estimated
+                                ),
+                            points:
+                                Array.isArray(route.points)
+                                    ? route.points
+                                    : []
+                        }
+                    ];
+
+            segments.forEach(
+                function (segment) {
+
+                    const segmentPoints =
+                        Array.isArray(segment.points)
+                            ? segment.points
+                            : [];
+
+                    if (segmentPoints.length < 2) {
+                        return;
+                    }
+
+                    const path = [];
+
+                    segmentPoints.forEach(
+                        function (point) {
+                            const lat =
+                                Number(point.lat);
+                            const lon =
+                                Number(point.lon);
+
+                            if (
+                                Number.isNaN(lat)
+                                || Number.isNaN(lon)
+                            ) {
+                                return;
+                            }
+
+                            const position =
+                                new kakao.maps.LatLng(
+                                    lat,
+                                    lon
+                                );
+
+                            path.push(position);
+
+                            if (
+                                focusRouteIndex !== null
+                                && Number(index)
+                                    === Number(focusRouteIndex)
+                            ) {
+                                focusBounds.extend(
+                                    position
+                                );
+                                hasFocusPoint = true;
+                            }
+                        }
+                    );
+
+                    if (path.length < 2) {
+                        return;
+                    }
+
+                    const mode =
+                        String(
+                            segment.mode || ""
+                        );
+
+                    const isWalk =
+                        mode === "walk";
+
+                    const estimated =
+                        Boolean(
+                            segment.estimated
+                            || (
+                                route.estimated
+                                && !route.geometry_detail_loaded
+                            )
+                        );
+
+                    const polyline =
+                        new kakao.maps.Polyline({
+                            map: map,
+                            path: path,
+                            strokeWeight:
+                                isWalk ? 4 : 7,
+                            strokeColor:
+                                isWalk
+                                    ? "#64748b"
+                                    : routeColor,
+                            strokeOpacity:
+                                estimated
+                                    ? 0.65
+                                    : 0.96,
+                            strokeStyle:
+                                estimated
+                                    ? "dash"
+                                    : "solid"
+                        });
+
+                    routePolylines.push(
+                        polyline
+                    );
+                }
+            );
+        }
+    );
+
+    if (
+        focusRouteIndex !== null
+        && hasFocusPoint
+    ) {
+        map.relayout();
+        map.setBounds(
+            focusBounds
+        );
+    }
+}
+
+
+async function loadDetailedRouteGeometry(
+    routeIndex,
+    trigger
+) {
+    if (
+        !currentRouteData
+        || !Array.isArray(
+            currentRouteData.routes
+        )
+    ) {
+        alert(
+            "현재 경로 데이터가 없습니다."
+        );
+        return;
+    }
+
+    const route =
+        currentRouteData.routes[
+            Number(routeIndex)
+        ];
+
+    if (!route) {
+        alert(
+            "상세 경로를 찾을 수 없습니다."
+        );
+        return;
+    }
+
+    if (route.short_distance_walk) {
+        redrawRoutePolylines(
+            currentRouteData,
+            routeIndex
+        );
+        return;
+    }
+
+    if (route.geometry_detail_loaded) {
+        redrawRoutePolylines(
+            currentRouteData,
+            routeIndex
+        );
+        return;
+    }
+
+    if (trigger) {
+        trigger.disabled = true;
+        trigger.textContent =
+            "상세 경로 불러오는 중...";
+    }
+
+    try {
+        const detailedRoute =
+            await odsFetchDetailedGeometry(
+                route
+            );
+
+        currentRouteData.routes[
+            Number(routeIndex)
+        ] = detailedRoute;
+
+        currentRouteData.route_points =
+            currentRouteData.routes.flatMap(
+                function (item) {
+                    return Array.isArray(
+                        item.points
+                    )
+                        ? item.points
+                        : [];
+                }
+            );
+
+        currentRouteData.points =
+            currentRouteData.route_points;
+
+        redrawRoutePolylines(
+            currentRouteData,
+            routeIndex
+        );
+
+        if (currentDayData) {
+            renderSchedule(
+                currentDayData,
+                currentRouteData
+            );
+        }
+
+    } catch (error) {
+        console.warn(
+            "상세 경로 수동 조회 실패:",
+            error
+        );
+
+        route.detail_status =
+            odsIsQuotaError(error)
+                ? "quota_exceeded"
+                : "error";
+
+        route.detail_error =
+            error && error.message
+                ? error.message
+                : "상세 경로 조회 실패";
+
+        if (currentDayData) {
+            renderSchedule(
+                currentDayData,
+                currentRouteData
+            );
+        }
+    }
+}
+
+
+
+async function enrichRouteDataWithOdsay(data) {
+    if (!data) {
+        return data;
+    }
+
+    const transport = normalizeTimelineTransport(data.transport);
+
+    if (transport !== "public_transport") {
+        return data;
+    }
+
+    const routes = Array.isArray(data.routes)
+        ? data.routes
+        : [];
+
+    if (routes.length === 0) {
+        return data;
+    }
+
+    if (!ODSAY_WEB_API_KEY) {
+        console.warn(
+            "ODSAY_WEB_API_KEY가 없어 예상 이동시간만 표시합니다."
+        );
+        data.odsay_status = "missing_key";
+        return data;
+    }
+
+    const enrichedRoutes = [];
+
+    // 무료 Basic 호출 수와 순간 호출 집중을 줄이기 위해 순차 호출한다.
+    for (const route of routes) {
+        try {
+            const enriched = await odsFetchTransitRoute(route);
+            enrichedRoutes.push(enriched);
+        } catch (error) {
+            console.warn(
+                "ODsay 대중교통 길찾기 실패:",
+                route.from_place,
+                "->",
+                route.to_place,
+                error
+            );
+
+            enrichedRoutes.push(
+                Object.assign({}, route, {
+                    estimated: true,
+                    api_source: "odsay_basic_web_error",
+                    transit_api_error: true,
+                    message: error && error.message
+                        ? error.message
+                        : "ODsay 대중교통 길찾기 실패"
+                })
+            );
+        }
+    }
+
+    data.routes = enrichedRoutes;
+    data.route_points = enrichedRoutes.flatMap(
+        function (route) {
+            return Array.isArray(route.points)
+                ? route.points
+                : [];
+        }
+    );
+    data.points = data.route_points;
+    data.api_source = "odsay_basic_web";
+    data.odsay_status = "done";
+
+    return data;
 }
 
 
 /* =========================================================
    선택한 DAY의 지도 표시
 ========================================================= */
+
+
+function timelineTimeToMinutes(value) {
+    if (!value) {
+        return null;
+    }
+
+    const parts =
+        String(value)
+        .split(":");
+
+    if (parts.length < 2) {
+        return null;
+    }
+
+    const hour = Number(parts[0]);
+    const minute = Number(parts[1]);
+
+    if (
+        Number.isNaN(hour)
+        || Number.isNaN(minute)
+    ) {
+        return null;
+    }
+
+    return hour * 60 + minute;
+}
+
+
+function timelineMinutesToTime(totalMinutes) {
+    let total = Math.round(
+        Number(totalMinutes || 0)
+    );
+
+    total = (
+        (total % (24 * 60))
+        + (24 * 60)
+    ) % (24 * 60);
+
+    const hour =
+        Math.floor(total / 60);
+
+    const minute =
+        total % 60;
+
+    return (
+        `${String(hour).padStart(2, "0")}:`
+        + `${String(minute).padStart(2, "0")}`
+    );
+}
+
+
+function routeDurationMinutes(route) {
+    if (!route) {
+        return 0;
+    }
+
+    const durationSeconds =
+        Number(route.duration || 0);
+
+    if (durationSeconds > 0) {
+        return Math.max(
+            Math.ceil(
+                durationSeconds / 60
+            ),
+            1
+        );
+    }
+
+    return Math.max(
+        Number(route.travel_time || 0),
+        0
+    );
+}
+
+
+function applyActualRouteTimesToDay(
+    dayData,
+    routeData
+) {
+    if (
+        !dayData
+        || !routeData
+        || !Array.isArray(dayData.places)
+    ) {
+        return;
+    }
+
+    const places =
+        dayData.places;
+
+    const routes =
+        Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    if (places.length === 0) {
+        return;
+    }
+
+    const startPoint =
+        routeData.start_point || null;
+
+    let previousDeparture =
+        timelineTimeToMinutes(
+            startPoint
+            ? startPoint.departure_time
+            : null
+        );
+
+    places.forEach(
+        function (sp, index) {
+
+            const visitOrder =
+                Number(
+                    sp.visit_order
+                    ?? index + 1
+                );
+
+            const route =
+                routes.find(
+                    function (item) {
+                        return (
+                            String(
+                                item.to_marker || ""
+                            )
+                            ===
+                            String(visitOrder)
+                        );
+                    }
+                )
+                || routes.find(
+                    function (item) {
+                        return (
+                            Number(
+                                item.to_order
+                            )
+                            === visitOrder
+                        );
+                    }
+                );
+
+            const travelMinutes =
+                routeDurationMinutes(
+                    route
+                );
+
+            const originalArrival =
+                timelineTimeToMinutes(
+                    sp.arrive_time
+                );
+
+            let earliestArrival = null;
+
+            if (
+                previousDeparture !== null
+            ) {
+                earliestArrival =
+                    previousDeparture
+                    + travelMinutes;
+            }
+
+            // 기존에 점심 12:30처럼 목표시각이 잡혀 있었다면
+            // 더 이른 시각으로 당기지 않는다.
+            // 다만 실제 이동시간 때문에 충돌하면 뒤로 밀어낸다.
+            let correctedArrival =
+                originalArrival;
+
+            if (
+                earliestArrival !== null
+                && (
+                    correctedArrival === null
+                    || correctedArrival
+                        < earliestArrival
+                )
+            ) {
+                correctedArrival =
+                    earliestArrival;
+            }
+
+            if (correctedArrival === null) {
+                correctedArrival =
+                    earliestArrival;
+            }
+
+            if (correctedArrival !== null) {
+                sp.travel_time =
+                    travelMinutes;
+
+                sp.arrive_time =
+                    timelineMinutesToTime(
+                        correctedArrival
+                    );
+
+                const stayMinutes =
+                    Math.max(
+                        Number(
+                            sp.stay_time || 0
+                        ),
+                        0
+                    );
+
+                previousDeparture =
+                    correctedArrival
+                    + stayMinutes;
+
+                sp.start_time =
+                    timelineMinutesToTime(
+                        previousDeparture
+                    );
+
+                if (route) {
+                    route.departure_time =
+                        (
+                            index === 0
+                            && startPoint
+                        )
+                            ? startPoint.departure_time
+                            : timelineMinutesToTime(
+                                previousDeparture
+                                - stayMinutes
+                                - travelMinutes
+                            );
+                }
+            }
+        }
+    );
+}
+
 
 function drawSchedule(scheduleId) {
 
@@ -1381,7 +3810,7 @@ function drawSchedule(scheduleId) {
         return;
     }
 
-    fetch(`/api/route/${scheduleId}/`)
+    return fetch(`/api/route/${scheduleId}/`)
 
         .then(function (response) {
 
@@ -1394,7 +3823,18 @@ function drawSchedule(scheduleId) {
             return response.json();
         })
 
-        .then(function (data) {
+        .then(async function (data) {
+
+            // 대중교통 선택 시 ODsay 무료 Web API로 노선 정보를 보강한다.
+            data = await enrichRouteDataWithOdsay(data);
+
+            // 지도/API가 알려준 실제 이동시간이 DB에 저장된 계획시간보다 길면
+            // 다음 일정들을 앞 일정 출발시각 이후로 연쇄적으로 밀어낸다.
+            // 점심/저녁처럼 원래 목표시각이 더 늦은 일정은 앞당기지 않는다.
+            applyActualRouteTimesToDay(
+                currentDayData,
+                data
+            );
 
             clearMap();
 
@@ -1411,126 +3851,134 @@ function drawSchedule(scheduleId) {
             const bounds =
                 new kakao.maps.LatLngBounds();
 
-            const startPoint =
-                data.start_point
-                    ? data.start_point
-                    : null;
+            // DAY 시작점(S) / 마지막 DAY 복귀지점(R) 고정 마커
+            // CustomOverlay만 쓸 때 일부 환경에서 마커가 사라지는 경우가 있어
+            // Kakao 기본 Marker + 문자 Badge를 함께 올린다.
+            function addFixedPointMarker(point, label, background, title) {
 
-
-            /* =========================================================
-               DAY 시작점 S 마커
-            ========================================================= */
-
-            if (
-                startPoint
-                && startPoint.lat !== null
-                && startPoint.lon !== null
-            ) {
-
-                const startLat =
-                    Number(startPoint.lat);
-
-                const startLon =
-                    Number(startPoint.lon);
-
-                if (
-                    !Number.isNaN(startLat)
-                    && !Number.isNaN(startLon)
-                ) {
-
-                    const startPosition =
-                        new kakao.maps.LatLng(
-                            startLat,
-                            startLon
-                        );
-
-                    const startMarkerElement =
-                        document.createElement(
-                            "div"
-                        );
-
-                    startMarkerElement.className =
-                        "schedule-map-marker schedule-start-marker";
-
-                    startMarkerElement.textContent =
-                        "S";
-
-                    startMarkerElement.title =
-                        `${
-                            startPoint.name || "출발지"
-                        }${
-                            startPoint.departure_time
-                                ? " · " + startPoint.departure_time
-                                : ""
-                        }`;
-
-                    startMarkerElement.style.cssText = `
-                        width: 40px;
-                        height: 40px;
-                        background: #0f172a;
-                        color: #ffffff;
-                        border-radius: 50%;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        font-weight: 800;
-                        font-size: 15px;
-                        border: 3px solid #ffffff;
-                        box-shadow: 0 2px 9px rgba(0,0,0,0.30);
-                        cursor: pointer;
-                        box-sizing: border-box;
-                    `;
-
-                    startMarkerElement.addEventListener(
-                        "click",
-                        function (event) {
-
-                            event.preventDefault();
-                            event.stopPropagation();
-
-                            if (
-                                kakao.maps.event
-                                && typeof kakao.maps.event.preventMap === "function"
-                            ) {
-                                kakao.maps.event.preventMap();
-                            }
-
-                            map.setLevel(3);
-                            map.setCenter(
-                                startPosition
-                            );
-                        }
-                    );
-
-                    const startOverlay =
-                        new kakao.maps.CustomOverlay({
-
-                            position:
-                                startPosition,
-
-                            content:
-                                startMarkerElement,
-
-                            yAnchor:
-                                0.5,
-
-                            clickable:
-                                true
-                        });
-
-                    startOverlay.setMap(
-                        map
-                    );
-
-                    overlays.push(
-                        startOverlay
-                    );
-
-                    bounds.extend(
-                        startPosition
-                    );
+                if (!point) {
+                    return null;
                 }
+
+                const lat = Number(point.lat);
+                const lon = Number(point.lon);
+
+                if (Number.isNaN(lat) || Number.isNaN(lon)) {
+                    return null;
+                }
+
+                const position =
+                    new kakao.maps.LatLng(lat, lon);
+
+                const nativeMarker =
+                    new kakao.maps.Marker({
+                        position: position,
+                        map: map,
+                        clickable: true,
+                        zIndex: label === "S" ? 125 : 115
+                    });
+
+                kakao.maps.event.addListener(
+                    nativeMarker,
+                    "click",
+                    function () {
+                        focusTimelineTarget(
+                            label,
+                            true
+                        );
+                    }
+                );
+
+                overlays.push(nativeMarker);
+
+                const markerElement =
+                    document.createElement("button");
+
+                markerElement.type = "button";
+                markerElement.textContent = label;
+                markerElement.title = title || point.name || "";
+                markerElement.setAttribute(
+                    "aria-label",
+                    `${title || point.name || label} 카드로 이동`
+                );
+                markerElement.style.cssText = `
+                    min-width: 36px;
+                    height: 36px;
+                    padding: 0 9px;
+                    background: ${background};
+                    color: #ffffff;
+                    border-radius: 999px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: 900;
+                    font-size: 14px;
+                    border: 3px solid #ffffff;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.28);
+                    box-sizing: border-box;
+                    transform: translateY(-36px);
+                    cursor: pointer;
+                `;
+
+                markerElement.addEventListener(
+                    "click",
+                    function (event) {
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        if (
+                            kakao.maps.event
+                            && typeof kakao.maps.event.preventMap === "function"
+                        ) {
+                            kakao.maps.event.preventMap();
+                        }
+
+                        focusTimelineTarget(
+                            label,
+                            true
+                        );
+                    }
+                );
+
+                const overlay =
+                    new kakao.maps.CustomOverlay({
+                        position: position,
+                        content: markerElement,
+                        yAnchor: 1,
+                        clickable: true,
+                        zIndex: label === "S" ? 130 : 120
+                    });
+
+                overlay.setMap(map);
+                overlays.push(overlay);
+
+                placeMarkerMap.set(
+                    label,
+                    {
+                        position: position,
+                        overlay: overlay,
+                        nativeMarker: nativeMarker
+                    }
+                );
+
+                bounds.extend(position);
+
+                return position;
             }
+
+            addFixedPointMarker(
+                data.start_point,
+                "S",
+                "#2563eb",
+                "DAY 출발지"
+            );
+
+            addFixedPointMarker(
+                data.return_point,
+                "R",
+                "#16a34a",
+                "출발지 복귀"
+            );
 
 
             /* 번호 마커 */
@@ -1631,8 +4079,9 @@ function drawSchedule(scheduleId) {
                                 kakao.maps.event.preventMap();
                             }
 
-                            focusSchedulePlace(
-                                place.id
+                            focusTimelineTarget(
+                                String(place.id),
+                                true
                             );
                         }
                     );
@@ -1656,7 +4105,11 @@ function drawSchedule(scheduleId) {
 
                             // 마커를 클릭했을 때 지도 클릭/드래그 이벤트와 충돌하지 않게 함
                             clickable:
-                                true
+                                true,
+
+                            // S/R 고정 마커보다 아래, 지도 경로선보다는 위
+                            zIndex:
+                                80
                         });
 
 
@@ -1706,111 +4159,212 @@ function drawSchedule(scheduleId) {
                     : [];
 
 
+            // 백엔드 응답에 S→1 구간이 누락됐더라도
+            // 출발지와 1번 장소 좌표가 있으면 지도에서 최소한 예상 직선 구간을 보여준다.
+            const hasStartToFirstRoute =
+                routes.some(function (route) {
+                    return (
+                        String(route.from_marker || "") === "S"
+                        && String(route.to_marker || "") === "1"
+                    );
+                });
+
+            if (
+                !hasStartToFirstRoute
+                && data.start_point
+                && places.length > 0
+            ) {
+                const startLat = Number(data.start_point.lat);
+                const startLon = Number(data.start_point.lon);
+                const firstLat = Number(places[0].lat);
+                const firstLon = Number(places[0].lon);
+
+                if (
+                    !Number.isNaN(startLat)
+                    && !Number.isNaN(startLon)
+                    && !Number.isNaN(firstLat)
+                    && !Number.isNaN(firstLon)
+                ) {
+                    routes.unshift({
+                        from_place: data.start_point.name || "출발지",
+                        to_place: places[0].name || "1번 장소",
+                        from_marker: "S",
+                        to_marker: "1",
+                        to_order: places[0].order || 1,
+                        success: true,
+                        estimated: true,
+                        transport: data.transport,
+                        transport_label: "예상 이동",
+                        points: [
+                            {lat: startLat, lon: startLon},
+                            {lat: firstLat, lon: firstLon}
+                        ],
+                        duration: Number(places[0].travel_time || 0) * 60
+                    });
+                }
+            }
+
             routes.forEach(
                 function (route, index) {
 
-                    if (
-                        !route.success
-                        || !Array.isArray(route.points)
-                        || route.points.length < 2
-                    ) {
+                    if (!route.success) {
                         return;
                     }
 
+                    const routeColor =
+                        route.to_marker === "R"
+                            ? "#16a34a"
+                            : getScheduleColor(
+                                Math.max(
+                                    Number(route.to_order || 1) - 1,
+                                    0
+                                )
+                            );
 
-                    const path = [];
+                    const segments =
+                        Array.isArray(route.geometry_segments)
+                        && route.geometry_segments.length > 0
+                            ? route.geometry_segments
+                            : [
+                                {
+                                    mode: route.transport || "transit",
+                                    estimated:
+                                        Boolean(
+                                            route.estimated
+                                            || route.geometry_estimated
+                                        ),
+                                    points:
+                                        Array.isArray(route.points)
+                                            ? route.points
+                                            : []
+                                }
+                            ];
 
+                    segments.forEach(
+                        function (segment) {
 
-                    route.points.forEach(
-                        function (point) {
+                            const segmentPoints =
+                                Array.isArray(segment.points)
+                                    ? segment.points
+                                    : [];
 
-                            const lat =
-                                Number(point.lat);
-
-                            const lon =
-                                Number(point.lon);
-
-
-                            if (
-                                Number.isNaN(lat)
-                                || Number.isNaN(lon)
-                            ) {
+                            if (segmentPoints.length < 2) {
                                 return;
                             }
 
+                            const path = [];
 
-                            const position =
-                                new kakao.maps.LatLng(
-                                    lat,
-                                    lon
+                            segmentPoints.forEach(
+                                function (point) {
+
+                                    const lat =
+                                        Number(point.lat);
+
+                                    const lon =
+                                        Number(point.lon);
+
+                                    if (
+                                        Number.isNaN(lat)
+                                        || Number.isNaN(lon)
+                                    ) {
+                                        return;
+                                    }
+
+                                    const position =
+                                        new kakao.maps.LatLng(
+                                            lat,
+                                            lon
+                                        );
+
+                                    path.push(
+                                        position
+                                    );
+
+                                    bounds.extend(
+                                        position
+                                    );
+                                }
+                            );
+
+                            if (path.length < 2) {
+                                return;
+                            }
+
+                            const mode =
+                                String(
+                                    segment.mode || ""
                                 );
 
+                            const estimated =
+                                Boolean(
+                                    segment.estimated
+                                    || (
+                                        route.estimated
+                                        && mode !== "walk"
+                                    )
+                                );
 
-                            path.push(
-                                position
-                            );
+                            const isWalk =
+                                mode === "walk";
 
-                            bounds.extend(
-                                position
+                            const polyline =
+                                new kakao.maps.Polyline({
+
+                                    map: map,
+                                    path: path,
+
+                                    // 실제 버스/지하철/열차 노선은 굵은 실선,
+                                    // 도보 연결/추정 연결은 얇은 점선으로 구분한다.
+                                    strokeWeight:
+                                        isWalk
+                                            ? 4
+                                            : 7,
+
+                                    strokeColor:
+                                        isWalk
+                                            ? "#64748b"
+                                            : routeColor,
+
+                                    strokeOpacity:
+                                        estimated
+                                            ? 0.65
+                                            : 0.96,
+
+                                    strokeStyle:
+                                        estimated
+                                            ? "dash"
+                                            : "solid"
+                                });
+
+                            routePolylines.push(
+                                polyline
                             );
                         }
-                    );
-
-
-                    if (path.length < 2) {
-                        return;
-                    }
-
-
-                    const polyline =
-                        new kakao.maps.Polyline({
-
-                            map:
-                                map,
-
-                            path:
-                                path,
-
-                            strokeWeight:
-                                7,
-
-                            // 각 구간은 도착지 마커와 같은 색을 사용한다.
-                            // S→1 = 1번 색상
-                            // 1→2 = 2번 색상
-                            // 5→6 = 6번 색상
-                            strokeColor:
-                                getScheduleColor(
-                                    Math.max(
-                                        Number(
-                                            route.to_order
-                                            || (index + 1)
-                                        ) - 1,
-                                        0
-                                    )
-                                ),
-
-                            strokeOpacity:
-                                0.96,
-
-                            strokeStyle:
-                                "solid"
-                        });
-
-
-                    routePolylines.push(
-                        polyline
                     );
                 }
             );
 
             if (
-                startPoint
+                data.start_point
+                || data.return_point
                 || places.length > 0
                 || routes.length > 0
             ) {
                 map.relayout();
                 map.setBounds(bounds);
+
+                // 레이아웃 직후 한 번 더 bounds를 적용해서
+                // 멀리 떨어진 DAY1 출발지(S)도 화면에서 빠지지 않게 한다.
+                setTimeout(function () {
+                    map.relayout();
+                    map.setBounds(bounds);
+                }, 120);
             }
+
+            // 타임라인/상세 경로 버튼에서 동일한 데이터를 재사용한다.
+            currentRouteData = data;
+
+            return data;
         })
 
         .catch(function (error) {
@@ -1818,6 +4372,8 @@ function drawSchedule(scheduleId) {
                 "일정 지도 표시 실패:",
                 error
             );
+
+            return null;
         });
 }
 
@@ -1889,7 +4445,11 @@ function loadDay(day) {
             currentScheduleId =
                 data.schedule_id;
 
-            renderSchedule(data);
+            currentDayData = data;
+            currentRouteData = null;
+
+            // DAY 데이터만으로 먼저 빠르게 렌더링한다.
+            renderSchedule(data, null);
             renderPayment(data);
 
             const currentDayTitle =
@@ -1902,9 +4462,29 @@ function loadDay(day) {
                     `📅 DAY ${data.day} 일정 ${data.s_day || ""}`;
             }
 
-            drawSchedule(
-                data.schedule_id
-            );
+            // 지도 경로 API에는 DAY 시작점(start_point)과 교통수단,
+            // 구간별 실제 경로 정보가 함께 들어 있다.
+            // drawSchedule()이 받은 동일한 응답을 타임라인에도 재사용한다.
+            const routeRequest =
+                drawSchedule(
+                    data.schedule_id
+                );
+
+            if (
+                routeRequest
+                && typeof routeRequest.then === "function"
+            ) {
+                routeRequest.then(
+                    function (routeData) {
+                        if (routeData) {
+                            renderSchedule(
+                                data,
+                                routeData
+                            );
+                        }
+                    }
+                );
+            }
         })
 
         .catch(function (error) {
@@ -1967,7 +4547,746 @@ function formatStayTime(minutes) {
 }
 
 
-function renderSchedule(data) {
+function formatDurationMinutes(minutes) {
+    const total = Math.max(
+        Math.round(Number(minutes || 0)),
+        0
+    );
+
+    if (total <= 0) {
+        return "0분";
+    }
+
+    const hour = Math.floor(total / 60);
+    const minute = total % 60;
+
+    if (hour > 0 && minute > 0) {
+        return `${hour}시간 ${minute}분`;
+    }
+
+    if (hour > 0) {
+        return `${hour}시간`;
+    }
+
+    return `${minute}분`;
+}
+
+
+function getTimelineTransportInfo(routeData) {
+
+    const fallbackTransport =
+        "{{ travel.t_way|escapejs }}";
+
+    const rawTransport =
+        routeData && routeData.transport
+            ? routeData.transport
+            : fallbackTransport;
+
+    const transport = String(
+        rawTransport || "car"
+    )
+        .split(",")[0]
+        .trim()
+        .toLowerCase();
+
+    const transportMap = {
+        "car": {
+            icon: "🚗",
+            label: "자동차"
+        },
+        "자동차": {
+            icon: "🚗",
+            label: "자동차"
+        },
+        "walk": {
+            icon: "🚶",
+            label: "도보"
+        },
+        "도보": {
+            icon: "🚶",
+            label: "도보"
+        },
+        "bike": {
+            icon: "🚲",
+            label: "자전거"
+        },
+        "자전거": {
+            icon: "🚲",
+            label: "자전거"
+        },
+        "public_transport": {
+            icon: "🚌",
+            label: "대중교통"
+        },
+        "public transport": {
+            icon: "🚌",
+            label: "대중교통"
+        },
+        "대중교통": {
+            icon: "🚌",
+            label: "대중교통"
+        }
+    };
+
+    return transportMap[transport] || {
+        icon: "🧭",
+        label: transport || "이동"
+    };
+}
+
+
+function getSegmentMinutes(sp, routeData) {
+
+    const visitOrder =
+        Number(sp.visit_order);
+
+    const routes =
+        routeData
+        && Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    // 실제 경로 API 조회가 성공한 경우 duration을 우선 사용한다.
+    const matchedRoute =
+        routes.find(
+            function (route) {
+                return (
+                    Number(route.to_order)
+                    === visitOrder
+                );
+            }
+        );
+
+    if (
+        matchedRoute
+        && matchedRoute.success
+        && Number(matchedRoute.duration) > 0
+    ) {
+        return Math.max(
+            Math.ceil(
+                Number(matchedRoute.duration)
+                / 60
+            ),
+            1
+        );
+    }
+
+    // 실제 경로 API를 아직 사용할 수 없는 경우에는
+    // SCHEDULE_PLACES.TRAVEL_TIME에 저장된 계산값을 표시한다.
+    const fallbackMinutes =
+        Number(sp.travel_time || 0);
+
+    if (fallbackMinutes > 0) {
+        return Math.round(
+            fallbackMinutes
+        );
+    }
+
+    return 0;
+}
+
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function buildTransitStepsHtml(route) {
+
+    if (
+        !route
+        || !route.transit_detail_available
+        || !Array.isArray(route.transit_steps)
+        || route.transit_steps.length === 0
+    ) {
+        return "";
+    }
+
+    const stepsHtml = route.transit_steps
+        .map(function (step) {
+
+            const mode = String(step.mode || "");
+            const icon =
+                mode === "walk"
+                    ? "🚶"
+                    : mode === "subway"
+                        ? "🚇"
+                        : mode === "train"
+                            ? "🚆"
+                            : mode === "air"
+                                ? "✈️"
+                                : "🚌";
+
+            const title =
+                escapeHtml(
+                    step.display_name
+                    || step.vehicle_label
+                    || "대중교통"
+                );
+
+            const details = [];
+
+            if (step.departure_time) {
+                details.push(
+                    `${escapeHtml(step.departure_time)} 출발`
+                );
+            }
+
+            if (step.boarding_stop) {
+                details.push(
+                    `${escapeHtml(step.boarding_stop)} 탑승`
+                );
+            }
+
+            if (step.alighting_stop) {
+                details.push(
+                    `${escapeHtml(step.alighting_stop)} 하차`
+                );
+            }
+
+            if (step.arrival_time) {
+                details.push(
+                    `${escapeHtml(step.arrival_time)} 도착`
+                );
+            }
+
+            if (Number(step.duration_minutes) > 0) {
+                details.push(
+                    formatDurationMinutes(
+                        Number(step.duration_minutes)
+                    )
+                );
+            }
+
+            if (Number(step.waiting_minutes) > 0) {
+                details.push(
+                    `대기 ${formatDurationMinutes(
+                        Number(step.waiting_minutes)
+                    )}`
+                );
+            }
+
+            if (step.direction) {
+                details.push(
+                    `${escapeHtml(step.direction)} 방면`
+                );
+            }
+
+            return `
+                <div class="transit-step">
+                    <div class="transit-step-icon">${icon}</div>
+                    <div>
+                        <strong>${title}</strong>
+                        <span class="transit-step-meta">
+                            ${details.join(" · ")}
+                        </span>
+                    </div>
+                </div>
+            `;
+        })
+        .join("");
+
+    return `
+        <div class="transit-steps">
+            ${stepsHtml}
+        </div>
+    `;
+}
+
+
+function buildTransportSegmentHtml(
+    sp,
+    routeData
+) {
+
+    const routes =
+        routeData
+        && Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    const matchedRoute =
+        routes.find(
+            function (route) {
+                return (
+                    Number(route.to_order)
+                    === Number(sp.visit_order)
+                );
+            }
+        );
+
+    const baseTransport =
+        getTimelineTransportInfo(
+            routeData
+        );
+
+    const minutes =
+        getSegmentMinutes(
+            sp,
+            routeData
+        );
+
+    const minuteText =
+        minutes > 0
+            ? `${formatDurationMinutes(minutes)} 이동`
+            : "이동시간 정보 없음";
+
+    const transportLabel =
+        matchedRoute
+        && matchedRoute.transport_label
+            ? matchedRoute.transport_label
+            : baseTransport.label;
+
+    let transitDetailHtml = "";
+
+    if (matchedRoute) {
+        const detailParts = [];
+
+        if (matchedRoute.transit_type) {
+            detailParts.push(
+                escapeHtml(matchedRoute.transit_type)
+            );
+        }
+
+        if (matchedRoute.departure_time) {
+            detailParts.push(
+                matchedRoute.departure_time_source === "actual_timetable"
+                    ? `${escapeHtml(matchedRoute.departure_time)} 탑승`
+                    : `${escapeHtml(matchedRoute.departure_time)} 일정상 출발`
+            );
+        }
+
+        if (matchedRoute.boarding_stop) {
+            detailParts.push(
+                `${escapeHtml(matchedRoute.boarding_stop)} 출발`
+            );
+        }
+
+        if (matchedRoute.line_name) {
+            detailParts.push(
+                escapeHtml(matchedRoute.line_name)
+            );
+        }
+
+        if (matchedRoute.alighting_stop) {
+            detailParts.push(
+                `${escapeHtml(matchedRoute.alighting_stop)} 하차`
+            );
+        }
+
+        if (matchedRoute.arrival_time) {
+            detailParts.push(
+                `${escapeHtml(matchedRoute.arrival_time)} 도착`
+            );
+        }
+
+        if (Number(matchedRoute.transfer_count) > 0) {
+            detailParts.push(
+                `환승 ${Number(matchedRoute.transfer_count)}회`
+            );
+        }
+
+        if (detailParts.length > 0) {
+            transitDetailHtml = `
+                <span class="transport-detail-text">
+                    ${detailParts.join(" · ")}
+                </span>
+            `;
+        }
+
+        transitDetailHtml +=
+            buildTransitStepsHtml(
+                matchedRoute
+            );
+
+        if (matchedRoute.short_distance_walk) {
+            transitDetailHtml += `
+                <span class="transport-detail-text">
+                    700m 이내의 가까운 구간이라 ODsay를 호출하지 않고 도보 예상으로 처리했습니다.
+                </span>
+            `;
+        } else if (
+            matchedRoute.estimated
+            && String(routeData?.transport || "")
+                .toLowerCase()
+                .includes("public")
+        ) {
+            transitDetailHtml += `
+                <span class="transport-detail-text">
+                    ODsay 기본 경로를 불러오지 못해 현재는 예상 이동시간으로 표시 중입니다.
+                </span>
+            `;
+        }
+
+        const routeIndex =
+            routes.indexOf(
+                matchedRoute
+            );
+
+        if (
+            routeIndex >= 0
+            && !matchedRoute.short_distance_walk
+            && matchedRoute.api_source === "odsay_basic_web"
+        ) {
+            if (matchedRoute.geometry_detail_loaded) {
+                transitDetailHtml += `
+                    <div class="route-detail-actions">
+                        <button
+                            type="button"
+                            class="route-detail-btn"
+                            onclick="
+                                event.stopPropagation();
+                                loadDetailedRouteGeometry(
+                                    ${routeIndex},
+                                    this
+                                );
+                            ">
+                            지도에서 상세 경로 보기
+                        </button>
+                        <span class="route-detail-status">
+                            상세 노선 좌표를 불러온 상태입니다.
+                        </span>
+                    </div>
+                `;
+            } else if (
+                matchedRoute.detail_status
+                === "quota_exceeded"
+            ) {
+                transitDetailHtml += `
+                    <div class="route-detail-actions">
+                        <button
+                            type="button"
+                            class="route-detail-btn"
+                            disabled>
+                            상세 경로 조회 한도 초과
+                        </button>
+                        <span class="route-detail-status error">
+                            오늘 상세 경로 API 사용 한도를 초과했습니다. 기본 직선/간략 경로는 계속 표시됩니다.
+                        </span>
+                    </div>
+                `;
+            } else if (
+                matchedRoute.detail_status
+                === "error"
+            ) {
+                transitDetailHtml += `
+                    <div class="route-detail-actions">
+                        <button
+                            type="button"
+                            class="route-detail-btn"
+                            onclick="
+                                event.stopPropagation();
+                                loadDetailedRouteGeometry(
+                                    ${routeIndex},
+                                    this
+                                );
+                            ">
+                            상세 경로 다시 시도
+                        </button>
+                        <span class="route-detail-status error">
+                            ${escapeHtml(
+                                matchedRoute.detail_error
+                                || "상세 경로 좌표를 불러오지 못했습니다."
+                            )}
+                        </span>
+                    </div>
+                `;
+            } else {
+                transitDetailHtml += `
+                    <div class="route-detail-actions">
+                        <button
+                            type="button"
+                            class="route-detail-btn"
+                            onclick="
+                                event.stopPropagation();
+                                loadDetailedRouteGeometry(
+                                    ${routeIndex},
+                                    this
+                                );
+                            ">
+                            상세 경로 보기
+                        </button>
+                        <span class="route-detail-status">
+                            누를 때만 추가 API를 호출합니다.
+                        </span>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    return `
+        <div class="transport-segment ${matchedRoute && matchedRoute.estimated ? "estimated-transport" : ""}">
+            <div class="transport-segment-content">
+                <span class="transport-chip">
+                    <span class="transport-chip-main">
+                        <span>${baseTransport.icon}</span>
+                        <span>${transportLabel} · ${minuteText}</span>
+                    </span>
+                    ${transitDetailHtml}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+function buildStartPointHtml(
+    startPoint,
+    day
+) {
+
+    if (!startPoint) {
+        return "";
+    }
+
+    const isAccommodation =
+        Number(day) > 1;
+
+    const icon =
+        isAccommodation
+            ? "🏨"
+            : "🚩";
+
+    const label =
+        isAccommodation
+            ? "숙소 출발"
+            : "여행 출발지";
+
+    const name =
+        startPoint.name
+        || (
+            isAccommodation
+                ? "숙소"
+                : "출발지"
+        );
+
+    const address =
+        startPoint.address
+        || "주소 정보 없음";
+
+    const departureTime =
+        startPoint.departure_time
+        || "";
+
+    return `
+        <div class="timeline-item start-point-item">
+
+            <div class="start-time-display">
+                ${formatVisitTime(departureTime)}
+            </div>
+
+            <div class="schedule-card start-point-card" data-map-key="S" onclick="focusTimelineTarget('S', false)">
+
+                <div class="schedule-image">
+                    <div class="no-place-image">
+                        ${icon}
+                    </div>
+                </div>
+
+                <div class="schedule-info">
+                    <h3>
+                        S. ${name}
+                    </h3>
+
+                    <p class="schedule-address">
+                        ${address}
+                    </p>
+
+                    <div>
+                        <span class="start-point-label">
+                            ${label}
+                        </span>
+                    </div>
+
+                    <p>
+                        출발 시간 : ${departureTime || "-"}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function getReturnSegmentMinutes(routeData) {
+
+    const routes =
+        routeData
+        && Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    const returnRoute =
+        routes.find(
+            function (route) {
+                return route.to_marker === "R";
+            }
+        );
+
+    if (
+        returnRoute
+        && returnRoute.success
+        && Number(returnRoute.duration) > 0
+    ) {
+        return Math.max(
+            Math.ceil(
+                Number(returnRoute.duration)
+                / 60
+            ),
+            1
+        );
+    }
+
+    const fallbackMinutes =
+        routeData
+        && routeData.return_point
+            ? Number(
+                routeData.return_point.travel_time
+                || 0
+            )
+            : 0;
+
+    return fallbackMinutes > 0
+        ? Math.round(fallbackMinutes)
+        : 0;
+}
+
+
+function buildReturnTransportSegmentHtml(routeData) {
+
+    const routes =
+        routeData
+        && Array.isArray(routeData.routes)
+            ? routeData.routes
+            : [];
+
+    const returnRoute =
+        routes.find(
+            function (route) {
+                return route.to_marker === "R";
+            }
+        );
+
+    const transport =
+        getTimelineTransportInfo(
+            routeData
+        );
+
+    const minutes =
+        getReturnSegmentMinutes(
+            routeData
+        );
+
+    const minuteText =
+        minutes > 0
+            ? `${formatDurationMinutes(minutes)} 이동`
+            : "이동시간 정보 없음";
+
+    const label =
+        returnRoute && returnRoute.transport_label
+            ? returnRoute.transport_label
+            : transport.label;
+
+    const detailHtml =
+        returnRoute
+            ? buildTransitStepsHtml(returnRoute)
+            : "";
+
+    return `
+        <div class="transport-segment return-transport-segment ${returnRoute && returnRoute.estimated ? "estimated-transport" : ""}">
+            <div class="transport-segment-content">
+                <span class="transport-chip">
+                    <span class="transport-chip-main">
+                        <span>${transport.icon}</span>
+                        <span>${escapeHtml(label)} · ${minuteText}</span>
+                    </span>
+                    ${detailHtml}
+                </span>
+            </div>
+        </div>
+    `;
+}
+
+
+function buildReturnPointHtml(returnPoint) {
+
+    if (!returnPoint) {
+        return "";
+    }
+
+    const name =
+        returnPoint.name
+        || "출발지";
+
+    const address =
+        returnPoint.address
+        || "주소 정보 없음";
+
+    const arrivalTime =
+        returnPoint.arrival_time
+        || "22:00";
+
+    return `
+        <div class="timeline-item return-point-item">
+
+            <div class="return-time-display">
+                <button
+                    type="button"
+                    class="time-picker-trigger return-time-picker-trigger"
+                    onclick="
+                        event.stopPropagation();
+                        openReturnTimePicker(
+                            this,
+                            '${arrivalTime}'
+                        );
+                    ">
+                    <span>${formatVisitTime(arrivalTime)}</span>
+                    <span class="picker-clock">◷</span>
+                </button>
+            </div>
+
+            <div class="schedule-card return-point-card" data-map-key="R" onclick="focusTimelineTarget('R', false)">
+
+                <div class="schedule-image">
+                    <div class="no-place-image">
+                        🏁
+                    </div>
+                </div>
+
+                <div class="schedule-info">
+                    <h3>
+                        R. ${name}
+                    </h3>
+
+                    <p class="schedule-address">
+                        ${address}
+                    </p>
+
+                    <div>
+                        <span class="return-point-label">
+                            출발지 복귀
+                        </span>
+                    </div>
+
+                    <p>
+                        복귀 예정 시간 : ${arrivalTime}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function renderSchedule(
+    data,
+    routeData = null
+) {
 
     const container =
         document.getElementById(
@@ -1977,6 +5296,7 @@ function renderSchedule(data) {
     const placeCount =
         document.getElementById("placeCount");
 
+    // 숙소/출발지는 그날의 방문 장소 수에는 포함하지 않는다.
     if (placeCount) {
         placeCount.innerText =
             `${data.places ? data.places.length : 0}곳`;
@@ -1991,9 +5311,27 @@ function renderSchedule(data) {
 
     container.innerHTML = "";
 
+    const places =
+        Array.isArray(data.places)
+            ? data.places
+            : [];
+
+    const startPoint =
+        routeData
+        && routeData.start_point
+            ? routeData.start_point
+            : null;
+
+    const returnPoint =
+        routeData
+        && routeData.return_point
+            ? routeData.return_point
+            : null;
+
     if (
-        !data.places
-        || data.places.length === 0
+        places.length === 0
+        && !startPoint
+        && !returnPoint
     ) {
         container.innerHTML = `
             <div class="empty-schedule">
@@ -2003,8 +5341,35 @@ function renderSchedule(data) {
         return;
     }
 
-    data.places.forEach(
-        function (sp) {
+    // DAY 1은 사용자가 입력한 출발지,
+    // DAY 2 이후는 전날 숙소가 S 카드로 가장 먼저 표시된다.
+    if (startPoint) {
+        container.insertAdjacentHTML(
+            "beforeend",
+            buildStartPointHtml(
+                startPoint,
+                data.day
+            )
+        );
+    }
+
+    places.forEach(
+        function (sp, index) {
+
+            // S -> 1 또는 이전 장소 -> 현재 장소 이동 정보.
+            // startPoint가 없을 때는 2번 장소부터 구간을 표시한다.
+            if (
+                startPoint
+                || index > 0
+            ) {
+                container.insertAdjacentHTML(
+                    "beforeend",
+                    buildTransportSegmentHtml(
+                        sp,
+                        routeData
+                    )
+                );
+            }
 
             let imageHtml;
 
@@ -2056,42 +5421,6 @@ function renderSchedule(data) {
             const stayTime =
                 Number(sp.stay_time || 0);
 
-            const isAccommodation =
-                category === "숙박";
-
-            const scheduleMetaHtml =
-                isAccommodation
-                    ? `
-                        <div class="schedule-meta-row">
-                            <span>🏨 숙소 도착 일정</span>
-                        </div>
-                        <p>
-                            다음 날 일정의 출발 기준점
-                        </p>
-                    `
-                    : `
-                        <div class="schedule-meta-row">
-                            <span>⏱ 체류 시간 :</span>
-                            <button
-                                type="button"
-                                class="stay-picker-trigger"
-                                onclick="
-                                    event.stopPropagation();
-                                    openStayTimePicker(
-                                        this,
-                                        ${sp.sp_id},
-                                        ${stayTime}
-                                    );
-                                ">
-                                ${formatStayTime(stayTime)}
-                            </button>
-                        </div>
-
-                        <p>
-                            출발 시간 : ${sp.start_time || "-"}
-                        </p>
-                    `;
-
             const html = `
                 <div class="timeline-item">
 
@@ -2105,9 +5434,10 @@ function renderSchedule(data) {
                         </button>
                     </div>
 
-                    <div 
+                    <div
                         class="schedule-card"
-                        onclick="focusSchedulePlace(${sp.place_id})"
+                        data-map-key="${sp.place_id}"
+                        onclick="focusTimelineTarget('${sp.place_id}', false)"
                     >
                         ${imageHtml}
 
@@ -2126,7 +5456,26 @@ function renderSchedule(data) {
                                 </span>
                             </div>
 
-                            ${scheduleMetaHtml}
+                            <div class="schedule-meta-row">
+                                <span>⏱ 체류 시간 :</span>
+                                <button
+                                    type="button"
+                                    class="stay-picker-trigger"
+                                    onclick="
+                                        event.stopPropagation();
+                                        openStayTimePicker(
+                                            this,
+                                            ${sp.sp_id},
+                                            ${stayTime}
+                                        );
+                                    ">
+                                    ${formatStayTime(stayTime)}
+                                </button>
+                            </div>
+
+                            <p>
+                                출발 시간 : ${sp.start_time || "-"}
+                            </p>
                         </div>
 
                         <button
@@ -2148,6 +5497,34 @@ function renderSchedule(data) {
             );
         }
     );
+
+    // 마지막 DAY이면 마지막 장소에서 최초 출발지로 돌아가는
+    // 복귀 구간과 R 카드를 일정 맨 아래에 표시한다.
+    if (returnPoint) {
+
+        if (places.length > 0 || startPoint) {
+            container.insertAdjacentHTML(
+                "beforeend",
+                buildReturnTransportSegmentHtml(
+                    routeData
+                )
+            );
+        }
+
+        container.insertAdjacentHTML(
+            "beforeend",
+            buildReturnPointHtml(
+                returnPoint
+            )
+        );
+    }
+
+    if (selectedTimelineKey !== null) {
+        highlightTimelineCard(
+            selectedTimelineKey,
+            false
+        );
+    }
 }
 
 
@@ -2968,6 +6345,186 @@ function openVisitTimePicker(trigger, spId, currentValue) {
 }
 
 
+function openReturnTimePicker(trigger, currentValue) {
+    closeSchedulePicker();
+
+    let hour24 = 22;
+    let minute = 0;
+
+    if (currentValue) {
+        const parts = currentValue.split(":");
+        hour24 = Number(parts[0]);
+        minute = Number(parts[1]);
+    }
+
+    if (Number.isNaN(hour24)) {
+        hour24 = 22;
+    }
+
+    if (Number.isNaN(minute)) {
+        minute = 0;
+    }
+
+    const currentPeriod = hour24 < 12 ? "AM" : "PM";
+    const currentHour12 = hour24 % 12 || 12;
+
+    const popover = document.createElement("div");
+    popover.className = "schedule-picker-popover";
+    popover.addEventListener("click", function (event) {
+        event.stopPropagation();
+    });
+
+    const columns = document.createElement("div");
+    columns.className = "schedule-picker-columns";
+
+    const periodSelect = document.createElement("select");
+    periodSelect.className = "schedule-picker-list";
+    periodSelect.size = 2;
+    periodSelect.appendChild(
+        makeOption("AM", "오전", currentPeriod === "AM")
+    );
+    periodSelect.appendChild(
+        makeOption("PM", "오후", currentPeriod === "PM")
+    );
+
+    const hourSelect = document.createElement("select");
+    hourSelect.className = "schedule-picker-list";
+    hourSelect.size = 6;
+
+    for (let hour = 1; hour <= 12; hour++) {
+        hourSelect.appendChild(
+            makeOption(
+                String(hour),
+                String(hour).padStart(2, "0"),
+                hour === currentHour12
+            )
+        );
+    }
+
+    const minuteSelect = document.createElement("select");
+    minuteSelect.className = "schedule-picker-list";
+    minuteSelect.size = 6;
+
+    for (let value = 0; value <= 59; value++) {
+        minuteSelect.appendChild(
+            makeOption(
+                String(value),
+                String(value).padStart(2, "0"),
+                value === minute
+            )
+        );
+    }
+
+    columns.appendChild(periodSelect);
+    columns.appendChild(hourSelect);
+    columns.appendChild(minuteSelect);
+    popover.appendChild(columns);
+
+    const actions = document.createElement("div");
+    actions.className = "schedule-picker-actions";
+
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "schedule-picker-cancel";
+    cancelButton.textContent = "취소";
+    cancelButton.onclick = closeSchedulePicker;
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "button";
+    saveButton.className = "schedule-picker-save";
+    saveButton.textContent = "적용";
+
+    saveButton.onclick = function () {
+        let hour = Number(hourSelect.value);
+
+        if (periodSelect.value === "AM") {
+            if (hour === 12) {
+                hour = 0;
+            }
+        } else if (hour !== 12) {
+            hour += 12;
+        }
+
+        const value =
+            `${String(hour).padStart(2, "0")}:` +
+            `${String(Number(minuteSelect.value)).padStart(2, "0")}`;
+
+        closeSchedulePicker();
+        updateReturnTime(value);
+    };
+
+    actions.appendChild(cancelButton);
+    actions.appendChild(saveButton);
+    popover.appendChild(actions);
+
+    positionSchedulePicker(popover, trigger);
+
+    hourSelect.focus();
+}
+
+
+function updateReturnTime(value) {
+    const body = new URLSearchParams();
+
+    body.append(
+        "travel_id",
+        String(travelId)
+    );
+
+    body.append(
+        "return_time",
+        value
+    );
+
+    fetch(
+        "/schedule_place_time_update/",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/x-www-form-urlencoded;charset=UTF-8",
+                "X-CSRFToken":
+                    getCookie("csrftoken")
+            },
+            body: body.toString()
+        }
+    )
+        .then(function (response) {
+            return response.json().then(function (data) {
+                if (!response.ok) {
+                    throw new Error(
+                        data.message
+                        || "복귀시간 수정 요청에 실패했습니다."
+                    );
+                }
+
+                return data;
+            });
+        })
+        .then(function (data) {
+            if (!data.success) {
+                throw new Error(
+                    data.message
+                    || "복귀시간 수정에 실패했습니다."
+                );
+            }
+
+            loadDay(currentDay);
+        })
+        .catch(function (error) {
+            console.error(
+                "복귀시간 수정 오류:",
+                error
+            );
+
+            alert(
+                error.message
+                || "복귀시간 수정 중 오류가 발생했습니다."
+            );
+        });
+}
+
+
 function openStayTimePicker(trigger, spId, currentMinutes) {
     closeSchedulePicker();
 
@@ -3159,234 +6716,41 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        initMap();
+        function startTravelDetailPage() {
 
-        const firstDay =
-            document.querySelector(
-                ".day"
+            initMap();
+
+            const firstDay =
+                document.querySelector(
+                    ".day"
+                );
+
+            if (firstDay) {
+
+                currentDay = 1;
+
+                loadDay(1);
+            }
+        }
+
+        if (
+            typeof kakao !== "undefined"
+            && kakao.maps
+            && typeof kakao.maps.load === "function"
+        ) {
+            kakao.maps.load(
+                startTravelDetailPage
             );
-
-        if (firstDay) {
-
-            currentDay = 1;
-
-            loadDay(1);
+        } else {
+            console.error(
+                "카카오 지도 SDK 로더가 준비되지 않았습니다."
+            );
         }
     }
 );
 
 </script>
 
-<script>
-/* =========================================================
-   여행 선택 팝업
-========================================================= */
-
-function openTravelSelectModal() {
-
-    const modal =
-        document.getElementById(
-            "travelSelectModal"
-        );
-
-    const results =
-        document.getElementById(
-            "travelSelectResults"
-        );
-
-    if (!modal || !results) {
-        return;
-    }
-
-    modal.style.display = "flex";
-
-    results.innerHTML = `
-        <p class="place-search-empty">
-            🔎 내 여행 목록을 불러오는 중...
-        </p>
-    `;
-
-    fetch("/travel_list/?select=1")
-
-        .then(function(response) {
-
-            if (!response.ok) {
-                throw new Error(
-                    "여행 목록을 불러오지 못했습니다."
-                );
-            }
-
-            return response.json();
-        })
-
-        .then(function(data) {
-
-            if (!data.success) {
-
-                results.innerHTML = `
-                    <p class="place-search-empty">
-                        ${data.message || "여행 목록이 없습니다."}
-                    </p>
-                `;
-
-                return;
-            }
-
-            const travels =
-                Array.isArray(data.travels)
-                    ? data.travels
-                    : [];
-
-            if (travels.length === 0) {
-
-                results.innerHTML = `
-                    <p class="place-search-empty">
-                        등록된 여행이 없습니다.
-                    </p>
-                `;
-
-                return;
-            }
-
-            results.innerHTML = "";
-
-            travels.forEach(function(travel) {
-
-                const row =
-                    document.createElement("div");
-
-                row.className =
-                    "place-search-result";
-
-                row.style.cursor = "pointer";
-
-                row.innerHTML = `
-                    <div
-                        class="place-result-image"
-                        style="
-                            display:flex;
-                            align-items:center;
-                            justify-content:center;
-                            font-size:32px;
-                        ">
-                        🗺️
-                    </div>
-
-                    <div class="place-result-info">
-
-                        <h3>
-                            ${travel.title || "제목 없는 여행"}
-                        </h3>
-
-                        <p>
-                            📍 ${travel.place || "지역 없음"}
-                        </p>
-
-                        <p>
-                            📅 ${travel.start || ""}
-                            ~
-                            ${travel.end || ""}
-                        </p>
-
-                    </div>
-
-                    <button
-                        type="button"
-                        class="place-select-btn">
-                        일정 관리
-                    </button>
-                `;
-
-                row.addEventListener(
-                    "click",
-                    function() {
-
-                        goToTravelDetail(
-                            travel.id
-                        );
-
-                    }
-                );
-
-                results.appendChild(row);
-            });
-        })
-
-        .catch(function(error) {
-
-            console.error(
-                "여행 목록 조회 오류:",
-                error
-            );
-
-            results.innerHTML = `
-                <p class="place-search-empty">
-                    여행 목록을 불러오는 중 오류가 발생했습니다.
-                </p>
-            `;
-        });
-}
-
-
-function closeTravelSelectModal() {
-
-    const modal =
-        document.getElementById(
-            "travelSelectModal"
-        );
-
-    if (modal) {
-        modal.style.display = "none";
-    }
-}
-
-
-function goToTravelDetail(travelId) {
-
-    if (!travelId) {
-        return;
-    }
-
-    window.location.href =
-        `/travel_detail/${travelId}/`;
-}
-</script>
-<!-- =========================================================
-     여행 선택 팝업
-========================================================= -->
-<div id="travelSelectModal"
-     class="place-modal"
-     style="display:none;">
-
-    <div class="place-modal-overlay"
-         onclick="closeTravelSelectModal()">
-    </div>
-
-    <div class="place-modal-content">
-
-        <div class="place-modal-header">
-
-            <h2>✈️ 내 여행 선택</h2>
-
-            <button
-                type="button"
-                onclick="closeTravelSelectModal()">
-                ×
-            </button>
-
-        </div>
-
-        <div id="travelSelectResults">
-
-            <p class="place-search-empty">
-                여행 목록을 불러오는 중...
-            </p>
-
-        </div>
-
-    </div>
-
-</div>
 </body>
 
 </html>

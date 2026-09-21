@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time
+import math
 
 from ..models import (
     Category,
@@ -12,6 +13,7 @@ from .place_service import search_places
 from .route_service import (
     calculate_distance,
     get_travel_time,
+    get_kakao_route,
 )
 
 
@@ -38,7 +40,17 @@ DEFAULT_STAY_TIME = {
 
 # 하루 관광 장소 최대 개수
 # 음식 / 숙박은 포함하지 않음
-MAX_ACTIVITY_PER_DAY = 3
+MAX_ACTIVITY_PER_DAY = 7
+
+
+# 자동 추천 시간 계산 시 같은 좌표쌍을 반복 조회하지 않도록 캐시한다.
+# 여행 하나를 생성하는 동안만 사용하는 메모리 캐시이다.
+_TRAVEL_MINUTES_CACHE = {}
+
+# 대중교통은 현재 서버에서 ODsay Web API를 직접 호출하지 않으므로
+# 일정 생성 단계에서는 거리 기반의 보수적인 예상시간을 사용한다.
+# 실제 화면에서는 ODsay 경로를 받은 뒤 충돌이 생기지 않도록 시간을 다시 밀어낸다.
+PUBLIC_TRANSPORT_MIN_BUFFER = 8
 
 
 # 첫날 시작
@@ -392,52 +404,211 @@ def remove_duplicate_places(
 
 # =========================================================
 # 이동시간
-# =========================================================
+# ===============================================def normalize_planning_transport(transport):
+    value = (
+        str(transport or 'car')
+        .split(',')[0]
+        .strip()
+        .lower()
+    )
+
+    transport_map = {
+        '자동차': 'car',
+        '차': 'car',
+        'car': 'car',
+        '도보': 'walk',
+        'walk': 'walk',
+        '자전거': 'bike',
+        'bike': 'bike',
+        '대중교통': 'public_transport',
+        'public': 'public_transport',
+        'public transport': 'public_transport',
+        'public_transport': 'public_transport',
+    }
+
+    return transport_map.get(
+        value,
+        value
+    )
+
 
 def calculate_travel_minutes(
     start_point,
     end_point,
     transport
 ):
+    """
+    자동 일정 생성에 사용할 이동시간.
+
+    car:
+        지도에서 사용하는 Kakao Directions와 같은 실제 duration을 우선 사용.
+        API 실패 시 기존 거리 기반 get_travel_time()으로 fallback.
+
+    public_transport:
+        ODsay Web Key는 브라우저에서 호출하므로 서버 자동추천 단계에서는
+        거리별 평균속도 + 환승/대기 버퍼를 사용한다.
+        화면 로딩 후 ODsay 실제 소요시간이 더 길면 프론트에서 뒤 일정을 밀어낸다.
+
+    walk / bike:
+        기존 get_travel_time() 계산 사용.
+    """
 
     if (
         start_point is None
         or
         end_point is None
     ):
-
         return 0
-
 
     try:
-
-        minutes = get_travel_time(
-
-            start_point[0],
-            start_point[1],
-
-            end_point[0],
-            end_point[1],
-
-            transport
-        )
-
-
-        return max(
-            int(minutes),
-            0
-        )
-
-
-    except Exception as e:
-
-        print(
-            '이동시간 계산 실패:',
-            e
-        )
-
+        start_lat = float(start_point[0])
+        start_lon = float(start_point[1])
+        end_lat = float(end_point[0])
+        end_lon = float(end_point[1])
+    except (TypeError, ValueError):
         return 0
 
+    normalized_transport = (
+        normalize_planning_transport(
+            transport
+        )
+    )
+
+    cache_key = (
+        round(start_lat, 6),
+        round(start_lon, 6),
+        round(end_lat, 6),
+        round(end_lon, 6),
+        normalized_transport,
+    )
+
+    if cache_key in _TRAVEL_MINUTES_CACHE:
+        return _TRAVEL_MINUTES_CACHE[
+            cache_key
+        ]
+
+    minutes = 0
+
+    # -----------------------------------------------------
+    # 자동차: Kakao 실제 길찾기 시간을 자동일정에도 동일하게 사용
+    # -----------------------------------------------------
+    if normalized_transport == 'car':
+        try:
+            route_data = get_kakao_route(
+                start_lat=start_lat,
+                start_lon=start_lon,
+                end_lat=end_lat,
+                end_lon=end_lon,
+                transport='car',
+            )
+
+            duration_seconds = float(
+                (route_data or {}).get(
+                    'duration',
+                    0
+                )
+                or 0
+            )
+
+            if duration_seconds > 0:
+                minutes = max(
+                    int(
+                        (duration_seconds + 59)
+                        // 60
+                    ),
+                    1
+                )
+
+        except Exception as e:
+            print(
+                'Kakao 실제 이동시간 계산 실패:',
+                e
+            )
+
+    # -----------------------------------------------------
+    # 대중교통: 서버에서는 보수적인 계획용 예상값
+    # -----------------------------------------------------
+    elif normalized_transport == 'public_transport':
+        try:
+            distance = max(
+                float(
+                    calculate_distance(
+                        start_lat,
+                        start_lon,
+                        end_lat,
+                        end_lon,
+                    )
+                ),
+                0.0
+            )
+
+            # 직선거리 -> 실제 이동거리 보정
+            road_distance = (
+                distance * 1.18
+            )
+
+            if distance >= 100:
+                # KTX/고속·시외 이동이 섞일 수 있는 장거리
+                speed = 65
+                buffer = 20
+            elif distance >= 30:
+                speed = 42
+                buffer = 15
+            elif distance >= 5:
+                speed = 24
+                buffer = 10
+            else:
+                speed = 18
+                buffer = PUBLIC_TRANSPORT_MIN_BUFFER
+
+            minutes = max(
+                int(
+                    math.ceil(
+                        road_distance
+                        / speed
+                        * 60
+                    )
+                )
+                + buffer,
+                1
+            )
+
+        except Exception as e:
+            print(
+                '대중교통 계획시간 계산 실패:',
+                e
+            )
+
+    # -----------------------------------------------------
+    # 도보 / 자전거 / 기타
+    # -----------------------------------------------------
+    if minutes <= 0:
+        try:
+            minutes = max(
+                int(
+                    get_travel_time(
+                        start_lat,
+                        start_lon,
+                        end_lat,
+                        end_lon,
+                        normalized_transport,
+                    )
+                ),
+                0
+            )
+
+        except Exception as e:
+            print(
+                '이동시간 계산 실패:',
+                e
+            )
+            minutes = 0
+
+    _TRAVEL_MINUTES_CACHE[
+        cache_key
+    ] = minutes
+
+    return minutes
 
 # =========================================================
 # 현재 위치에서 가장 가까운 장소
@@ -1832,6 +2003,9 @@ def generate_schedule(
     숙소 도착시간 미입력: 20:00
     """
 
+    # 여행마다 좌표/이동시간 캐시를 새로 시작한다.
+    _TRAVEL_MINUTES_CACHE.clear()
+
     print()
     print('=================================')
     print('날짜별 자동 일정 생성 시작')
@@ -2027,8 +2201,51 @@ def generate_schedule(
                     )
                 )
 
-        day_end_datetime = (
+        # ---------------------------------------------
+        # 마지막 DAY은 사용자가 지정한 RETURN_TIME까지
+        # 최초 출발지로 돌아갈 수 있어야 한다.
+        # ---------------------------------------------
+        return_point = None
+        return_datetime = None
+
+        if is_last_day:
+            return_point = get_start_point(
+                travel
+            )
+
+            return_time = (
+                normalize_time(
+                    getattr(
+                        travel,
+                        'return_time',
+                        None,
+                    )
+                )
+                or time(22, 0)
+            )
+
+            if return_point is not None:
+                return_datetime = (
+                    datetime.combine(
+                        travel_date,
+                        return_time,
+                    )
+                )
+
+        deadline_point = (
+            accommodation_point
+            if accommodation_point is not None
+            else return_point
+        )
+
+        deadline_datetime = (
             accommodation_datetime
+            if accommodation_datetime is not None
+            else return_datetime
+        )
+
+        day_end_datetime = (
+            deadline_datetime
             or datetime.combine(
                 travel_date,
                 DAY_END,
@@ -2091,7 +2308,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
+                deadline_point
                 if morning_limit == day_end_datetime
                 else None
             ),
@@ -2125,14 +2342,10 @@ def generate_schedule(
                 travel.t_way,
                 lunch_datetime,
                 fixed_datetime=(
-                    accommodation_datetime
-                    if accommodation
-                    else None
+                    deadline_datetime
                 ),
                 fixed_point=(
-                    accommodation_point
-                    if accommodation
-                    else None
+                    deadline_point
                 ),
             )
 
@@ -2163,7 +2376,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
+                deadline_point
                 if afternoon_limit == day_end_datetime
                 else None
             ),
@@ -2197,14 +2410,10 @@ def generate_schedule(
                 travel.t_way,
                 dinner_datetime,
                 fixed_datetime=(
-                    accommodation_datetime
-                    if accommodation
-                    else None
+                    deadline_datetime
                 ),
                 fixed_point=(
-                    accommodation_point
-                    if accommodation
-                    else None
+                    deadline_point
                 ),
             )
 
@@ -2230,9 +2439,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
-                if accommodation
-                else None
+                deadline_point
             ),
         )
 

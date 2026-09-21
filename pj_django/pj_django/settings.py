@@ -4,16 +4,17 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+DEPLOY = False
+#DEPLOY = True #PythonAnywhere에 올릴 때만 True로
 
 # .env 파일 불러오기
 load_dotenv(
-    BASE_DIR / ".env"
+    BASE_DIR / ".env",
+    override=True
 )
 
 # 카카오맵 API Key
-KAKAO_MAP_API_KEY = os.getenv(
-    "KAKAO_MAP_API_KEY"
-)
+KAKAO_MAP_API_KEY = os.getenv("KAKAO_MAP_API_KEY","")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
@@ -22,13 +23,24 @@ KAKAO_MAP_API_KEY = os.getenv(
 SECRET_KEY = 'django-insecure-3@^-*@q8(2vf-24@!86r1^4^p!s730av90edxy%25fx)k&khm-'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+#DEBUG = True
+DEBUG = not DEPLOY
+if DEPLOY:
+    ALLOWED_HOSTS = ['shlee.pythonanywhere.com']
+    CSRF_TRUSTED_ORIGINS = ['https://shlee.pythonanywhere.com']
+else:
+    #ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.11']
 
 # 카카오 REST API키
-KAKAO_REST_API_KEY = "a42d762a9d581241570816b03ff39930"
+KAKAO_REST_API_KEY = os.getenv("KAKAO_REST_API_KEY","")
 
-#ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['127.0.0.1','localhost','192.168.1.23']
+# ODsay WEB API키
+ODSAY_WEB_API_KEY = os.getenv("ODSAY_WEB_API_KEY","")
+
+SECURE_REFERRER_POLICY = (
+    'strict-origin-when-cross-origin'
+)
 
 # Application definition
 
@@ -67,6 +79,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'sherpaapp.context_processors.login_member',
                 'sherpaapp.context_processors.kakao_api_key',
+                'sherpaapp.context_processors.odsay_api_key',
             ],
         },
     },
@@ -92,20 +105,29 @@ WSGI_APPLICATION = 'pj_django.wsgi.application'
 #         },
 #     }
 # }
-DATABASES = {
-			'default': {
-				'ENGINE': 'django.db.backends.mysql',
-				'NAME': 'sherpa_schema',
-				'USER': 'sherpa',
-				'PASSWORD': '1234',
-				'HOST': '127.0.0.1',
-				'PORT': '3306',
-				'OPTIONS': {
-					'charset': 'utf8mb4',
-					'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-				},
-			}
-		}
+if DEPLOY:
+#if True:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+else:
+    DATABASES = {
+                'default': {
+                    'ENGINE': 'django.db.backends.mysql',
+                    'NAME': 'sherpa_schema',
+                    'USER': 'sherpa',
+                    'PASSWORD': '1234',
+                    'HOST': '127.0.0.1',
+                    'PORT': '3306',
+                    'OPTIONS': {
+                        'charset': 'utf8mb4',
+                        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                    },
+                }
+            }
 
 
 # Password validation
@@ -144,7 +166,19 @@ USE_TZ = False
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = 'static/' #
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+if DEPLOY:
+    MAX_UPLOAD_MB = 2
+else:
+    MAX_UPLOAD_MB = 5
+
+SESSION_COOKIE_AGE = 1800
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 # Email
