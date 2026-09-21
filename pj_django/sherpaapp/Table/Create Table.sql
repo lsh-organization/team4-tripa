@@ -46,8 +46,10 @@ CREATE TABLE member (
 --
 -- T_BUDGET          : 여행 총 예산
 -- START_*           : 첫날 출발지 / 좌표
--- ACCOMMODATION_*   : 숙소 / 좌표
--- CHECKIN_TIME      : 첫날 체크인 시간
+-- ACCOMMODATION_*   : 기존 숙소 / 좌표 호환용
+-- CHECKIN_TIME      : 기존 첫날 체크인 시간 호환용
+-- RETURN_TIME       : 마지막 날 최초 출발지 복귀 예정 시간
+--                     기본값 22:00:00
 -- =========================================================
 
 CREATE TABLE travel (
@@ -77,6 +79,10 @@ CREATE TABLE travel (
 
     CHECKIN_TIME TIME,
 
+    -- 마지막 DAY의 마지막 장소에서 최초 출발지로 돌아오는 목표 시간
+    -- 사용자가 일정 상세 화면에서 수정 가능
+    RETURN_TIME TIME DEFAULT '22:00:00',
+
     CONSTRAINT TRAVEL_PK
         PRIMARY KEY (T_ID),
 
@@ -88,6 +94,7 @@ CREATE TABLE travel (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
 
 -- =========================================================
 -- TRAVEL_DAY_PLAN
@@ -101,7 +108,9 @@ CREATE TABLE travel (
 --
 -- DAY 1 출발시간은 TRAVEL.START_TIME 사용
 -- DAY 2 이후는 DEPARTURE_TIME 사용
+-- 숙소 미입력 시 이전 숙소를 계속 사용하는 방식
 -- 마지막 날은 숙소 정보가 NULL일 수 있음
+-- 마지막 날 최초 출발지 복귀 목표시간은 TRAVEL.RETURN_TIME 사용
 -- =========================================================
 
 CREATE TABLE travel_day_plan (
@@ -134,6 +143,7 @@ CREATE TABLE travel_day_plan (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci;
+
 
 -- =========================================================
 -- PLACE

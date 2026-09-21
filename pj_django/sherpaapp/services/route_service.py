@@ -227,20 +227,43 @@ def get_travel_time(
     # DB에 CAR / car 둘 다 들어올 수 있으므로 통일
     transport = str(transport).strip().lower()
 
-    speed_map = {
-        'car': 30,
-        'walk': 4,
-        'public transport': 20,
-        'public_transport': 20,
-        'bike': 15,
-    }
+        # 실제 도로는 직선거리보다 길기 때문에 보정
+    road_distance = distance * 1.15
 
-    speed = speed_map.get(
-        transport,
-        20
+    if transport == 'car':
+
+        # 장거리
+        if distance >= 100:
+            speed = 80
+
+        # 중거리
+        elif distance >= 30:
+            speed = 60
+
+        # 시내 이동
+        else:
+            speed = 30
+
+    elif transport == 'walk':
+        speed = 4
+
+    elif transport == 'bike':
+        speed = 15
+
+    elif transport in (
+        'public transport',
+        'public_transport'
+    ):
+        speed = 25
+
+    else:
+        speed = 30
+
+    hours = (
+        road_distance
+        /
+        speed
     )
-
-    hours = distance / speed
 
     minutes = round(
         hours * 60
