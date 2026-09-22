@@ -404,7 +404,9 @@ def remove_duplicate_places(
 
 # =========================================================
 # 이동시간
-# ===============================================def normalize_planning_transport(transport):
+# ===============================================
+
+def normalize_planning_transport(transport):
     value = (
         str(transport or 'car')
         .split(',')[0]
