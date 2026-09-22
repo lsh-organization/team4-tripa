@@ -1958,6 +1958,82 @@ def mypage_edit(request):
         }
     )
 
+# ==============================================
+# 회원탈퇴
+# ==============================================
+
+def member_delete(request):
+
+    # POST 요청만 허용
+    if request.method != 'POST':
+
+        return redirect(
+            'mypage'
+        )
+
+
+    # 로그인 확인
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+
+    if not login_user:
+
+        return redirect(
+            'login'
+        )
+
+
+    # 현재 회원 조회
+    try:
+
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+
+        request.session.flush()
+
+        return redirect(
+            'login'
+        )
+
+
+    # 입력한 비밀번호
+    password = request.POST.get(
+        'password',
+        ''
+    )
+
+
+    # 비밀번호 확인
+    if member.pwd != password:
+
+        return HttpResponse("""
+            <script>
+                alert('비밀번호가 일치하지 않습니다.');
+                history.back();
+            </script>
+        """)
+
+
+    # 회원 삭제
+    member.delete()
+
+
+    # 로그인 세션 삭제
+    request.session.flush()
+
+
+    return HttpResponse("""
+        <script>
+            alert('회원탈퇴가 완료되었습니다.');
+            location.href = '../';
+        </script>
+    """)
+
 def schedule_place_search(request):
     query = request.GET.get('query', '').strip()
 
