@@ -222,4 +222,10 @@ urlpatterns = [
         views.budget_delete,
         name='budget_delete'
     ),
+
+    path(
+        'member_delete/',
+        views.member_delete,
+        name='member_delete'
+    ),
 ]
