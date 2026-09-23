@@ -110,26 +110,120 @@ def login(request):
     template = loader.get_template('sherpaapp/login.html')
     return HttpResponse(template.render({},request))
 
+# ==============================================
 # 장소 검색
+# ==============================================
+
 def place_search(request):
-    template = loader.get_template('sherpaapp/place_search.html')
-    return HttpResponse(
-        template.render({},request))
-# 장소 검색 실행
-def place_search_search(request):
-    query = request.GET.get('query', '').strip()
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+    if not login_user:
+        return redirect(
+            'login'
+        )
 
     try:
-        places = _search_kakao_places(query)
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+        return redirect(
+            'login'
+        )
+
+    # 현재 로그인한 회원의 여행 목록만 조회
+    travels = (
+        Travel.objects
+        .filter(
+            member=member
+        )
+        .order_by(
+            '-t_id'
+        )
+    )
+
+    return render(
+        request,
+        'sherpaapp/place_search.html',
+        {
+            'member': member,
+            'travels': travels,
+            'places': [],
+            'query': '',
+            'KAKAO_MAP_API_KEY':
+                settings.KAKAO_MAP_API_KEY,
+        }
+    )
+
+
+# ==============================================
+# 장소 검색 실행
+# ==============================================
+
+def place_search_search(request):
+
+    login_user = request.session.get(
+        'login_ok_user'
+    )
+
+    if not login_user:
+        return redirect(
+            'login'
+        )
+
+    try:
+        member = Member.objects.get(
+            email=login_user
+        )
+
+    except Member.DoesNotExist:
+        return redirect(
+            'login'
+        )
+
+    # 검색 후 페이지가 다시 렌더링되어도
+    # 일정 추가 모달의 여행 목록이 유지되도록 다시 조회
+    travels = (
+        Travel.objects
+        .filter(
+            member=member
+        )
+        .order_by(
+            '-t_id'
+        )
+    )
+
+    query = request.GET.get(
+        'query',
+        ''
+    ).strip()
+
+    try:
+        places = _search_kakao_places(
+            query
+        )
+
     except requests.RequestException:
         places = []
 
     context = {
+        'member': member,
+        'travels': travels,
         'places': places,
         'query': query,
-        'KAKAO_MAP_API_KEY': settings.KAKAO_MAP_API_KEY,
+        'KAKAO_MAP_API_KEY':
+            settings.KAKAO_MAP_API_KEY,
     }
-    return render(request, 'sherpaapp/place_search.html', context)
+
+    return render(
+        request,
+        'sherpaapp/place_search.html',
+        context
+    )
 
 
 # 여행 생성

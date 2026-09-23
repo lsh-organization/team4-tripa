@@ -39,12 +39,10 @@ db.sqlite3
 .DS_Store
 Thumbs.db
 
-<<<<<<< HEAD
 # =========================
-# .env
+# Environment
 # =========================
 
 .env
-=======
-.env
->>>>>>> 891429e3f544b0a291afda612d071ac7811b1d64
+.env.*
+!.env.example

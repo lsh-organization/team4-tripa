@@ -13,7 +13,6 @@ from .place_service import search_places
 from .route_service import (
     calculate_distance,
     get_travel_time,
-    get_kakao_route,
 )
 
 
@@ -40,7 +39,7 @@ DEFAULT_STAY_TIME = {
 
 # 하루 관광 장소 최대 개수
 # 음식 / 숙박은 포함하지 않음
-MAX_ACTIVITY_PER_DAY = 7
+MAX_ACTIVITY_PER_DAY = 3
 
 
 # 자동 추천 시간 계산 시 같은 좌표쌍을 반복 조회하지 않도록 캐시한다.
@@ -404,8 +403,7 @@ def remove_duplicate_places(
 
 # =========================================================
 # 이동시간
-# ===============================================
-
+# =========================================================
 def normalize_planning_transport(transport):
     value = (
         str(transport or 'car')
@@ -440,25 +438,24 @@ def calculate_travel_minutes(
     transport
 ):
     """
-    자동 일정 생성에 사용할 이동시간.
+    자동 일정 '후보 평가'용 빠른 예상 이동시간.
 
-    car:
-        지도에서 사용하는 Kakao Directions와 같은 실제 duration을 우선 사용.
-        API 실패 시 기존 거리 기반 get_travel_time()으로 fallback.
+    중요:
+    이 함수에서는 Kakao Directions / ODsay 같은 외부 길찾기 API를
+    절대로 호출하지 않는다.
 
-    public_transport:
-        ODsay Web Key는 브라우저에서 호출하므로 서버 자동추천 단계에서는
-        거리별 평균속도 + 환승/대기 버퍼를 사용한다.
-        화면 로딩 후 ODsay 실제 소요시간이 더 길면 프론트에서 뒤 일정을 밀어낸다.
+    이유:
+    fill_activities()는 후보 장소 여러 개를 반복 평가하므로
+    여기서 외부 API를 호출하면 여행 생성 한 번에 수십~수백 번의
+    네트워크 요청이 발생해 PythonAnywhere 요청 시간이 지나치게 길어진다.
 
-    walk / bike:
-        기존 get_travel_time() 계산 사용.
+    실제 상세 경로와 실제 이동시간은 여행 상세 페이지에서
+    최종 선택된 장소 사이에 대해서만 조회한다.
     """
 
     if (
         start_point is None
-        or
-        end_point is None
+        or end_point is None
     ):
         return 0
 
@@ -489,122 +486,128 @@ def calculate_travel_minutes(
             cache_key
         ]
 
-    minutes = 0
-
-    # -----------------------------------------------------
-    # 자동차: Kakao 실제 길찾기 시간을 자동일정에도 동일하게 사용
-    # -----------------------------------------------------
-    if normalized_transport == 'car':
-        try:
-            route_data = get_kakao_route(
-                start_lat=start_lat,
-                start_lon=start_lon,
-                end_lat=end_lat,
-                end_lon=end_lon,
-                transport='car',
-            )
-
-            duration_seconds = float(
-                (route_data or {}).get(
-                    'duration',
-                    0
+    try:
+        distance = max(
+            float(
+                calculate_distance(
+                    start_lat,
+                    start_lon,
+                    end_lat,
+                    end_lon,
                 )
-                or 0
-            )
+            ),
+            0.0
+        )
+    except Exception as e:
+        print(
+            '거리 계산 실패:',
+            e
+        )
+        distance = 0.0
 
-            if duration_seconds > 0:
-                minutes = max(
-                    int(
-                        (duration_seconds + 59)
-                        // 60
-                    ),
-                    1
+    if distance <= 0:
+        minutes = 0
+
+    elif normalized_transport == 'walk':
+        # 실제 보행 경로가 직선보다 길다는 점을 약 15% 보정
+        adjusted_distance = (
+            distance * 1.15
+        )
+
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / 4.0
+                    * 60
                 )
+            ),
+            1
+        )
 
-        except Exception as e:
-            print(
-                'Kakao 실제 이동시간 계산 실패:',
-                e
-            )
+    elif normalized_transport == 'bike':
+        adjusted_distance = (
+            distance * 1.12
+        )
 
-    # -----------------------------------------------------
-    # 대중교통: 서버에서는 보수적인 계획용 예상값
-    # -----------------------------------------------------
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / 15.0
+                    * 60
+                )
+            ),
+            1
+        )
+
     elif normalized_transport == 'public_transport':
-        try:
-            distance = max(
-                float(
-                    calculate_distance(
-                        start_lat,
-                        start_lon,
-                        end_lat,
-                        end_lon,
-                    )
-                ),
-                0.0
-            )
+        # 대중교통은 환승/도보/대기시간을 포함해 보수적으로 잡는다.
+        adjusted_distance = (
+            distance * 1.18
+        )
 
-            # 직선거리 -> 실제 이동거리 보정
-            road_distance = (
-                distance * 1.18
-            )
+        if distance >= 100:
+            speed = 65.0
+            buffer = 20
+        elif distance >= 30:
+            speed = 42.0
+            buffer = 15
+        elif distance >= 5:
+            speed = 24.0
+            buffer = 10
+        else:
+            speed = 18.0
+            buffer = PUBLIC_TRANSPORT_MIN_BUFFER
 
-            if distance >= 100:
-                # KTX/고속·시외 이동이 섞일 수 있는 장거리
-                speed = 65
-                buffer = 20
-            elif distance >= 30:
-                speed = 42
-                buffer = 15
-            elif distance >= 5:
-                speed = 24
-                buffer = 10
-            else:
-                speed = 18
-                buffer = PUBLIC_TRANSPORT_MIN_BUFFER
-
-            minutes = max(
-                int(
-                    math.ceil(
-                        road_distance
-                        / speed
-                        * 60
-                    )
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / speed
+                    * 60
                 )
-                + buffer,
-                1
             )
+            + buffer,
+            1
+        )
 
-        except Exception as e:
-            print(
-                '대중교통 계획시간 계산 실패:',
-                e
-            )
+    else:
+        # 자동차 및 기타 차량.
+        # 후보 평가에서는 실제 Directions API 대신 거리 기반 예상치만 사용한다.
+        # 시내 짧은 구간은 신호/교차로 시간을 더 크게 잡고,
+        # 장거리는 평균속도를 높인다.
+        adjusted_distance = (
+            distance * 1.22
+        )
 
-    # -----------------------------------------------------
-    # 도보 / 자전거 / 기타
-    # -----------------------------------------------------
-    if minutes <= 0:
-        try:
-            minutes = max(
-                int(
-                    get_travel_time(
-                        start_lat,
-                        start_lon,
-                        end_lat,
-                        end_lon,
-                        normalized_transport,
-                    )
-                ),
-                0
-            )
+        if distance < 2:
+            speed = 24.0
+            buffer = 3
+        elif distance < 10:
+            speed = 34.0
+            buffer = 4
+        elif distance < 50:
+            speed = 48.0
+            buffer = 6
+        elif distance < 150:
+            speed = 65.0
+            buffer = 8
+        else:
+            speed = 78.0
+            buffer = 12
 
-        except Exception as e:
-            print(
-                '이동시간 계산 실패:',
-                e
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / speed
+                    * 60
+                )
             )
-            minutes = 0
+            + buffer,
+            1
+        )
 
     _TRAVEL_MINUTES_CACHE[
         cache_key
