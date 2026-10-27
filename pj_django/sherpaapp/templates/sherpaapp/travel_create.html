@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TRIPA - 여행 만들기</title>
     {% load static %}
-    <link rel="stylesheet" href="{% static 'sherpaapp/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'sherpaapp/css/style.css' %}?v=20261038">
 
     <style>
         .search-input-row {
@@ -368,32 +368,160 @@
 <div class="detail-container">
     <aside class="sidebar">
         <div class="logo">
-            <a href="{% url 'index' %}">🏔️ TRIPA</a>
+            <a href="{% url 'index' %}">{% include "_icon.html" with name="mountain" %} TRIPA</a>
         </div>
 
         <div class="menu-title">MENU</div>
 
         <ul class="menu">
-            <li><a href="{% url 'travel_list' %}">✈️ 내 여행</a></li>
-            <li><a href="{% url 'travel_create' %}" class="active">➕ 여행 만들기</a></li>
-            <li><a href="{% url 'place_search' %}">📍 장소 검색</a></li>
-            <li><a href="{% url 'travel_detail' travel_id=1 %}">📅 일정 관리</a></li>
-            <li><a href="{% url 'budget' %}">💰 비용 관리</a></li>
+            <li><a href="{% url 'travel_list' %}">{% include "_icon.html" with name="suitcase" %} 내 여행</a></li>
+            <li><a href="{% url 'travel_create' %}" class="active">{% include "_icon.html" with name="plus" %} 여행 만들기</a></li>
+            <li><a href="{% url 'place_search' %}">{% include "_icon.html" with name="pin" %} 장소 검색</a></li>
+            <li><a href="{% url 'schedule_manage' %}">{% include "_icon.html" with name="calendar" %} 일정 관리</a></li>
+            <li><a href="{% url 'budget' %}">{% include "_icon.html" with name="wallet" %} 비용 관리</a></li>
         </ul>
 
         {% if member %}
-            <a href="{% url 'mypage' %}" class="user-profile">👤 {{ member.nickname }}</a>
+            <a href="{% url 'mypage' %}" class="user-profile">{% include "_icon.html" with name="user" %} {{ member.nickname }}</a>
         {% else %}
-            <a href="{% url 'login' %}" class="user-profile">👤 로그인</a>
+            <a href="{% url 'login' %}" class="user-profile">{% include "_icon.html" with name="user" %} 로그인</a>
         {% endif %}
     </aside>
 
     <main class="detail-content">
+        {% if mode == 'chat' %}
         <div class="page-title">
-            <h1>✈️ 새로운 여행 만들기</h1>
-            <p>여행 기본 정보와 출발지, 날짜별 숙소 정보를 입력해주세요.</p>
+            <h1>{% include "_icon.html" with name="plane" %} AI와 여행 만들기</h1>
+            <p>가고 싶은 여행을 말하듯이 적어 주세요. 대화하면서 일정 초안이 채워져요.</p>
         </div>
+        {% else %}
+        <div class="page-title">
+            <h1>{% include "_icon.html" with name="plane" %} 새로운 여행 만들기</h1>
+            <p>여행 기본 정보와 출발지, 날짜별 숙소 정보를 입력해주세요.</p>
+            <p class="tc-switch"><a href="{% url 'travel_create' %}">AI와 대화로 만들기</a></p>
+        </div>
+        {% endif %}
 
+{% if mode == 'chat' %}
+        <div class="tc-app" id="tcApp"
+             data-chat-url="{% url 'travel_chat' %}"
+             data-apply-url="{% url 'travel_chat_apply' %}"
+             data-add-url="{% url 'schedule_place_add' %}"
+             data-preview-url="{% url 'travel_chat_preview' %}"
+             data-login-url="{% url 'login' %}"
+             data-sprite="{% static 'sherpaapp/icons/icons.svg' %}?v=5"
+             data-prefill="{{ prefill_title|default:'' }}"
+             data-budget="{{ prefill_budget_code|default:'' }}">
+            {% csrf_token %}
+
+            <!-- 1) 대화 -->
+            <section class="tc-panel tc-chat" aria-label="AI와 대화">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="chat" %} 대화</h2>
+                    <button type="button" class="tc-link" id="tcReset">새로 시작</button>
+                </header>
+
+                <div class="tc-messages" id="tcMessages" aria-live="polite"></div>
+
+                <div class="tc-examples" id="tcExamples" aria-label="예시 질문"></div>
+
+                <form class="tc-form" id="tcForm" autocomplete="off">
+                    <textarea id="tcInput" rows="1" maxlength="500"
+                              placeholder="여행 이야기를 편하게 적어 주세요"
+                              aria-label="메시지 입력"></textarea>
+                    <button type="submit" class="tc-send" id="tcSend" aria-label="보내기">
+                        {% include "_icon.html" with name="arrow" %}
+                    </button>
+                </form>
+            </section>
+
+            <!-- 2) 일정 초안 -->
+            <section class="tc-panel tc-draft" aria-label="일정 초안">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="calendar" %} 일정 초안</h2>
+                    <span class="tc-panel__sub">적용 전 미리보기</span>
+                </header>
+
+                <div class="tc-draft__body">
+                    <p class="tc-draft__title" id="tcTitle">새 여행</p>
+
+                    <div class="tc-progress" aria-hidden="true"><span id="tcProgressBar"></span></div>
+                    <p class="tc-progress__text"><strong id="tcProgressText">필수 정보 0/4</strong> <span id="tcMissing"></span></p>
+
+                    <ul class="tc-notes" id="tcNotes" hidden></ul>
+
+                    <dl class="tc-rows">
+                        <div class="tc-row is-empty" data-row="place">
+                            <dt>{% include "_icon.html" with name="pin" %}<span>지역</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="date">
+                            <dt>{% include "_icon.html" with name="calendar" %}<span>날짜</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="people">
+                            <dt>{% include "_icon.html" with name="users" %}<span>인원</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="stay">
+                            <dt>{% include "_icon.html" with name="bed" %}<span>숙소</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="start">
+                            <dt>{% include "_icon.html" with name="flag" %}<span>출발</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="budget">
+                            <dt>{% include "_icon.html" with name="wallet" %}<span>예산</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="concept">
+                            <dt>{% include "_icon.html" with name="tag" %}<span>컨셉</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="transport">
+                            <dt>{% include "_icon.html" with name="route" %}<span>이동수단</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                        <div class="tc-row is-empty" data-row="pins">
+                            <dt>{% include "_icon.html" with name="pin" %}<span>담은 장소</span></dt>
+                            <dd class="tc-val"></dd>
+                        </div>
+                    </dl>
+                    <section class="tc-plan" aria-label="일정 미리보기">
+                        <div class="tc-plan__head">
+                            <h3>{% include "_icon.html" with name="route" %} 일정 미리보기</h3>
+                            <button type="button" class="tc-link" id="tcPlanRefresh" hidden>다시 만들기</button>
+                        </div>
+                        <div class="tc-tabs" id="tcTabs" role="tablist"></div>
+                        <div class="tc-plan__body" id="tcTimeline" aria-live="polite"></div>
+                        <p class="tc-plan__sum" id="tcPlanState"></p>
+                    </section>
+                </div>
+
+                <footer class="tc-draft__foot">
+                    <button type="button" class="tc-btn tc-btn--primary" id="tcApply" disabled>
+                        {% include "_icon.html" with name="check" %} 이 일정 적용하기
+                    </button>
+                    <button type="button" class="tc-btn tc-btn--ghost" id="tcEdit">
+                        {% include "_icon.html" with name="chat" %} 채팅으로 고치기
+                    </button>
+                    <a class="tc-link tc-manual" href="{% url 'travel_create' %}?mode=manual">직접 선택해서 만들기</a>
+                </footer>
+            </section>
+
+            <!-- 3) 지도 -->
+            <section class="tc-panel tc-mapPanel" aria-label="지도">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="map" %} 지도</h2>
+                </header>
+                <div class="tc-mapWrap">
+                    <div id="tcMap" class="tc-map"></div>
+                    <p class="tc-map__hint" id="tcMapHint">지역을 정하면 지도에 표시돼요.</p>
+                </div>
+            </section>
+        </div>
+{% else %}
         <div class="create-layout">
             <div class="card">
                 <form method="POST" id="travelCreateForm">
@@ -403,11 +531,16 @@
                         <div class="error-message">{{ error }}</div>
                     {% endif %}
 
+                    {% if prefill_budget_style %}
+                        <div class="plan-notice">{% include "_icon.html" with name="wallet" %} 선택한 예산 성향: <strong>{{ prefill_budget_style }}</strong></div>
+                    {% endif %}
+
                     <div class="form-group">
                         <label>여행 제목</label>
                         <input
                             type="text"
                             name="t_title"
+                            value="{{ prefill_title|default:'' }}"
                             placeholder="예) 서울 3박 4일 여행"
                             required>
                     </div>
@@ -417,6 +550,7 @@
                         <input
                             type="text"
                             name="t_place"
+                            value="{{ prefill_place|default:'' }}"
                             placeholder="예) 서울"
                             required>
                     </div>
@@ -539,7 +673,7 @@
                     </div>
 
                     <section id="dayPlanSection" class="day-plan-section">
-                        <h2 class="day-plan-title">🏨 날짜별 숙소 및 출발 시간</h2>
+                        <h2 class="day-plan-title">{% include "_icon.html" with name="bed" %} 날짜별 숙소 및 출발 시간</h2>
                         <div id="dayPlanContainer"></div>
                     </section>
 
@@ -551,7 +685,7 @@
             </div>
 
             <div class="card guide-card">
-                <h2>💡 여행 만들기</h2>
+                <h2>{% include "_icon.html" with name="bulb" %} 여행 만들기</h2>
                 <p>1. 여행 제목과 지역을 입력합니다.</p>
                 <p>2. 출발지를 검색해서 선택하고 첫날 출발 시간을 설정합니다.</p>
                 <p>3. 원하는 여행 컨셉과 교통수단을 선택합니다.</p>
@@ -560,9 +694,14 @@
                 <p>6. 날짜별 출발시간과 숙소 도착시간은 필요한 경우 설정합니다.</p>
             </div>
         </div>
+        {% endif %}
     </main>
 </div>
 
+{% if mode == 'chat' %}
+<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_API_KEY }}&autoload=false"></script>
+<script src="{% static 'sherpaapp/js/travel_chat.js' %}?v=20261038"></script>
+{% else %}
 <div id="placeSearchModal" class="place-search-modal" aria-hidden="true">
     <div class="place-search-dialog">
         <div class="place-search-modal-header">
@@ -588,6 +727,13 @@
 </div>
 
 <script>
+const TP_SPRITE = "{% static 'sherpaapp/icons/icons.svg' %}?v=5";
+
+function tpIcon(name) {
+    return '<svg class="tp-icon" aria-hidden="true" focusable="false"><use href="'
+        + TP_SPRITE + '#i-' + name + '"></use></svg>';
+}
+
 let activeSchedulePicker = null;
 let placeSearchTarget = null;
 let dayPlanState = {};
@@ -1035,7 +1181,7 @@ function searchPlaces() {
         return;
     }
 
-    results.innerHTML = '<p class="place-search-empty">🔎 검색 중...</p>';
+    results.innerHTML = '<p class="place-search-empty">' + tpIcon("search") + ' 검색 중...</p>';
 
     fetch(`/schedule_place_search/?query=${encodeURIComponent(query)}`)
         .then(function (response) {
@@ -1069,7 +1215,7 @@ function searchPlaces() {
                 } else {
                     const noImage = document.createElement("div");
                     noImage.className = "no-place-image";
-                    noImage.textContent = "📍";
+                    noImage.innerHTML = tpIcon("pin");
                     imageArea.appendChild(noImage);
                 }
 
@@ -1083,7 +1229,8 @@ function searchPlaces() {
                 address.textContent = place.address || "주소 정보 없음";
 
                 const category = document.createElement("p");
-                category.textContent = `🏷️ ${place.category || ""}`;
+                category.textContent = place.category || "";
+                category.insertAdjacentHTML("afterbegin", tpIcon("tag") + " ");
 
                 info.appendChild(name);
                 info.appendChild(address);
@@ -1286,7 +1433,6 @@ form.addEventListener("keydown", function (event) {
     updateEndDate();
 });
 </script>
+{% endif %}
 </body>
 </html>
-travel_create.html
-HTML

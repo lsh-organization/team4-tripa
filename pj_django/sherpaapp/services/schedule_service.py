@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, time
+import math
 
 from ..models import (
     Category,
@@ -39,6 +40,16 @@ DEFAULT_STAY_TIME = {
 # 하루 관광 장소 최대 개수
 # 음식 / 숙박은 포함하지 않음
 MAX_ACTIVITY_PER_DAY = 3
+
+
+# 자동 추천 시간 계산 시 같은 좌표쌍을 반복 조회하지 않도록 캐시한다.
+# 여행 하나를 생성하는 동안만 사용하는 메모리 캐시이다.
+_TRAVEL_MINUTES_CACHE = {}
+
+# 대중교통은 현재 서버에서 ODsay Web API를 직접 호출하지 않으므로
+# 일정 생성 단계에서는 거리 기반의 보수적인 예상시간을 사용한다.
+# 실제 화면에서는 ODsay 경로를 받은 뒤 충돌이 생기지 않도록 시간을 다시 밀어낸다.
+PUBLIC_TRANSPORT_MIN_BUFFER = 8
 
 
 # 첫날 시작
@@ -393,51 +404,216 @@ def remove_duplicate_places(
 # =========================================================
 # 이동시간
 # =========================================================
+def normalize_planning_transport(transport):
+    value = (
+        str(transport or 'car')
+        .split(',')[0]
+        .strip()
+        .lower()
+    )
+
+    transport_map = {
+        '자동차': 'car',
+        '차': 'car',
+        'car': 'car',
+        '도보': 'walk',
+        'walk': 'walk',
+        '자전거': 'bike',
+        'bike': 'bike',
+        '대중교통': 'public_transport',
+        'public': 'public_transport',
+        'public transport': 'public_transport',
+        'public_transport': 'public_transport',
+    }
+
+    return transport_map.get(
+        value,
+        value
+    )
+
 
 def calculate_travel_minutes(
     start_point,
     end_point,
     transport
 ):
+    """
+    자동 일정 '후보 평가'용 빠른 예상 이동시간.
+
+    중요:
+    이 함수에서는 Kakao Directions / ODsay 같은 외부 길찾기 API를
+    절대로 호출하지 않는다.
+
+    이유:
+    fill_activities()는 후보 장소 여러 개를 반복 평가하므로
+    여기서 외부 API를 호출하면 여행 생성 한 번에 수십~수백 번의
+    네트워크 요청이 발생해 PythonAnywhere 요청 시간이 지나치게 길어진다.
+
+    실제 상세 경로와 실제 이동시간은 여행 상세 페이지에서
+    최종 선택된 장소 사이에 대해서만 조회한다.
+    """
 
     if (
         start_point is None
-        or
-        end_point is None
+        or end_point is None
     ):
-
         return 0
-
 
     try:
-
-        minutes = get_travel_time(
-
-            start_point[0],
-            start_point[1],
-
-            end_point[0],
-            end_point[1],
-
-            transport
-        )
-
-
-        return max(
-            int(minutes),
-            0
-        )
-
-
-    except Exception as e:
-
-        print(
-            '이동시간 계산 실패:',
-            e
-        )
-
+        start_lat = float(start_point[0])
+        start_lon = float(start_point[1])
+        end_lat = float(end_point[0])
+        end_lon = float(end_point[1])
+    except (TypeError, ValueError):
         return 0
 
+    normalized_transport = (
+        normalize_planning_transport(
+            transport
+        )
+    )
+
+    cache_key = (
+        round(start_lat, 6),
+        round(start_lon, 6),
+        round(end_lat, 6),
+        round(end_lon, 6),
+        normalized_transport,
+    )
+
+    if cache_key in _TRAVEL_MINUTES_CACHE:
+        return _TRAVEL_MINUTES_CACHE[
+            cache_key
+        ]
+
+    try:
+        distance = max(
+            float(
+                calculate_distance(
+                    start_lat,
+                    start_lon,
+                    end_lat,
+                    end_lon,
+                )
+            ),
+            0.0
+        )
+    except Exception as e:
+        print(
+            '거리 계산 실패:',
+            e
+        )
+        distance = 0.0
+
+    if distance <= 0:
+        minutes = 0
+
+    elif normalized_transport == 'walk':
+        # 실제 보행 경로가 직선보다 길다는 점을 약 15% 보정
+        adjusted_distance = (
+            distance * 1.15
+        )
+
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / 4.0
+                    * 60
+                )
+            ),
+            1
+        )
+
+    elif normalized_transport == 'bike':
+        adjusted_distance = (
+            distance * 1.12
+        )
+
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / 15.0
+                    * 60
+                )
+            ),
+            1
+        )
+
+    elif normalized_transport == 'public_transport':
+        # 대중교통은 환승/도보/대기시간을 포함해 보수적으로 잡는다.
+        adjusted_distance = (
+            distance * 1.18
+        )
+
+        if distance >= 100:
+            speed = 65.0
+            buffer = 20
+        elif distance >= 30:
+            speed = 42.0
+            buffer = 15
+        elif distance >= 5:
+            speed = 24.0
+            buffer = 10
+        else:
+            speed = 18.0
+            buffer = PUBLIC_TRANSPORT_MIN_BUFFER
+
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / speed
+                    * 60
+                )
+            )
+            + buffer,
+            1
+        )
+
+    else:
+        # 자동차 및 기타 차량.
+        # 후보 평가에서는 실제 Directions API 대신 거리 기반 예상치만 사용한다.
+        # 시내 짧은 구간은 신호/교차로 시간을 더 크게 잡고,
+        # 장거리는 평균속도를 높인다.
+        adjusted_distance = (
+            distance * 1.22
+        )
+
+        if distance < 2:
+            speed = 24.0
+            buffer = 3
+        elif distance < 10:
+            speed = 34.0
+            buffer = 4
+        elif distance < 50:
+            speed = 48.0
+            buffer = 6
+        elif distance < 150:
+            speed = 65.0
+            buffer = 8
+        else:
+            speed = 78.0
+            buffer = 12
+
+        minutes = max(
+            int(
+                math.ceil(
+                    adjusted_distance
+                    / speed
+                    * 60
+                )
+            )
+            + buffer,
+            1
+        )
+
+    _TRAVEL_MINUTES_CACHE[
+        cache_key
+    ] = minutes
+
+    return minutes
 
 # =========================================================
 # 현재 위치에서 가장 가까운 장소
@@ -1037,6 +1213,34 @@ def get_start_point(
 # 활동 장소 후보 + 음식 후보
 # =========================================================
 
+# 컨셉과 안 맞는 종류(카페/음식점/숙소)는 관광 후보에서 제외
+# 예) '랜드마크' 검색에 걸린 스타벅스
+_KIND_GROUPS = {
+    'CE7': ('카페',),
+    'FD6': ('음식', '맛집'),
+    'AD5': ('숙박', '숙소'),
+}
+
+
+def filter_by_real_kind(places, concept):
+
+    kept = []
+
+    for place in places:
+
+        allowed = _KIND_GROUPS.get(
+            place.get('kakao_group')
+        )
+
+        if allowed and concept not in allowed:
+            continue
+
+        kept.append(place)
+
+    # 전부 걸러지면 원래 결과를 그대로 사용
+    return kept or places
+
+
 def build_place_candidates(
     travel,
     categories
@@ -1086,6 +1290,11 @@ def build_place_candidates(
             )
         )
 
+
+        searched_places = filter_by_real_kind(
+            searched_places,
+            category.c_name
+        )
 
         for place in searched_places:
 
@@ -1832,6 +2041,9 @@ def generate_schedule(
     숙소 도착시간 미입력: 20:00
     """
 
+    # 여행마다 좌표/이동시간 캐시를 새로 시작한다.
+    _TRAVEL_MINUTES_CACHE.clear()
+
     print()
     print('=================================')
     print('날짜별 자동 일정 생성 시작')
@@ -2027,8 +2239,51 @@ def generate_schedule(
                     )
                 )
 
-        day_end_datetime = (
+        # ---------------------------------------------
+        # 마지막 DAY은 사용자가 지정한 RETURN_TIME까지
+        # 최초 출발지로 돌아갈 수 있어야 한다.
+        # ---------------------------------------------
+        return_point = None
+        return_datetime = None
+
+        if is_last_day:
+            return_point = get_start_point(
+                travel
+            )
+
+            return_time = (
+                normalize_time(
+                    getattr(
+                        travel,
+                        'return_time',
+                        None,
+                    )
+                )
+                or time(22, 0)
+            )
+
+            if return_point is not None:
+                return_datetime = (
+                    datetime.combine(
+                        travel_date,
+                        return_time,
+                    )
+                )
+
+        deadline_point = (
+            accommodation_point
+            if accommodation_point is not None
+            else return_point
+        )
+
+        deadline_datetime = (
             accommodation_datetime
+            if accommodation_datetime is not None
+            else return_datetime
+        )
+
+        day_end_datetime = (
+            deadline_datetime
             or datetime.combine(
                 travel_date,
                 DAY_END,
@@ -2091,7 +2346,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
+                deadline_point
                 if morning_limit == day_end_datetime
                 else None
             ),
@@ -2125,14 +2380,10 @@ def generate_schedule(
                 travel.t_way,
                 lunch_datetime,
                 fixed_datetime=(
-                    accommodation_datetime
-                    if accommodation
-                    else None
+                    deadline_datetime
                 ),
                 fixed_point=(
-                    accommodation_point
-                    if accommodation
-                    else None
+                    deadline_point
                 ),
             )
 
@@ -2163,7 +2414,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
+                deadline_point
                 if afternoon_limit == day_end_datetime
                 else None
             ),
@@ -2197,14 +2448,10 @@ def generate_schedule(
                 travel.t_way,
                 dinner_datetime,
                 fixed_datetime=(
-                    accommodation_datetime
-                    if accommodation
-                    else None
+                    deadline_datetime
                 ),
                 fixed_point=(
-                    accommodation_point
-                    if accommodation
-                    else None
+                    deadline_point
                 ),
             )
 
@@ -2230,9 +2477,7 @@ def generate_schedule(
             travel.t_way,
             MAX_ACTIVITY_PER_DAY,
             reach_point=(
-                accommodation_point
-                if accommodation
-                else None
+                deadline_point
             ),
         )
 

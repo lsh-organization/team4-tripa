@@ -13,7 +13,7 @@
     {% load static %}
 
     <link rel="stylesheet"
-          href="{% static 'sherpaapp/css/style.css' %}">
+          href="{% static 'sherpaapp/css/style.css' %}?v=20261035">
 
 </head>
 
@@ -29,14 +29,17 @@
 
     <div class="header-inner">
 
-        <a href="{% url 'index' %}" class="logo">
-            🏔️ TRIPA
+        <a href="{% url 'index' %}" class="logo logo-link">
+            {% include "_icon.html" with name="mountain" %}
+            TRIPA
         </a>
 
         <div class="header-actions">
 
+            <a href="{% url 'travel_list' %}">{% include "_icon.html" with name="suitcase" %}내 여행</a>
+
             {% if member %}
-                <span>👤🏞️🏖️🏕️{{ member.nickname }}님</span>
+                <span>{% include "_icon.html" with name="user" %}{{ member.nickname }}님</span>
                 <a href="{% url 'mypage' %}">마이페이지</a>
                 <a href="{% url 'logout' %}">로그아웃</a>
             {% else %}
@@ -62,7 +65,7 @@
         <div class="hero-content">
 
             <span class="hero-badge">
-                ✈️ 스마트한 여행 일정 관리
+                {% include "_icon.html" with name="plane" %} 스마트한 여행 일정 관리
             </span>
 
 
@@ -81,22 +84,239 @@
             </p>
 
 
+            <!-- 일정 시작 폼 -->
+
+            <form class="plan-form"
+                  action="{% url 'travel_create' %}"
+                  method="get">
+
+                <div class="plan-label">
+                    {% include "_icon.html" with name="wallet" %} 예산 성향 <small>(필수)</small>
+                </div>
+
+                <div class="plan-budget">
+
+                    <label>
+                        <input type="radio"
+                               name="budget_style"
+                               value="value"
+                               required
+                               checked>
+                        <span>가성비</span>
+                    </label>
+
+                    <label>
+                        <input type="radio"
+                               name="budget_style"
+                               value="premium"
+                               required>
+                        <span>비싸도 괜찮음</span>
+                    </label>
+
+                </div>
+
+                <div class="plan-row">
+
+                    <input type="text"
+                           name="q"
+                           id="planInput"
+                           maxlength="100"
+                           autocomplete="off"
+                           placeholder="예: 강릉 1박 2일, 아이랑 갈 만한 곳 위주로">
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        일정 짜기
+                    </button>
+
+                </div>
+
+                <div class="plan-hint">
+                    이렇게 물어볼 수도 있어요
+                </div>
+
+                <div class="plan-examples" id="planExamples"
+                     data-sprite="{% static 'sherpaapp/icons/icons.svg' %}?v=4"></div>
+
+            </form>
+
+
             <div class="hero-buttons">
 
                 <a href="{% url 'travel_create' %}"
                    class="btn btn-primary btn-large">
-                    ✈️ 여행 계획 시작하기
+                    {% include "_icon.html" with name="plane" %} 여행 계획 시작하기
                 </a>
 
                 <a href="{% url 'travel_list' %}"
                    class="btn btn-secondary btn-large">
-                    내 여행 보기
+                    {% include "_icon.html" with name="suitcase" %} 내 여행 보기
                 </a>
 
             </div>
 
         </div>
 
+
+        {% if recent_travel %}
+
+        <!-- 최근 만든 일정 -->
+
+        <div class="hero-preview">
+
+            <div class="preview-window">
+
+                <div class="preview-header">
+
+                    <span>
+                        {% include "_icon.html" with name="map" %} {{ recent_travel.title }}
+                    </span>
+
+                    <span class="preview-status">
+                        최근 만든 일정
+                    </span>
+
+                </div>
+
+
+                <div class="preview-info">
+
+                    <div>
+                        {% include "_icon.html" with name="calendar" %}
+                        <span>
+                            {{ recent_travel.start|date:"Y.m.d" }} ~ {{ recent_travel.end|date:"Y.m.d" }}
+                        </span>
+                    </div>
+
+                    <div>
+                        {% include "_icon.html" with name="pin" %}
+                        <span>
+                            {{ recent_travel.place }}
+                        </span>
+                    </div>
+
+                </div>
+
+
+                {% if recent_travel.days %}
+
+                <div class="preview-days">
+
+                    {% for day in recent_travel.days %}
+                    <button type="button"
+                            class="preview-day{% if forloop.first %} active{% endif %}"
+                            data-day="{{ forloop.counter0 }}">
+                        DAY {{ day.number }}
+                    </button>
+                    {% endfor %}
+
+                </div>
+
+
+                {% for day in recent_travel.days %}
+                <div class="preview-schedule"
+                     data-day-panel="{{ forloop.counter0 }}"
+                     {% if not forloop.first %}hidden{% endif %}>
+
+                    {% for item in day.items %}
+                    <div class="preview-item">
+
+                        <span class="preview-time">
+                            {{ item.time|default:"--:--" }}
+                        </span>
+
+                        <div class="preview-place">
+                            <strong>
+                                {% include "_icon.html" with name="pin" %} {{ item.name }}
+                            </strong>
+
+                            {% if item.detail %}
+                            <small>
+                                {{ item.detail }}
+                            </small>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    {% empty %}
+                    <div class="preview-item">
+
+                        <div class="preview-place">
+                            <strong>
+                                아직 추가된 장소가 없어요
+                            </strong>
+
+                            <small>
+                                여행 상세에서 장소를 추가해보세요
+                            </small>
+                        </div>
+
+                    </div>
+                    {% endfor %}
+
+                </div>
+                {% endfor %}
+
+                {% endif %}
+
+
+                <a href="{% url 'travel_detail' travel_id=recent_travel.id %}"
+                   class="btn btn-secondary preview-open">
+                    이 일정 열어보기
+                </a>
+
+            </div>
+
+        </div>
+
+        {% elif member %}
+
+        <!-- 로그인했지만 아직 만든 일정이 없을 때 -->
+
+        <div class="hero-preview">
+
+            <div class="preview-window preview-window--empty">
+
+                <div class="preview-header">
+
+                    <span>
+                        {% include "_icon.html" with name="map" %} 내 여행 일정
+                    </span>
+
+                    <span class="preview-status">
+                        일정 없음
+                    </span>
+
+                </div>
+
+
+                <div class="preview-empty">
+
+                    <div class="preview-empty__icon">
+                        {% include "_icon.html" with name="calendar" %}
+                    </div>
+
+                    <strong>
+                        아직 만든 여행 일정이 없어요
+                    </strong>
+
+                    <p>
+                        여행지와 날짜만 정하면<br>
+                        날짜별 일정이 여기에 나타나요.
+                    </p>
+
+                    <a href="{% url 'travel_create' %}"
+                       class="btn btn-primary preview-empty__btn">
+                        + 여행 일정 추가하러 가기
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% else %}
 
         <!-- 여행 일정 미리보기 -->
 
@@ -107,7 +327,7 @@
                 <div class="preview-header">
 
                     <span>
-                        🗺️ 서울 여행
+                        {% include "_icon.html" with name="map" %} 서울 여행
                     </span>
 
                     <span class="preview-status">
@@ -120,14 +340,14 @@
                 <div class="preview-info">
 
                     <div>
-                        📅
+                        {% include "_icon.html" with name="calendar" %}
                         <span>
                             2026.09.09 ~ 2026.09.12
                         </span>
                     </div>
 
                     <div>
-                        📍
+                        {% include "_icon.html" with name="pin" %}
                         <span>
                             서울
                         </span>
@@ -163,7 +383,7 @@
 
                         <div class="preview-place">
                             <strong>
-                                🏯 경복궁
+                                {% include "_icon.html" with name="pin" %} 경복궁
                             </strong>
 
                             <small>
@@ -182,7 +402,7 @@
 
                         <div class="preview-place">
                             <strong>
-                                🏘️ 북촌한옥마을
+                                {% include "_icon.html" with name="pin" %} 북촌한옥마을
                             </strong>
 
                             <small>
@@ -201,7 +421,7 @@
 
                         <div class="preview-place">
                             <strong>
-                                🗼 남산타워
+                                {% include "_icon.html" with name="pin" %} 남산타워
                             </strong>
 
                             <small>
@@ -216,6 +436,8 @@
             </div>
 
         </div>
+
+        {% endif %}
 
     </section>
 
@@ -253,7 +475,7 @@
             <div class="service-card">
 
                 <div class="service-icon">
-                    🗺️
+                    {% include "_icon.html" with name="map" %}
                 </div>
 
                 <h3>
@@ -273,7 +495,7 @@
             <div class="service-card">
 
                 <div class="service-icon">
-                    📅
+                    {% include "_icon.html" with name="calendar" %}
                 </div>
 
                 <h3>
@@ -293,7 +515,7 @@
             <div class="service-card">
 
                 <div class="service-icon">
-                    📍
+                    {% include "_icon.html" with name="pin" %}
                 </div>
 
                 <h3>
@@ -313,7 +535,7 @@
             <div class="service-card">
 
                 <div class="service-icon">
-                    💰
+                    {% include "_icon.html" with name="wallet" %}
                 </div>
 
                 <h3>
@@ -375,7 +597,7 @@
 
 
             <div class="process-arrow">
-                →
+                {% include "_icon.html" with name="arrow" %}
             </div>
 
 
@@ -399,7 +621,7 @@
 
 
             <div class="process-arrow">
-                →
+                {% include "_icon.html" with name="arrow" %}
             </div>
 
 
@@ -423,7 +645,7 @@
 
 
             <div class="process-arrow">
-                →
+                {% include "_icon.html" with name="arrow" %}
             </div>
 
 
@@ -473,7 +695,7 @@
         <a href="{% url 'travel_create' %}"
            class="btn btn-white btn-large">
 
-            여행 만들기 →
+            여행 만들기 {% include "_icon.html" with name="arrow" cls="tp-icon-after" %}
 
         </a>
 
@@ -490,8 +712,9 @@
 
     <div class="footer-inner">
 
-        <div class="logo">
-            🏔️ TRIPA
+        <div class="logo logo-link">
+            {% include "_icon.html" with name="mountain" %}
+            TRIPA
         </div>
 
         <p>
@@ -502,6 +725,109 @@
 
 </footer>
 
+
+
+
+<script>
+(function () {
+
+    // ---------- 예시 질문: 4초마다 바뀌고, 누르면 입력창에 들어감 ----------
+    var examples = [
+        '서울에서 강릉 가는 제일 싼 방법은?',
+        '부모님 모시고 여수 2박 3일',
+        '강릉 1박 2일, 아이랑 갈 만한 곳 위주로',
+        '제주 3박 4일, 맛집 위주로',
+        '부산 당일치기, 비 오면 실내 위주로',
+        '전주 1박 2일, 한옥마을이랑 먹거리'
+    ];
+
+    var box = document.getElementById('planExamples');
+    var input = document.getElementById('planInput');
+    var start = 0;
+    var paused = false;
+
+    function chatIcon() {
+        var ns = 'http://www.w3.org/2000/svg';
+        var svg = document.createElementNS(ns, 'svg');
+        var use = document.createElementNS(ns, 'use');
+
+        svg.setAttribute('class', 'tp-icon');
+        svg.setAttribute('aria-hidden', 'true');
+        use.setAttribute('href', box.getAttribute('data-sprite') + '#i-chat');
+        svg.appendChild(use);
+
+        return svg;
+    }
+
+    function renderExamples() {
+        box.textContent = '';
+
+        for (var i = 0; i < 2; i++) {
+            var text = examples[(start + i) % examples.length];
+            var btn = document.createElement('button');
+
+            btn.type = 'button';
+            btn.className = 'plan-example';
+            btn.appendChild(chatIcon());
+            btn.appendChild(document.createTextNode(text));
+            btn.setAttribute('data-text', text);
+
+            box.appendChild(btn);
+        }
+    }
+
+    if (box && input) {
+
+        box.addEventListener('click', function (event) {
+            var btn = event.target.closest('.plan-example');
+
+            if (!btn) {
+                return;
+            }
+
+            input.value = btn.getAttribute('data-text');
+            input.focus();
+        });
+
+        box.addEventListener('mouseenter', function () { paused = true; });
+        box.addEventListener('mouseleave', function () { paused = false; });
+
+        input.addEventListener('focus', function () { paused = true; });
+        input.addEventListener('blur', function () { paused = false; });
+
+        renderExamples();
+
+        setInterval(function () {
+            if (paused) {
+                return;
+            }
+
+            start = (start + 2) % examples.length;
+            renderExamples();
+        }, 4000);
+    }
+
+
+    // ---------- 최근 일정 카드: DAY 탭 전환 ----------
+    var tabs = document.querySelectorAll('.preview-day[data-day]');
+    var panels = document.querySelectorAll('[data-day-panel]');
+
+    tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+            var target = tab.getAttribute('data-day');
+
+            tabs.forEach(function (t) {
+                t.classList.toggle('active', t === tab);
+            });
+
+            panels.forEach(function (panel) {
+                panel.hidden = panel.getAttribute('data-day-panel') !== target;
+            });
+        });
+    });
+
+})();
+</script>
 
 </body>
 

@@ -13,7 +13,7 @@
     {% load static %}
 
     <link rel="stylesheet"
-          href="{% static 'sherpaapp/css/style.css' %}">
+          href="{% static 'sherpaapp/css/style.css' %}?v=20261029">
 
 </head>
 
@@ -34,7 +34,7 @@
         <div class="logo">
 
             <a href="{% url 'index' %}">
-                🏔️ TRIPA
+                {% include "_icon.html" with name="mountain" %} TRIPA
             </a>
 
         </div>
@@ -51,7 +51,7 @@
             <li>
 
                 <a href="{% url 'travel_list' %}">
-                    ✈️ 내 여행
+                    {% include "_icon.html" with name="suitcase" %} 내 여행
                 </a>
 
             </li>
@@ -60,7 +60,7 @@
             <li>
 
                 <a href="{% url 'travel_create' %}">
-                    ➕ 여행 만들기
+                    {% include "_icon.html" with name="plus" %} 여행 만들기
                 </a>
 
             </li>
@@ -69,7 +69,7 @@
             <li>
 
                 <a href="{% url 'place_search' %}">
-                    📍 장소 검색
+                    {% include "_icon.html" with name="pin" %} 장소 검색
                 </a>
 
             </li>
@@ -78,7 +78,7 @@
             <li>
 
                 <a href="{% url 'travel_detail' travel_id=travel.t_id %}">
-                    📅 일정 관리
+                    {% include "_icon.html" with name="calendar" %} 일정 관리
                 </a>
 
             </li>
@@ -87,7 +87,7 @@
             <li>
 
                 <a href="{% url 'budget' %}">
-                    💰 비용 관리
+                    {% include "_icon.html" with name="wallet" %} 비용 관리
                 </a>
 
             </li>
@@ -101,7 +101,7 @@
             <a href="{% url 'mypage' %}"
                class="user-profile">
 
-                👤 {{ member.nickname }}
+                {% include "_icon.html" with name="user" %} {{ member.nickname }}
 
             </a>
 
@@ -110,7 +110,7 @@
             <a href="{% url 'login' %}"
                class="user-profile">
 
-                👤 로그인
+                {% include "_icon.html" with name="user" %} 로그인
 
             </a>
 
@@ -130,7 +130,7 @@
         <div class="page-title">
 
             <h1>
-                ✏️ 여행 수정
+                {% include "_icon.html" with name="edit" %} 여행 수정
             </h1>
 
             <p>

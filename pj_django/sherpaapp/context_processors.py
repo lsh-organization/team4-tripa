@@ -21,3 +21,9 @@ def kakao_api_key(request):
         "KAKAO_MAP_API_KEY":
             settings.KAKAO_MAP_API_KEY
     }
+
+def odsay_api_key(request):
+    return {
+        "ODSAY_WEB_API_KEY":
+            settings.ODSAY_WEB_API_KEY
+    }

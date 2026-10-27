@@ -54,12 +54,95 @@
             display: block;
             width: 100%;
             padding: 13px;
-            margin-top: 30px;
+            margin-top: 20px;
             background-color: #3182ce;
             color: white;
             text-align: center;
             text-decoration: none;
+            border: none;
             border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        /* 회원탈퇴 버튼 */
+        .btn-danger {
+            background-color: #e53e3e;
+        }
+
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+
+        /* =========================
+           회원탈퇴 모달
+        ========================= */
+
+        .delete-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-modal.show {
+            display: flex;
+        }
+
+        .delete-modal-content {
+            width: 420px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .delete-modal-content h2 {
+            margin-bottom: 15px;
+            color: #e53e3e;
+        }
+
+        .delete-warning {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .delete-warning strong {
+            color: #e53e3e;
+        }
+
+        .delete-password {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            background-color: #e2e8f0;
+        }
+
+        .delete-btn {
+            background-color: #e53e3e;
+            color: white;
         }
 
     </style>
@@ -124,7 +207,123 @@
         로그아웃
     </a>
 
+
+    <!-- 회원탈퇴 -->
+    <button
+        type="button"
+        class="btn btn-danger"
+        onclick="openDeleteModal()"
+    >
+        회원탈퇴
+    </button>
+
 </div>
+
+
+<!-- =========================================
+     회원탈퇴 확인창
+========================================= -->
+
+<div
+    id="deleteModal"
+    class="delete-modal"
+>
+
+    <div class="delete-modal-content">
+
+        <h2>회원탈퇴</h2>
+
+        <div class="delete-warning">
+
+            정말 탈퇴하시겠습니까?
+
+            <br><br>
+
+            <strong>
+                회원탈퇴 후에는 계정을 복구할 수 없습니다.
+            </strong>
+
+            <br>
+
+            확인을 위해 비밀번호를 입력해주세요.
+
+        </div>
+
+
+        <form
+            method="post"
+            action="{% url 'member_delete' %}"
+        >
+
+            {% csrf_token %}
+
+            <label for="delete_password">
+                비밀번호
+            </label>
+
+            <input
+                type="password"
+                id="delete_password"
+                name="password"
+                class="delete-password"
+                placeholder="비밀번호 입력"
+                required
+            >
+
+
+            <div class="modal-buttons">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    onclick="closeDeleteModal()"
+                >
+                    취소
+                </button>
+
+                <button
+                    type="submit"
+                    class="delete-btn"
+                    onclick="return confirm('정말 회원탈퇴 하시겠습니까?');"
+                >
+                    탈퇴하기
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    function openDeleteModal() {
+
+        document
+            .getElementById(
+                "deleteModal"
+            )
+            .classList
+            .add("show");
+
+    }
+
+
+    function closeDeleteModal() {
+
+        document
+            .getElementById(
+                "deleteModal"
+            )
+            .classList
+            .remove("show");
+
+    }
+
+</script>
 
 </body>
 </html>

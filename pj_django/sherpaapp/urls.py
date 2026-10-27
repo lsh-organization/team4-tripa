@@ -119,9 +119,33 @@ urlpatterns = [
     ),
 
     path(
+        'travel_chat/',
+        views.travel_chat,
+        name='travel_chat'
+    ),
+
+    path(
+        'travel_chat_apply/',
+        views.travel_chat_apply,
+        name='travel_chat_apply'
+    ),
+
+    path(
+        'travel_chat_preview/',
+        views.travel_chat_preview,
+        name='travel_chat_preview'
+    ),
+
+    path(
         'travel_list/',
         views.travel_list,
         name='travel_list'
+    ),
+
+    path(
+        'schedule_manage/',
+        views.schedule_manage,
+        name='schedule_manage'
     ),
 
     path(
@@ -221,5 +245,17 @@ urlpatterns = [
         'budget/<int:travel_id>/delete/<int:pay_id>/',
         views.budget_delete,
         name='budget_delete'
+    ),
+
+    path(
+        'budget/<int:travel_id>/update/<int:pay_id>/',
+        views.budget_update_pay,
+        name='budget_update_pay'
+    ),
+
+    path(
+        'member_delete/',
+        views.member_delete,
+        name='member_delete'
     ),
 ]

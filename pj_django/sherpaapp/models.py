@@ -179,6 +179,14 @@ class Travel(models.Model):
         blank=True
     )
 
+    # 마지막 DAY 최초 출발지 복귀 예정 시간
+    # 값이 없으면 화면/경로 API에서 22:00을 기본값으로 사용한다.
+    return_time = models.TimeField(
+        db_column='RETURN_TIME',
+        null=True,
+        blank=True
+    )
+
     class Meta:
         db_table = 'travel'
         managed = False

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>TRIPA - 일정 관리</title>
+
+    {% load static %}
+
+    <link rel="stylesheet"
+          href="{% static 'sherpaapp/css/style.css' %}?v=20261034">
+
+</head>
+
+
+<body>
+
+
+<div class="detail-container">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================= -->
+
+    <aside class="sidebar">
+
+
+        <div class="logo">
+            <a href="{% url 'index' %}">{% include "_icon.html" with name="mountain" %} TRIPA</a>
+        </div>
+
+
+        <div class="menu-title">
+            MENU
+        </div>
+
+
+        <ul class="menu">
+
+            <li>
+                <a href="{% url 'travel_list' %}">
+                    {% include "_icon.html" with name="suitcase" %} 내 여행
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'travel_create' %}">
+                    {% include "_icon.html" with name="plus" %} 여행 만들기
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'place_search' %}">
+                    {% include "_icon.html" with name="pin" %} 장소 검색
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'schedule_manage' %}"
+                   class="active">
+                    {% include "_icon.html" with name="calendar" %} 일정 관리
+                </a>
+            </li>
+
+            <li>
+                <a href="{% url 'budget' %}">
+                    {% include "_icon.html" with name="wallet" %} 비용 관리
+                </a>
+            </li>
+
+        </ul>
+
+        {% if member %}
+            <a href="{% url 'mypage' %}" class="user-profile">
+                {% include "_icon.html" with name="user" %} {{ member.nickname }}
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" class="user-profile">
+                {% include "_icon.html" with name="user" %} 로그인
+            </a>
+        {% endif %}
+
+    </aside>
+
+
+    <!-- =========================
+         MAIN
+    ========================= -->
+
+    <main class="detail-content">
+
+
+        <div class="travel-list-header">
+
+            <div class="travel-list-title">
+
+                <h1>
+                    {% include "_icon.html" with name="calendar" %} 일정 관리
+                </h1>
+
+                <p>
+                    여행 일정을 확인하고 수정할 수 있어요.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <section class="sc-empty">
+
+            <div class="sc-empty__icon">
+                {% include "_icon.html" with name="calendar" %}
+            </div>
+
+            <h2 class="sc-empty__title">
+                아직 만들어진 일정이 없어요
+            </h2>
+
+            <p class="sc-empty__desc">
+                여행을 먼저 만들면 날짜별 일정과 이동 시간을<br>
+                이곳에서 한눈에 볼 수 있어요.
+            </p>
+
+            <div class="sc-empty__actions">
+
+                <a href="{% url 'travel_create' %}"
+                   class="btn btn-primary">
+                    + 여행 만들기
+                </a>
+
+                <a href="{% url 'travel_list' %}"
+                   class="sc-empty__link">
+                    내 여행 보기
+                </a>
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+</body>
+</html>
