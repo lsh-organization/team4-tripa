@@ -12,7 +12,7 @@
     {% load static %}
 
     <link rel="stylesheet"
-          href="{% static 'sherpaapp/css/style.css' %}?v=20261029">
+          href="{% static 'sherpaapp/css/style.css' %}?v=20261030">
 
     <style>
 
@@ -1003,14 +1003,6 @@
             </li>
 
 
-            <li>
-
-                <a href="{% url 'place_search' %}">
-                    {% include "_icon.html" with name="pin" %} 장소 검색
-                </a>
-
-            </li>
-
 
             <li>
 
@@ -1102,235 +1094,99 @@
         </section>
 
 
-        <div class="dashboard">
+        <!-- 여행 만들기 화면처럼 3칸: 여행 정보·비용 | DAY 일정 | 지도 -->
+        <div class="td-app">
 
+            <!-- 왼쪽: 여행 정보 + 그날 비용 -->
+            <section class="tc-panel td-info" aria-label="여행 정보">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="map" %} 여행 정보</h2>
+                </header>
 
-            <section class="section-box map-box">
+                <div class="td-panel__body">
+                    <dl class="td-summary travel-summary">
+                        <div class="summary-item">
+                            <dt class="summary-label">{% include "_icon.html" with name="pin" %} 여행 지역</dt>
+                            <dd class="summary-value">{{ travel.t_place }}</dd>
+                        </div>
+                        <div class="summary-item">
+                            <dt class="summary-label">{% include "_icon.html" with name="calendar" %} 여행 기간</dt>
+                            <dd class="summary-value">{{ schedules|length }}일</dd>
+                        </div>
+                        <div class="summary-item">
+                            <dt class="summary-label">{% include "_icon.html" with name="search" %} 방문 장소 수</dt>
+                            <dd class="summary-value" id="placeCount">0곳</dd>
+                        </div>
+                        <div class="summary-item">
+                            <dt class="summary-label">{% include "_icon.html" with name="route" %} 교통 수단</dt>
+                            <dd class="summary-value">{{ travel.t_way }}</dd>
+                        </div>
+                    </dl>
 
-
-                <div class="section-title">
-                    {% include "_icon.html" with name="map" %} 여행 지도
+                    <!-- 비용 (JS가 선택한 DAY에 맞춰 내용을 채움) -->
+                    <section class="pay-box" id="payBox">
+                        <div class="section-title">
+                            {% include "_icon.html" with name="wallet" %} DAY 1 여행 비용
+                        </div>
+                        <div class="pay-item">
+                            <span>등록된 비용이 없습니다.</span>
+                            <strong>0원</strong>
+                        </div>
+                        <div class="pay-item total-pay">
+                            <span>DAY 1 총 비용</span>
+                            <strong>0원</strong>
+                        </div>
+                    </section>
                 </div>
-
-
-                <div class="detail-map">
-
-                    <div id="map"></div>
-                        
-                </div>
-
-
             </section>
 
+            <!-- 가운데: DAY 탭 + 그날 타임라인 -->
+            <section class="tc-panel td-plan" aria-label="여행 일정">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="calendar" %} 여행 일정</h2>
+                    <span class="tc-panel__sub">날짜를 눌러 확인</span>
+                </header>
 
+                <div id="dayList" class="td-days" role="tablist">
+                    {% for schedule in schedules %}
+                        <div class="day {% if forloop.first %}active{% endif %}"
+                             role="tab"
+                             onclick="selectDay({{ forloop.counter }})">
+                            <strong>DAY {{ forloop.counter }}</strong>
+                            <div class="day-date">{{ schedule.s_day|date:"Y.m.d" }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
 
-            <!-- DAY + 여행정보 -->
-
-            <div>
-
-
-
-                <!-- DAY -->
-
-                <section class="day-box">
-
-
-                    <div class="section-title">
-                        {% include "_icon.html" with name="calendar" %} 여행 일정
+                <div class="td-panel__body timeline-box">
+                    <div class="timeline-header">
+                        <div class="section-title" id="currentDayTitle">
+                            {% include "_icon.html" with name="calendar" %} DAY 1 일정
+                        </div>
+                        <button type="button"
+                                class="add-schedule-btn"
+                                onclick="openPlaceSearch()">
+                            {% include "_icon.html" with name="search" %} 장소 추가
+                        </button>
                     </div>
 
-
-                    <div id="dayList">
-
-
-                        {% for schedule in schedules %}
-
-
-                            <div
-                                class="day {% if forloop.first %}active{% endif %}"
-                                onclick="selectDay({{ forloop.counter }})">
-
-
-                                <strong>
-                                    DAY {{ forloop.counter }}
-                                </strong>
-
-
-                                <div class="day-date">
-
-                                    {{ schedule.s_day|date:"Y.m.d" }}
-
-                                </div>
-
-
-                            </div>
-
-
-                        {% endfor %}
-
-
+                    <div class="timeline">
+                        <div id="timelineContainer"></div>
                     </div>
+                </div>
+            </section>
 
-
-                </section>
-
-
-
-                <!-- 여행 요약 -->
-
-                <section class="travel-summary">
-
-
-                    <div class="section-title">
-                        여행 정보
-                    </div>
-
-
-                    <div class="summary-item">
-
-
-                        <div class="summary-label">
-                            여행 지역
-                        </div>
-
-
-                        <div class="summary-value">
-                            {{ travel.t_place }}
-                        </div>
-
-
-                    </div>
-
-
-                    <div class="summary-item">
-
-
-                        <div class="summary-label">
-                            여행 기간
-                        </div>
-
-
-                        <div class="summary-value">
-                            {{ schedules|length }}일
-                        </div>
-
-
-                    </div>
-
-                    <div class="summary-item">
-
-
-
-                        <div class="summary-label">
-                            방문 장소 수
-                        </div>
-
-
-
-                        <div class="summary-value" id="placeCount">
-                            0곳
-                        </div>
-
-
-
-                    </div>
-
-                    <div class="summary-item">
-
-
-
-                        <div class="summary-label">
-                            교통 수단
-                        </div>
-
-
-
-                        <div class="summary-value">
-                            {{ travel.t_way }}
-                        </div>
-
-
-
-                    </div>
-
-                </section>
-
-
-            </div>
-
+            <!-- 오른쪽: 지도 -->
+            <section class="tc-panel td-mapPanel" aria-label="여행 지도">
+                <header class="tc-panel__head">
+                    <h2>{% include "_icon.html" with name="map" %} 지도</h2>
+                </header>
+                <div class="detail-map td-map">
+                    <div id="map"></div>
+                </div>
+            </section>
 
         </div>
-
-
-
-        <!-- =================================================
-             DAY 일정
-        ================================================== -->
-
-        <section class="timeline-box">
-
-
-            <!--
-                DAY N 일정 제목 + 추가 버튼을
-                같은 줄에 배치
-            -->
-
-            <div class="timeline-header">
-
-
-                <div class="section-title"
-                     id="currentDayTitle">
-
-                    {% include "_icon.html" with name="calendar" %} DAY 1 일정
-
-                </div>
-
-
-                <button
-                    type="button"
-                    class="add-schedule-btn"
-                    onclick="openPlaceSearch()">
-
-                    {% include "_icon.html" with name="search" %} 장소 추가
-
-                </button>
-
-
-            </div>
-
-
-
-            <div class="timeline">
-
-
-                <div id="timelineContainer">
-
-                </div>
-
-
-            </div>
-
-
-        </section>
-
-        <!-- =================================================
-             비용
-        ================================================== -->
-        <section class="pay-box" id="payBox">
-            <div class="section-title">
-                {% include "_icon.html" with name="wallet" %} DAY 1 여행 비용
-            </div>
-
-            <div class="pay-item">
-                <span>등록된 비용이 없습니다.</span>
-                <strong>0원</strong>
-            </div>
-
-            <div class="pay-item total-pay">
-                <span>DAY 1 총 비용</span>
-                <strong>0원</strong>
-            </div>
-        </section>
 
     </main>
 

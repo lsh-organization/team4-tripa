@@ -4917,3 +4917,193 @@ button.preview-day {
 .bg-amt-cancel { border: 1px solid #e4e8f0; background: #fff; color: #7b88a1; }
 .bg-amt-msg { flex: 1 0 100%; text-align: right; font-size: 11px; color: #e5484d; }
 .bg-amt-msg:empty { display: none; }
+
+/* =========================================================
+   일정 관리(여행 상세): 여행 만들기처럼 3칸 패널
+   여행 정보·비용 | DAY 탭 + 타임라인 | 지도
+   카드 모양은 .tc-panel / .tc-panel__head 를 그대로 재사용
+========================================================= */
+.td-app {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.85fr) minmax(340px, 1.25fr) minmax(300px, 1.1fr);
+    gap: 16px;
+    height: calc(100vh - 200px);
+    min-height: 560px;
+}
+
+/* 패널 안에서만 스크롤 */
+.td-panel__body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 14px 16px;
+}
+
+/* 예전 카드 모양(흰 배경·그림자)은 패널이 대신하므로 지움 */
+.td-app .travel-summary,
+.td-app .pay-box,
+.td-app .timeline-box {
+    margin-top: 0;
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.td-app .section-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0;
+    font-size: 15px;
+}
+
+/* 여행 정보: 여행 만들기의 초안 줄처럼 */
+.td-summary {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+}
+
+.td-summary .summary-item {
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 10px;
+    background: #f6f9ff;
+}
+
+.td-summary .summary-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #5b6b88;
+    white-space: nowrap;
+}
+
+.td-summary .summary-value {
+    margin: 0;
+    font-size: 14px;
+    word-break: keep-all;
+}
+
+/* 그날 비용 */
+.td-app .pay-box {
+    margin-top: 16px;
+    padding: 14px 0 0;
+    border-top: 1px solid #eaeff8;
+}
+
+.td-app .pay-box .section-title { margin-bottom: 8px; }
+.td-app .pay-item { padding: 9px 2px; font-size: 14px; gap: 10px; }
+.td-app .total-pay { font-size: 15px; }
+
+/* DAY 탭: 세로 목록 → 가로 탭 */
+.td-days {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    border-bottom: 1px solid #e8eef9;
+}
+
+.td-days .day {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 8px 14px;
+    border: 1px solid #dfe8f7;
+    background: #fff;
+    font-size: 13px;
+    text-align: center;
+}
+
+.td-days .day:hover { background: #eef3fc; }
+
+.td-days .day.active {
+    border-color: #2d6cdf;
+    background: #2d6cdf;
+    color: #fff;
+}
+
+.td-days .day-date { margin-top: 2px; font-size: 11px; }
+
+/* 타임라인 머리줄 */
+.td-app .timeline-header {
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+/* 지도: 패널을 꽉 채움 */
+.td-app .td-map {
+    flex: 1;
+    min-height: 0;
+    border-radius: 0;
+}
+
+/* 중간 화면: 정보·일정 2칸 + 지도는 아래 한 줄 */
+@media (max-width: 1279px) {
+    .td-app {
+        grid-template-columns: minmax(260px, 0.8fr) minmax(320px, 1.2fr);
+        height: auto;
+    }
+    .td-info,
+    .td-plan { height: calc(100vh - 200px); min-height: 520px; }
+    .td-mapPanel { grid-column: 1 / -1; height: 420px; }
+}
+
+/* 좁은 화면: 한 줄로 쌓기 */
+@media (max-width: 859px) {
+    .td-app { grid-template-columns: 1fr; }
+    .td-info,
+    .td-plan { height: auto; min-height: 0; }
+    .td-panel__body { overflow: visible; }
+    .td-mapPanel { height: 360px; }
+}
+
+/* 가운데 칸이 좁으니 시간은 카드 위로, 사진은 작게 (모바일 배치와 같은 방식) */
+.td-app .timeline-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    margin-bottom: 18px;
+}
+
+.td-app .timeline-item .time,
+.td-app .start-time-display {
+    justify-self: start;
+    min-width: 0;
+    padding-top: 0;
+    text-align: left;
+}
+
+.td-app .transport-segment {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    margin: -8px 0 14px;
+}
+
+.td-app .transport-segment-content {
+    grid-column: 1;
+    padding-left: 4px;
+}
+
+.td-app .schedule-card {
+    gap: 12px;
+    min-height: 0;
+    padding: 12px 76px 12px 12px;
+}
+
+.td-app .schedule-image {
+    flex: 0 0 96px;
+    width: 96px;
+    height: 96px;
+}
+
+.td-app .schedule-info h3 { font-size: 15px; }
+.td-app .schedule-info p { font-size: 13px; }
